@@ -1,0 +1,37 @@
+{%% extends "base.html" %%}
+{%% from "macros.html" import sidebar, topbar, flash_messages %%}
+{%% block title %%}Lectures – IMS Mentor{%% endblock %%}
+{%% block body %%}
+<div class="app-layout">
+  {{ sidebar('mentor', 'lectures') }}
+  <div class="main-content">
+    {{ topbar('Lectures') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="page-toolbar"><h4>Lectures</h4>
+<button class="btn-primary" onclick="openModal('addLecModal')"><i class="fas fa-plus"></i> Upload Lecture</button></div>
+<div class="card"><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Title</th><th>Class</th><th>Link</th><th>Added</th></tr></thead>
+<tbody>
+{% for l in lectures %}
+<tr><td>{{ l.title }}</td><td>{{ l.class_name }}</td>
+<td>{% if l.url %}<a href="{{ l.url }}" target="_blank" class="link-sm">Open <i class="fas fa-external-link-alt"></i></a>{% else %}–{% endif %}</td>
+<td>{{ l.created_at.strftime('%b %d, %Y') if l.created_at else '' }}</td>
+</tr>
+{% else %}<tr><td colspan="4" class="empty-state">No lectures yet</td></tr>{% endfor %}
+</tbody></table></div></div>
+<div class="modal" id="addLecModal"><div class="modal-box">
+<div class="modal-header"><h3>Upload Lecture</h3><button onclick="closeModal('addLecModal')">×</button></div>
+<form method="POST" action="/mentor/lectures/add" class="form-vertical">
+<div class="form-group"><label>Title</label><input type="text" name="title" required/></div>
+<div class="form-group"><label>Class</label><select name="class_id" required>{% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+<div class="form-group"><label>Video/Resource URL</label><input type="url" name="url" placeholder="https://youtube.com/..."/></div>
+<div class="form-group"><label>Description</label><textarea name="description" rows="3"></textarea></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Save</button><button type="button" class="btn-outline" onclick="closeModal('addLecModal')">Cancel</button></div>
+</form></div></div>
+    </div>
+  </div>
+</div>
+{%% endblock %%}

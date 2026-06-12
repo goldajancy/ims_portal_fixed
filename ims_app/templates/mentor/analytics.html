@@ -1,0 +1,30 @@
+{%% extends "base.html" %%}
+{%% from "macros.html" import sidebar, topbar, flash_messages %%}
+{%% block title %%}Analytics & Reports – IMS Mentor{%% endblock %%}
+{%% block body %%}
+<div class="app-layout">
+  {{ sidebar('mentor', 'analytics') }}
+  <div class="main-content">
+    {{ topbar('Analytics & Reports') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="card"><div class="card-header"><h3>Trainee Performance</h3></div>
+<div class="card-body"><canvas id="perfChart" height="100"></canvas></div></div>
+<div class="card" style="margin-top:20px"><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Trainee</th><th>Avg Marks</th><th>Attendance %</th><th>Submissions</th></tr></thead>
+<tbody>
+{% for t in perf %}
+<tr><td>{{ t.name }}</td><td>{{ t.avg_marks or '–' }}</td><td>{{ t.att_pct or '–' }}</td><td>{{ t.submissions }}</td></tr>
+{% else %}<tr><td colspan="4" class="empty-state">No data yet</td></tr>{% endfor %}
+</tbody></table></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+var perf={{ perf|tojson }};
+if(perf.length){new Chart(document.getElementById('perfChart'),{type:'bar',data:{labels:perf.map(t=>t.name),datasets:[{label:'Avg Marks',data:perf.map(t=>t.avg_marks||0),backgroundColor:'rgba(92,107,192,0.8)',borderRadius:4},{label:'Attendance %',data:perf.map(t=>t.att_pct||0),backgroundColor:'rgba(34,197,94,0.8)',borderRadius:4}]},options:{responsive:true,scales:{y:{beginAtZero:true,max:100}}}});}
+</script>
+    </div>
+  </div>
+</div>
+{%% endblock %%}

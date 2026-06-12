@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}My Dashboard – IMS{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('trainee', 'dashboard') }}
+  <div class="main-content">
+    {{ topbar('Welcome back, ' ~ session.name ~ '! 👋', 'Keep learning, keep growing!') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      <div class="stats-grid">
+        <div class="stat-card progress-card">
+          <div class="progress-ring-wrap">
+            <svg class="progress-ring" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="32" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+              <circle cx="40" cy="40" r="32" fill="none" stroke="#0891b2" stroke-width="8"
+                stroke-dasharray="{{ (progress / 100 * 201.06)|round(1) }} 201.06"
+                stroke-dashoffset="50.27" stroke-linecap="round"
+                style="transform:rotate(-90deg);transform-origin:center"/>
+            </svg>
+            <div class="ring-text">{{ progress }}%</div>
+          </div>
+          <div class="stat-info"><div class="stat-label">Overall Progress</div><div class="stat-sub">Keep it up! 🚀</div></div>
+        </div>
+        <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-tasks"></i></div><div class="stat-info"><div class="stat-label">Assignments</div><div class="stat-value">{{ submitted_count }} / {{ total_assignments }}</div></div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-label">Tasks Done</div><div class="stat-value">{{ completed_tasks }} / {{ total_tasks }}</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-star"></i></div><div class="stat-info"><div class="stat-label">Avg Marks</div><div class="stat-value">{{ avg_marks or '–' }}%</div></div></div>
+        <div class="stat-card"><div class="stat-icon {% if attendance and attendance < 75 %}red{% else %}teal{% endif %}"><i class="fas fa-user-check"></i></div>
+          <div class="stat-info"><div class="stat-label">Attendance</div><div class="stat-value">{{ attendance or 0 }}%</div>
+          {% if attendance and attendance < 75 %}<div class="stat-alert">⚠ Below 75%</div>{% endif %}
+          </div></div>
+      </div>
+
+      <div class="dash-grid dash-grid-3">
+        <div class="card">
+          <div class="card-header"><h3>📅 Upcoming Deadlines</h3><a href="/trainee/calendar" class="link-sm">Calendar</a></div>
+          <div class="card-body">
+          {% for a in upcoming[:4] %}
+          <div class="deadline-item">
+            <div class="deadline-date">{{ a.due_date.strftime('%b %d') if a.due_date else '–' }}</div>
+            <div class="deadline-info">
+              <div class="deadline-title">{{ a.title }}</div>
+              <div class="deadline-sub">{{ a.class_name }}</div>
+            </div>
+          </div>
+          {% else %}<p class="empty-state">No upcoming deadlines 🎉</p>{% endfor %}
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>📢 Announcements</h3><a href="/trainee/announcements" class="link-sm">View All</a></div>
+          <div class="card-body">
+          {% for a in announcements %}
+          <div class="ann-item">
+            <div class="ann-title">{{ a.title }}</div>
+            <div class="ann-sub">{{ a.author }} · {{ a.created_at.strftime('%b %d') if a.created_at else '' }}</div>
+          </div>
+          {% else %}<p class="empty-state">No announcements</p>{% endfor %}
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Attendance</h3></div>
+          <div class="card-body" style="text-align:center">
+            <canvas id="attDonut" width="140" height="140" style="max-width:140px;margin:auto;display:block"></canvas>
+            <div style="margin-top:12px;font-size:13px">
+              <span style="color:#22c55e">● Present: {{ present_days }}</span> &nbsp;
+              <span style="color:#ef4444">● Absent: {{ absent_days }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-grid dash-grid-2">
+        <div class="card">
+          <div class="card-header"><h3>📈 Marks Trend</h3><a href="/trainee/progress" class="link-sm">View Report</a></div>
+          <div class="card-body"><canvas id="marksChart" height="130"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Recent Activity</h3></div>
+          <div class="card-body">
+          {% for a in recent_activity %}
+          <div class="activity-item">
+            <div class="activity-dot"></div>
+            <div class="activity-info">
+              <div class="activity-text">{{ a.detail }}</div>
+              <div class="activity-time">{{ a.created_at.strftime('%b %d, %I:%M %p') if a.created_at else '' }}</div>
+            </div>
+          </div>
+          {% else %}<p class="empty-state">No recent activity</p>{% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>Quick Actions</h3></div>
+        <div class="card-body">
+          <div class="quick-actions">
+            <a href="/trainee/assignments" class="qa-btn"><i class="fas fa-upload"></i><span>Submit Assignment</span></a>
+            <a href="/trainee/lectures" class="qa-btn"><i class="fas fa-video"></i><span>View Lectures</span></a>
+            <a href="/trainee/exams" class="qa-btn"><i class="fas fa-file-alt"></i><span>Check Results</span></a>
+            <a href="/trainee/messages" class="qa-btn"><i class="fas fa-envelope"></i><span>Message Mentor</span></a>
+            <a href="/trainee/progress" class="qa-btn"><i class="fas fa-chart-line"></i><span>My Progress</span></a>
+            <a href="/trainee/bookmarks" class="qa-btn"><i class="fas fa-bookmark"></i><span>Bookmarks</span></a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+var trend = {{ marks_trend | tojson }};
+var presentD = {{ present_days }}, absentD = {{ absent_days }};
+new Chart(document.getElementById('attDonut'),{
+  type:'doughnut',
+  data:{labels:['Present','Absent'],datasets:[{data:[presentD,absentD],backgroundColor:['#22c55e','#ef4444'],borderWidth:0}]},
+  options:{plugins:{legend:{display:false}},cutout:'70%'}
+});
+if(trend.length){
+  new Chart(document.getElementById('marksChart'),{
+    type:'line',
+    data:{labels:trend.map(d=>d.mon),datasets:[{label:'Avg Marks',data:trend.map(d=>d.avg),borderColor:'#0891b2',backgroundColor:'rgba(8,145,178,0.1)',fill:true,tension:0.4,pointRadius:5}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100}}}
+  });
+} else {
+  document.getElementById('marksChart').parentElement.innerHTML='<p class="empty-state">Submit assignments to see your marks trend</p>';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{%% extends "base.html" %%}
+{%% from "macros.html" import sidebar, topbar, flash_messages %%}
+{%% block title %%}Question Bank – IMS Mentor{%% endblock %%}
+{%% block body %%}
+<div class="app-layout">
+  {{ sidebar('mentor', 'qbank') }}
+  <div class="main-content">
+    {{ topbar('Question Bank') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="page-toolbar"><h4>Question Bank</h4>
+<button class="btn-primary" onclick="openModal('addQModal')"><i class="fas fa-plus"></i> Add Question</button></div>
+<div class="card"><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>#</th><th>Question</th><th>Type</th><th>Answer</th></tr></thead>
+<tbody>
+{% for q in questions %}
+<tr><td>{{ loop.index }}</td><td>{{ q.question[:80] }}</td>
+<td><span class="badge badge-blue">{{ q.qtype|upper }}</span></td>
+<td>{{ q.answer[:40] if q.answer else '–' }}</td></tr>
+{% else %}<tr><td colspan="4" class="empty-state">No questions yet</td></tr>{% endfor %}
+</tbody></table></div></div>
+<div class="modal" id="addQModal"><div class="modal-box">
+<div class="modal-header"><h3>Add Question</h3><button onclick="closeModal('addQModal')">×</button></div>
+<form method="POST" action="/mentor/question-bank/add" class="form-vertical">
+<div class="form-group"><label>Type</label><select name="qtype"><option value="mcq">MCQ</option><option value="short">Short Answer</option><option value="long">Long Answer</option></select></div>
+<div class="form-group"><label>Question</label><textarea name="question" rows="3" required></textarea></div>
+<div class="form-group"><label>Options (MCQ, comma-separated)</label><input type="text" name="options" placeholder="A, B, C, D"/></div>
+<div class="form-group"><label>Correct Answer</label><input type="text" name="answer"/></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Add</button><button type="button" class="btn-outline" onclick="closeModal('addQModal')">Cancel</button></div>
+</form></div></div>
+    </div>
+  </div>
+</div>
+{%% endblock %%}

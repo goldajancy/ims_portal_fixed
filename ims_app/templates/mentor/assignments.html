@@ -1,0 +1,36 @@
+{%% extends "base.html" %%}
+{%% from "macros.html" import sidebar, topbar, flash_messages %%}
+{%% block title %%}Assignments – IMS Mentor{%% endblock %%}
+{%% block body %%}
+<div class="app-layout">
+  {{ sidebar('mentor', 'assignments') }}
+  <div class="main-content">
+    {{ topbar('Assignments') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="page-toolbar">
+  <h4>My Assignments</h4>
+  <button class="btn-primary" onclick="openModal('addAssModal')"><i class="fas fa-plus"></i> New Assignment</button>
+</div>
+<div class="card"><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Title</th><th>Class</th><th>Due Date</th><th>Submitted</th><th>Graded</th></tr></thead>
+<tbody>
+{% for a in assignments %}
+<tr><td>{{ a.title }}</td><td>{{ a.class_name }}</td><td>{{ a.due_date or '–' }}</td><td>{{ a.sub_count }}</td><td>{{ a.graded_count }}</td></tr>
+{% else %}<tr><td colspan="5" class="empty-state">No assignments</td></tr>{% endfor %}
+</tbody></table></div></div>
+<div class="modal" id="addAssModal"><div class="modal-box">
+<div class="modal-header"><h3>New Assignment</h3><button onclick="closeModal('addAssModal')">×</button></div>
+<form method="POST" action="/mentor/assignments/add" class="form-vertical">
+<div class="form-group"><label>Title</label><input type="text" name="title" required/></div>
+<div class="form-group"><label>Class</label><select name="class_id" required>{% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+<div class="form-group"><label>Due Date</label><input type="date" name="due_date"/></div>
+<div class="form-group"><label>Description</label><textarea name="description" rows="3"></textarea></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Create</button><button type="button" class="btn-outline" onclick="closeModal('addAssModal')">Cancel</button></div>
+</form></div></div>
+    </div>
+  </div>
+</div>
+{%% endblock %%}

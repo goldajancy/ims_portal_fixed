@@ -1,0 +1,36 @@
+{%% extends "base.html" %%}
+{%% from "macros.html" import sidebar, topbar, flash_messages %%}
+{%% block title %%}Submissions – IMS Mentor{%% endblock %%}
+{%% block body %%}
+<div class="app-layout">
+  {{ sidebar('mentor', 'submissions') }}
+  <div class="main-content">
+    {{ topbar('Submissions') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="card"><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Trainee</th><th>Assignment</th><th>Class</th><th>Submitted</th><th>Marks</th><th>Action</th></tr></thead>
+<tbody>
+{% for s in submissions %}
+<tr>
+  <td>{{ s.trainee_name }}</td><td>{{ s.assignment_title }}</td><td>{{ s.class_name }}</td>
+  <td>{{ s.submitted_at.strftime('%b %d, %Y') if s.submitted_at else '' }}</td>
+  <td>{{ s.marks if s.marks is not none else '–' }}</td>
+  <td><button class="btn-sm btn-primary" onclick="openGrade({{ s.id }},'{{ s.trainee_name }}')">Grade</button></td>
+</tr>
+{% else %}<tr><td colspan="6" class="empty-state">No submissions yet</td></tr>{% endfor %}
+</tbody></table></div></div>
+<div class="modal" id="gradeModal"><div class="modal-box">
+<div class="modal-header"><h3>Grade – <span id="gradeTrainee"></span></h3><button onclick="closeModal('gradeModal')">×</button></div>
+<form method="POST" id="gradeForm" class="form-vertical">
+<div class="form-group"><label>Marks (0–100)</label><input type="number" name="marks" min="0" max="100" required/></div>
+<div class="form-group"><label>Feedback</label><textarea name="feedback" rows="3"></textarea></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Save</button><button type="button" class="btn-outline" onclick="closeModal('gradeModal')">Cancel</button></div>
+</form></div></div>
+<script>function openGrade(id,name){document.getElementById('gradeTrainee').textContent=name;document.getElementById('gradeForm').action='/mentor/submissions/grade/'+id;openModal('gradeModal');}</script>
+    </div>
+  </div>
+</div>
+{%% endblock %%}

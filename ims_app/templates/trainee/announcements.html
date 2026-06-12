@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Announcements – IMS Trainee{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('trainee', 'announcements') }}
+  <div class="main-content">
+    {{ topbar('Announcements') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="card"><div class="card-body">
+{% for a in announcements %}
+<div class="ann-card">
+  <div class="ann-card-header"><h4>{{ a.title }}</h4><span class="ann-date">{{ a.created_at.strftime('%b %d, %Y') if a.created_at else '' }}</span></div>
+  <div class="ann-card-body">{{ a.content }}</div>
+  <div class="ann-card-footer">By {{ a.author }}</div>
+</div>
+{% else %}<p class="empty-state">No announcements yet</p>{% endfor %}
+</div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Verify OTP – IMS Portal{% endblock %}
+{% block body %}
+<div class="auth-wrapper centered">
+  <div class="auth-right" style="width:100%;max-width:480px;margin:auto;">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <div class="auth-icon-big otp-icon"><i class="fas fa-shield-alt"></i></div>
+        <h2>Enter OTP</h2>
+        <p>We sent a 6-digit OTP to <strong>{{ session.get('reset_email','your email') }}</strong></p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}{% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">{{ msg }}</div>
+      {% endfor %}{% endif %}{% endwith %}
+
+      <form method="POST" action="/verify-otp" class="auth-form">
+        <div class="form-group">
+          <label><i class="fas fa-key"></i> One-Time Password</label>
+          <input type="text" name="otp" placeholder="Enter 6-digit OTP" maxlength="6"
+                 pattern="[0-9]{6}" inputmode="numeric" class="otp-input" required autocomplete="one-time-code"/>
+        </div>
+        <div class="otp-timer">OTP expires in <span id="countdown">10:00</span></div>
+        <button type="submit" class="btn-primary btn-full">Verify OTP <i class="fas fa-check"></i></button>
+      </form>
+
+      <div class="auth-links">
+        <a href="/forgot-password"><i class="fas fa-redo"></i> Resend OTP</a>
+        <span>|</span>
+        <a href="/login"><i class="fas fa-arrow-left"></i> Back to Login</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var s=600, el=document.getElementById('countdown');
+  var t=setInterval(function(){
+    s--; if(s<=0){clearInterval(t);el.textContent='Expired';el.style.color='#dc2626';return;}
+    el.textContent=Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;
+  },1000);
+})();
+</script>
+{% endblock %}

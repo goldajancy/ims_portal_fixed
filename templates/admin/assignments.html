@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Assignments - Admin{% endblock %}
+
+
+{% block body %}
+<div class="app-layout">
+    {{ sidebar('admin', 'assignments') }}
+  <div class="main-content">
+    {{ topbar('Assignments', 'Create and manage assignments across all classes') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <div class="page-header">
+        <div></div> <!-- spacer -->
+    <button class="btn btn-primary" onclick="openModal('addAssignmentModal')">
+        <i class="fas fa-plus"></i> Create Assignment
+    </button>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-tasks"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ assignments|length }}</span>
+            <span class="stat-label">Total Assignments</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-file-alt"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ assignments|sum(attribute='submission_count') }}</span>
+            <span class="stat-label">Total Submissions</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-orange"><i class="fas fa-clock"></i></div>
+        <div class="stat-info">
+            {% set upcoming = assignments|selectattr('due_date')|list %}
+            <span class="stat-value">{{ upcoming|length }}</span>
+            <span class="stat-label">With Deadlines</span>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card filter-card">
+    <div class="filter-bar">
+        <div class="filter-group">
+            <select id="classFilter" onchange="filterAssignments()">
+                <option value="">All Classes</option>
+                {% for cls in classes %}
+                <option value="{{ cls.id }}">{{ cls.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <select id="statusFilter" onchange="filterAssignments()">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="past">Past Due</option>
+            </select>
+        </div>
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search assignments..." onkeyup="searchAssignments()">
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if assignments %}
+        <div class="assignments-grid">
+            {% for a in assignments %}
+            <div class="assignment-card" data-class="{{ a.class_id }}">
+                <div class="assignment-header">
+                    <div class="assignment-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="assignment-meta">
+                        {% if a.due_date %}
+                            {% set is_past = a.due_date < now %}
+                            <span class="due-badge {% if is_past %}past{% else %}upcoming{% endif %}">
+                                <i class="fas fa-calendar"></i>
+                                {{ a.due_date.strftime('%b %d, %Y') }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="assignment-body">
+                    <h4>{{ a.title }}</h4>
+                    <p class="class-tag">
+                        <i class="fas fa-graduation-cap"></i>
+                        {{ a.class_name or 'No Class' }}
+                    </p>
+                    {% if a.description %}
+                    <p class="description">{{ a.description[:80] }}{% if a.description|length > 80 %}...{% endif %}</p>
+                    {% endif %}
+                </div>
+                <div class="assignment-footer">
+                    <div class="submission-stats">
+                        <span class="stat">
+                            <i class="fas fa-paper-plane"></i>
+                            {{ a.submission_count }} submissions
+                        </span>
+                    </div>
+                    <div class="assignment-actions">
+                        <button class="btn-sm" onclick="viewAssignment({{ a.id }})" title="View">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-sm" onclick="editAssignment({{ a.id }})" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-sm btn-danger" onclick="deleteAssignment({{ a.id }})" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h4>No Assignments Created</h4>
+            <p>Start by creating your first assignment</p>
+            <button class="btn btn-primary" onclick="openModal('addAssignmentModal')">
+                <i class="fas fa-plus"></i> Create Assignment
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Assignment Modal -->
+<div class="modal" id="addAssignmentModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus-circle"></i> Create Assignment</h3>
+            <button class="modal-close" onclick="closeModal('addAssignmentModal')">&times;</button>
+        </div>
+        <form action="{{ url_for('admin_add_assignment') }}" method="POST">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="title">Assignment Title <span class="required">*</span></label>
+                    <input type="text" id="title" name="title" required placeholder="e.g., Week 1 - Python Basics">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="class_id">Assign to Class</label>
+                        <select id="class_id" name="class_id">
+                            <option value="">-- Select Class --</option>
+                            {% for cls in classes %}
+                            <option value="{{ cls.id }}">{{ cls.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="due_date">Due Date</label>
+                        <input type="date" id="due_date" name="due_date">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="4" placeholder="Detailed instructions for the assignment..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addAssignmentModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Assignment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.filter-card {
+    margin-bottom: 20px;
+}
+.filter-bar {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.filter-group select {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    min-width: 150px;
+}
+.search-box {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+}
+.search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+.search-box input {
+    width: 100%;
+    padding: 10px 15px 10px 40px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+.assignments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+.assignment-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.assignment-card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+.assignment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 15px 15px 0;
+}
+.assignment-icon {
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+.due-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.due-badge.upcoming {
+    background: #fff3cd;
+    color: #856404;
+}
+.due-badge.past {
+    background: #f8d7da;
+    color: #721c24;
+}
+.assignment-body {
+    padding: 15px;
+}
+.assignment-body h4 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    color: #333;
+}
+.class-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #667eea;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+}
+.assignment-body .description {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+}
+.assignment-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+.submission-stats .stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #666;
+    font-size: 0.85rem;
+}
+.assignment-actions {
+    display: flex;
+    gap: 5px;
+}
+.btn-sm {
+    padding: 6px 10px;
+    border: none;
+    background: #e9ecef;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-sm:hover {
+    background: #dee2e6;
+}
+.btn-sm.btn-danger:hover {
+    background: #f8d7da;
+    color: #721c24;
+}
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+</style>
+
+<script>
+function openModal(id) {
+    document.getElementById(id).classList.add('active');
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+function viewAssignment(id) {
+    alert('View assignment ' + id);
+}
+function editAssignment(id) {
+    alert('Edit assignment ' + id);
+}
+function deleteAssignment(id) {
+    if (confirm('Delete this assignment?')) {
+        alert('Delete assignment ' + id);
+    }
+}
+function filterAssignments() {
+    const classFilter = document.getElementById('classFilter').value;
+    const cards = document.querySelectorAll('.assignment-card');
+    cards.forEach(card => {
+        if (!classFilter || card.dataset.class === classFilter) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+function searchAssignments() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const cards = document.querySelectorAll('.assignment-card');
+    cards.forEach(card => {
+        const title = card.querySelector('h4').textContent.toLowerCase();
+        card.style.display = title.includes(query) ? 'block' : 'none';
+    });
+}
+</script>
+{% endblock %}

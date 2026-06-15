@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Attendance - Admin{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('admin', 'attendance') }}
+  <div class="main-content">
+    {{ topbar('Attendance Management', 'Monitor and manage student attendance across all classes') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <div class="page-header">
+        <div></div> <!-- spacer -->
+    <div class="header-actions">
+        <button class="btn btn-outline" onclick="exportAttendance()">
+            <i class="fas fa-download"></i> Export
+        </button>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-calendar-check"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ records|length }}</span>
+            <span class="stat-label">Total Records</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-user-check"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ records|selectattr('present')|list|length }}</span>
+            <span class="stat-label">Present Days</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-red"><i class="fas fa-user-times"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ records|rejectattr('present')|list|length }}</span>
+            <span class="stat-label">Absent Days</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-purple"><i class="fas fa-percentage"></i></div>
+        <div class="stat-info">
+            {% set total = records|length %}
+            {% set present = records|selectattr('present')|list|length %}
+            <span class="stat-value">{{ ((present / total * 100)|round|int) if total > 0 else 0 }}%</span>
+            <span class="stat-label">Overall Rate</span>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- Recent Attendance Records -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-history"></i> Recent Attendance Records</h3>
+        </div>
+        <div class="card-body">
+            {% if records %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Class</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="avatar-sm">{{ record.student_name[0] }}</div>
+                                    <span>{{ record.student_name }}</span>
+                                </div>
+                            </td>
+                            <td>{{ record.class_name }}</td>
+                            <td>{{ record.date.strftime('%b %d, %Y') if record.date else '-' }}</td>
+                            <td>
+                                {% if record.present %}
+                                    <span class="attendance-badge present">
+                                        <i class="fas fa-check"></i> Present
+                                    </span>
+                                {% else %}
+                                    <span class="attendance-badge absent">
+                                        <i class="fas fa-times"></i> Absent
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-calendar-alt"></i>
+                <p>No attendance records found</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Attendance Summary by Student -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-bar"></i> Student Attendance Summary</h3>
+        </div>
+        <div class="card-body">
+            {% if summary %}
+            <div class="summary-list">
+                {% for s in summary %}
+                <div class="summary-item">
+                    <div class="summary-info">
+                        <div class="avatar-sm">{{ s.name[0] }}</div>
+                        <div class="summary-details">
+                            <strong>{{ s.name }}</strong>
+                            <span class="text-muted">{{ s.present_days|int }}/{{ s.total }} days</span>
+                        </div>
+                    </div>
+                    <div class="summary-progress">
+                        {% set pct = ((s.present_days / s.total * 100)|round|int) if s.total > 0 else 0 %}
+                        <div class="progress-bar">
+                            <div class="progress-fill {% if pct >= 75 %}bg-green{% elif pct >= 50 %}bg-yellow{% else %}bg-red{% endif %}" 
+                                 style="width: {{ pct }}%"></div>
+                        </div>
+                        <span class="progress-text">{{ pct }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <p>No summary data available</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Chart -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-line"></i> Attendance Trends</h3>
+    </div>
+    <div class="card-body">
+        <canvas id="attendanceChart" height="100"></canvas>
+    </div>
+</div>
+
+<style>
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.attendance-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+.attendance-badge.present {
+    background: #d4edda;
+    color: #155724;
+}
+.attendance-badge.absent {
+    background: #f8d7da;
+    color: #721c24;
+}
+.summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.summary-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+.summary-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.summary-details {
+    display: flex;
+    flex-direction: column;
+}
+.summary-details strong {
+    font-size: 0.95rem;
+}
+.summary-details span {
+    font-size: 0.8rem;
+}
+.summary-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 150px;
+}
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+.bg-green { background: #28a745; }
+.bg-yellow { background: #ffc107; }
+.bg-red { background: #dc3545; }
+.progress-text {
+    font-weight: 600;
+    font-size: 0.85rem;
+    min-width: 40px;
+    text-align: right;
+}
+</style>
+
+<script src="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/chart.js)"></script>
+<script>
+function exportAttendance() {
+    alert('Exporting attendance data...');
+}
+
+// Sample chart initialization
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+            datasets: [{
+                label: 'Attendance Rate (%)',
+                data: [85, 88, 82, 90, 87, 92],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 50,
+                    max: 100
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

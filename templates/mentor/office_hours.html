@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Office Hours – IMS Mentor{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('mentor', 'officehours') }}
+  <div class="main-content">
+    {{ topbar('Office Hours') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="page-toolbar"><h4>Office Hours</h4>
+<button class="btn-primary" onclick="openModal('addSlotModal')"><i class="fas fa-plus"></i> Add Slot</button></div>
+<div class="card"><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Date &amp; Time</th><th>Notes</th><th>Status</th><th>Booked By</th></tr></thead>
+<tbody>
+{% for s in slots %}
+<tr><td>{{ s.slot_time.strftime('%b %d, %Y %I:%M %p') if s.slot_time else '' }}</td>
+<td>{{ s.notes or '–' }}</td>
+<td><span class="badge {{ 'badge-danger' if s.is_booked else 'badge-success' }}">{{ 'Booked' if s.is_booked else 'Available' }}</span></td>
+<td>{{ s.trainee_name or '–' }}</td></tr>
+{% else %}<tr><td colspan="4" class="empty-state">No slots added yet</td></tr>{% endfor %}
+</tbody></table></div></div>
+<div class="modal" id="addSlotModal"><div class="modal-box">
+<div class="modal-header"><h3>Add Office Hour Slot</h3><button onclick="closeModal('addSlotModal')">×</button></div>
+<form method="POST" action="/mentor/office-hours/add" class="form-vertical">
+<div class="form-group"><label>Date &amp; Time</label><input type="datetime-local" name="slot_time" required/></div>
+<div class="form-group"><label>Notes</label><input type="text" name="notes" placeholder="Optional notes"/></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Add Slot</button><button type="button" class="btn-outline" onclick="closeModal('addSlotModal')">Cancel</button></div>
+</form></div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

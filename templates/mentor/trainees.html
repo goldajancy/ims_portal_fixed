@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}My Trainees – IMS Mentor{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('mentor', 'trainees') }}
+  <div class="main-content">
+    {{ topbar('My Trainees') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="card"><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Name</th><th>Email</th><th>Class</th><th>Avg Marks</th><th>Attendance</th></tr></thead>
+<tbody>
+{% for t in trainees %}
+<tr>
+  <td><div class="user-cell"><div class="avatar-sm">{{ t.name[0]|upper }}</div>{{ t.name }}</div></td>
+  <td>{{ t.email }}</td><td>{{ t.class_name }}</td>
+  <td>{{ t.avg_marks or '–' }}</td>
+  <td><span class="badge {{ 'badge-success' if t.att_pct and t.att_pct >= 75 else 'badge-danger' }}">{{ t.att_pct or '–' }}%</span></td>
+</tr>
+{% else %}<tr><td colspan="5" class="empty-state">No trainees enrolled yet</td></tr>{% endfor %}
+</tbody></table></div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

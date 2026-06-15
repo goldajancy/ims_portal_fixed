@@ -1,0 +1,550 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Settings - Admin{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('admin', 'settings') }}
+  <div class="main-content">
+    {{ topbar('Account Settings', 'Manage your account and preferences') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <!-- rest of your page content below unchanged -->
+
+<div class="settings-container">
+    <div class="settings-sidebar">
+        <nav class="settings-nav">
+            <a href="#profile" class="nav-item active" onclick="showSection('profile')">
+                <i class="fas fa-user"></i> Profile
+            </a>
+            <a href="#security" class="nav-item" onclick="showSection('security')">
+                <i class="fas fa-lock"></i> Security
+            </a>
+            <a href="#notifications" class="nav-item" onclick="showSection('notifications')">
+                <i class="fas fa-bell"></i> Notifications
+            </a>
+            <a href="#appearance" class="nav-item" onclick="showSection('appearance')">
+                <i class="fas fa-palette"></i> Appearance
+            </a>
+            <a href="#system" class="nav-item" onclick="showSection('system')">
+                <i class="fas fa-cog"></i> System
+            </a>
+        </nav>
+    </div>
+
+    <div class="settings-content">
+        <!-- Profile Section -->
+        <div id="profile" class="settings-section active">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-user-edit"></i> Profile Information</h3>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('admin_settings') }}" method="POST" class="settings-form">
+                        <div class="profile-header">
+                            <div class="avatar-large">
+                                {{ user.name[0] if user.name else 'A' }}
+                            </div>
+                            <div class="avatar-actions">
+                                <button type="button" class="btn btn-outline btn-sm">
+                                    <i class="fas fa-camera"></i> Change Photo
+                                </button>
+                                <button type="button" class="btn btn-text btn-sm">Remove</button>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name">Full Name</label>
+                                <input type="text" id="name" name="name" value="{{ user.name }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <input type="email" id="email" value="{{ user.email }}" disabled>
+                                <small class="form-text">Contact support to change email</small>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="phone">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" value="{{ user.phone or '' }}" placeholder="+1 234 567 8900">
+                            </div>
+                            <div class="form-group">
+                                <label for="role">Role</label>
+                                <input type="text" id="role" value="{{ user.role|capitalize }}" disabled>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bio">Bio</label>
+                            <textarea id="bio" name="bio" rows="3" placeholder="Tell us about yourself...">{{ user.bio or '' }}</textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Section -->
+        <div id="security" class="settings-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-shield-alt"></i> Security Settings</h3>
+                </div>
+                <div class="card-body">
+                    <div class="security-item">
+                        <div class="security-info">
+                            <h4>Change Password</h4>
+                            <p>Update your password regularly for security</p>
+                        </div>
+                        <button class="btn btn-outline" onclick="openModal('changePasswordModal')">
+                            Change Password
+                        </button>
+                    </div>
+
+                    <div class="security-item">
+                        <div class="security-info">
+                            <h4>Two-Factor Authentication</h4>
+                            <p>Add an extra layer of security to your account</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="2fa">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="security-item">
+                        <div class="security-info">
+                            <h4>Active Sessions</h4>
+                            <p>Manage your active login sessions</p>
+                        </div>
+                        <button class="btn btn-outline">View Sessions</button>
+                    </div>
+
+                    <div class="security-item">
+                        <div class="security-info">
+                            <h4>Last Login</h4>
+                            <p>{{ user.last_login.strftime('%b %d, %Y at %I:%M %p') if user.last_login else 'Unknown' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Section -->
+        <div id="notifications" class="settings-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-bell"></i> Notification Preferences</h3>
+                </div>
+                <div class="card-body">
+                    <div class="notification-group">
+                        <h4>Email Notifications</h4>
+                        <div class="notification-item">
+                            <span>New user registrations</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="notification-item">
+                            <span>Assignment submissions</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="notification-item">
+                            <span>System alerts</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="notification-item">
+                            <span>Weekly reports</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="notification-group">
+                        <h4>Push Notifications</h4>
+                        <div class="notification-item">
+                            <span>Enable browser notifications</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appearance Section -->
+        <div id="appearance" class="settings-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-paint-brush"></i> Appearance</h3>
+                </div>
+                <div class="card-body">
+                    <div class="appearance-item">
+                        <h4>Theme</h4>
+                        <div class="theme-options">
+                            <label class="theme-option">
+                                <input type="radio" name="theme" value="light" checked>
+                                <span class="theme-box light">
+                                    <i class="fas fa-sun"></i>
+                                    Light
+                                </span>
+                            </label>
+                            <label class="theme-option">
+                                <input type="radio" name="theme" value="dark">
+                                <span class="theme-box dark">
+                                    <i class="fas fa-moon"></i>
+                                    Dark
+                                </span>
+                            </label>
+                            <label class="theme-option">
+                                <input type="radio" name="theme" value="auto">
+                                <span class="theme-box auto">
+                                    <i class="fas fa-adjust"></i>
+                                    Auto
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="appearance-item">
+                        <h4>Sidebar Compact</h4>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="compactSidebar">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Section -->
+        <div id="system" class="settings-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-server"></i> System Settings</h3>
+                </div>
+                <div class="card-body">
+                    <div class="system-info">
+                        <div class="info-item">
+                            <span class="info-label">Application Version</span>
+                            <span class="info-value">IMS v2.0.1</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Database Status</span>
+                            <span class="info-value status-ok"><i class="fas fa-check-circle"></i> Connected</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Mail Service</span>
+                            <span class="info-value status-ok"><i class="fas fa-check-circle"></i> Active</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Last Backup</span>
+                            <span class="info-value">June 9, 2025 at 3:00 AM</span>
+                        </div>
+                    </div>
+
+                    <div class="system-actions">
+                        <button class="btn btn-outline">
+                            <i class="fas fa-database"></i> Backup Now
+                        </button>
+                        <button class="btn btn-outline">
+                            <i class="fas fa-sync"></i> Clear Cache
+                        </button>
+                        <button class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Purge Old Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal" id="changePasswordModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-key"></i> Change Password</h3>
+            <button class="modal-close" onclick="closeModal('changePasswordModal')">&times;</button>
+        </div>
+        <form action="#" method="POST">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="current_password">Current Password</label>
+                    <input type="password" id="current_password" name="current_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <input type="password" id="new_password" name="new_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('changePasswordModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Update Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.settings-container {
+    display: flex;
+    gap: 25px;
+}
+.settings-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+}
+.settings-nav {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.settings-nav .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    color: #555;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+}
+.settings-nav .nav-item:hover {
+    background: #f8f9fa;
+    color: #333;
+}
+.settings-nav .nav-item.active {
+    background: #f0f4ff;
+    color: #667eea;
+    border-left-color: #667eea;
+}
+.settings-content {
+    flex: 1;
+}
+.settings-section {
+    display: none;
+}
+.settings-section.active {
+    display: block;
+}
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+.avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 600;
+}
+.avatar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+.form-text {
+    color: #888;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+.form-actions {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+.security-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+.security-item:last-child {
+    border-bottom: none;
+}
+.security-info h4 {
+    margin: 0 0 5px;
+}
+.security-info p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+.toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 26px;
+}
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 26px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+input:checked + .slider {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+.notification-group {
+    margin-bottom: 25px;
+}
+.notification-group h4 {
+    margin: 0 0 15px;
+    color: #333;
+}
+.notification-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+}
+.theme-options {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+.theme-option input {
+    display: none;
+}
+.theme-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 30px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.theme-option input:checked + .theme-box {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+.theme-box i {
+    font-size: 1.5rem;
+}
+.theme-box.light i { color: #ffc107; }
+.theme-box.dark i { color: #343a40; }
+.theme-box.auto i { color: #667eea; }
+.appearance-item {
+    padding: 15px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.system-info {
+    margin-bottom: 25px;
+}
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+.info-label {
+    color: #666;
+}
+.info-value {
+    font-weight: 500;
+}
+.status-ok {
+    color: #28a745;
+}
+.system-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+@media (max-width: 768px) {
+    .settings-container {
+        flex-direction: column;
+    }
+    .settings-sidebar {
+        width: 100%;
+    }
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+function showSection(sectionId) {
+    document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.settings-nav .nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
+    event.target.closest('.nav-item').classList.add('active');
+}
+
+function openModal(id) {
+    document.getElementById(id).classList.add('active');
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+</script>
+{% endblock %}

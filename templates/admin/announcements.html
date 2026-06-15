@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Announcements - Admin{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('admin', 'announcements') }}
+  <div class="main-content">
+    {{ topbar('Announcements', 'Broadcast important updates to users') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <div class="page-header">
+        <div></div> <!-- spacer -->
+    <button class="btn btn-primary" onclick="openModal('addAnnouncementModal')">
+        <i class="fas fa-bullhorn"></i> New Announcement
+    </button>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-bullhorn"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ announcements|length }}</span>
+            <span class="stat-label">Total Announcements</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ announcements|selectattr('target_role', 'equalto', 'all')|list|length }}</span>
+            <span class="stat-label">For Everyone</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-purple"><i class="fas fa-calendar-week"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ announcements[:7]|length }}</span>
+            <span class="stat-label">This Week</span>
+        </div>
+    </div>
+</div>
+
+<div class="announcements-container">
+    {% if announcements %}
+        {% for ann in announcements %}
+        <div class="announcement-card">
+            <div class="announcement-left">
+                <div class="announcement-icon">
+                    {% if ann.target_role == 'all' %}
+                        <i class="fas fa-globe"></i>
+                    {% elif ann.target_role == 'trainee' %}
+                        <i class="fas fa-user-graduate"></i>
+                    {% elif ann.target_role == 'mentor' %}
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    {% else %}
+                        <i class="fas fa-bullhorn"></i>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="announcement-content">
+                <div class="announcement-header">
+                    <h4>{{ ann.title }}</h4>
+                    <span class="target-badge target-{{ ann.target_role }}">
+                        {{ ann.target_role|capitalize }}
+                    </span>
+                </div>
+                <p class="announcement-body">{{ ann.content }}</p>
+                <div class="announcement-meta">
+                    <span class="author">
+                        <i class="fas fa-user"></i> {{ ann.author }}
+                    </span>
+                    <span class="date">
+                        <i class="fas fa-clock"></i> 
+                        {{ ann.created_at.strftime('%b %d, %Y at %I:%M %p') if ann.created_at else '-' }}
+                    </span>
+                </div>
+            </div>
+            <div class="announcement-actions">
+                <button class="btn-icon" title="Edit" onclick="editAnnouncement({{ ann.id }})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon btn-danger" title="Delete" onclick="deleteAnnouncement({{ ann.id }})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fas fa-bullhorn"></i>
+            <h4>No Announcements Yet</h4>
+            <p>Create your first announcement to reach your users</p>
+            <button class="btn btn-primary" onclick="openModal('addAnnouncementModal')">
+                <i class="fas fa-plus"></i> Create Announcement
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Announcement Modal -->
+<div class="modal" id="addAnnouncementModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3><i class="fas fa-bullhorn"></i> New Announcement</h3>
+            <button class="modal-close" onclick="closeModal('addAnnouncementModal')">&times;</button>
+        </div>
+        <form action="{{ url_for('admin_add_announcement') }}" method="POST">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="title">Title <span class="required">*</span></label>
+                    <input type="text" id="title" name="title" required placeholder="Announcement title">
+                </div>
+                <div class="form-group">
+                    <label for="target_role">Target Audience <span class="required">*</span></label>
+                    <div class="target-options">
+                        <label class="target-option">
+                            <input type="radio" name="target_role" value="all" checked>
+                            <span class="option-box">
+                                <i class="fas fa-globe"></i>
+                                <span>Everyone</span>
+                            </span>
+                        </label>
+                        <label class="target-option">
+                            <input type="radio" name="target_role" value="trainee">
+                            <span class="option-box">
+                                <i class="fas fa-user-graduate"></i>
+                                <span>Trainees</span>
+                            </span>
+                        </label>
+                        <label class="target-option">
+                            <input type="radio" name="target_role" value="mentor">
+                            <span class="option-box">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <span>Mentors</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="content">Content <span class="required">*</span></label>
+                    <textarea id="content" name="content" rows="6" required placeholder="Write your announcement here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addAnnouncementModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Publish Announcement
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.announcements-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.announcement-card {
+    display: flex;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+.announcement-card:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.announcement-left {
+    margin-right: 20px;
+}
+.announcement-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.3rem;
+}
+.announcement-content {
+    flex: 1;
+}
+.announcement-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+.announcement-header h4 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: #333;
+}
+.target-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+.target-all {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+.target-trainee {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+.target-mentor {
+    background: #fce4ec;
+    color: #c2185b;
+}
+.announcement-body {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+.announcement-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 0.85rem;
+    color: #888;
+}
+.announcement-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.announcement-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.target-options {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+.target-option {
+    cursor: pointer;
+}
+.target-option input {
+    display: none;
+}
+.option-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 25px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+.target-option input:checked + .option-box {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+.option-box i {
+    font-size: 1.5rem;
+    color: #667eea;
+}
+.modal-lg {
+    max-width: 600px;
+}
+</style>
+
+<script>
+function openModal(id) {
+    document.getElementById(id).classList.add('active');
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+function editAnnouncement(id) {
+    alert('Edit announcement ' + id);
+}
+function deleteAnnouncement(id) {
+    if (confirm('Delete this announcement?')) {
+        alert('Delete announcement ' + id);
+    }
+}
+</script>
+{% endblock %}

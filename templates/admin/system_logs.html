@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}System Logs - Admin{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('admin', 'system_logs') }}
+  <div class="main-content">
+    {{ topbar('System Logs', 'Track all system activities and user actions') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <div class="page-header">
+        <div></div> <!-- spacer -->
+    <div class="header-actions">
+        <button class="btn btn-outline" onclick="refreshLogs()">
+            <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+        <button class="btn btn-outline" onclick="exportLogs()">
+            <i class="fas fa-download"></i> Export
+        </button>
+        <button class="btn btn-danger" onclick="clearOldLogs()">
+            <i class="fas fa-trash"></i> Clear Old Logs
+        </button>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-list"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ logs|length }}</span>
+            <span class="stat-label">Total Entries</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-sign-in-alt"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ logs|selectattr('action', 'equalto', 'login')|list|length }}</span>
+            <span class="stat-label">Logins</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-orange"><i class="fas fa-sign-out-alt"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ logs|selectattr('action', 'equalto', 'logout')|list|length }}</span>
+            <span class="stat-label">Logouts</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-purple"><i class="fas fa-paper-plane"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ logs|selectattr('action', 'equalto', 'submit')|list|length }}</span>
+            <span class="stat-label">Submissions</span>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card filter-card">
+    <div class="filter-bar">
+        <div class="filter-group">
+            <select id="actionFilter" onchange="filterLogs()">
+                <option value="">All Actions</option>
+                <option value="login">Login</option>
+                <option value="logout">Logout</option>
+                <option value="register">Register</option>
+                <option value="submit">Submit</option>
+                <option value="submit_task">Submit Task</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <select id="roleFilter" onchange="filterLogs()">
+                <option value="">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="mentor">Mentor</option>
+                <option value="trainee">Trainee</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <input type="date" id="dateFilter" onchange="filterLogs()">
+        </div>
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search logs..." onkeyup="searchLogs()">
+        </div>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="card">
+    <div class="card-body">
+        {% if logs %}
+        <div class="table-responsive">
+            <table class="data-table" id="logsTable">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr data-action="{{ log.action }}" data-role="{{ log.role }}">
+                        <td>
+                            <div class="timestamp">
+                                <span class="date">{{ log.created_at.strftime('%b %d, %Y') if log.created_at else '-' }}</span>
+                                <span class="time">{{ log.created_at.strftime('%I:%M:%S %p') if log.created_at else '' }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-cell">
+                                <div class="avatar-sm">{{ log.name[0] if log.name else '?' }}</div>
+                                <span>{{ log.name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="role-badge role-{{ log.role }}">{{ log.role|capitalize }}</span>
+                        </td>
+                        <td>
+                            <span class="action-badge action-{{ log.action }}">
+                                {% if log.action == 'login' %}
+                                    <i class="fas fa-sign-in-alt"></i>
+                                {% elif log.action == 'logout' %}
+                                    <i class="fas fa-sign-out-alt"></i>
+                                {% elif log.action == 'register' %}
+                                    <i class="fas fa-user-plus"></i>
+                                {% elif log.action == 'submit' %}
+                                    <i class="fas fa-paper-plane"></i>
+                                {% elif log.action == 'submit_task' %}
+                                    <i class="fas fa-tasks"></i>
+                                {% else %}
+                                    <i class="fas fa-cog"></i>
+                                {% endif %}
+                                {{ log.action|replace('_', ' ')|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="detail-text">{{ log.detail or '-' }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <button class="btn-page" disabled><i class="fas fa-chevron-left"></i></button>
+            <span class="page-info">Showing 1-{{ logs|length }} of {{ logs|length }} entries</span>
+            <button class="btn-page" disabled><i class="fas fa-chevron-right"></i></button>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-history"></i>
+            <h4>No Activity Logs</h4>
+            <p>Activity logs will appear here as users interact with the system</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Live Activity Feed -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-broadcast-tower"></i> Live Activity Feed</h3>
+        <span class="live-indicator">
+            <span class="pulse"></span> Live
+        </span>
+    </div>
+    <div class="card-body">
+        <div class="activity-feed" id="liveFeed">
+            {% for log in logs[:10] %}
+            <div class="feed-item">
+                <div class="feed-icon action-{{ log.action }}">
+                    {% if log.action == 'login' %}
+                        <i class="fas fa-sign-in-alt"></i>
+                    {% elif log.action == 'logout' %}
+                        <i class="fas fa-sign-out-alt"></i>
+                    {% elif log.action == 'submit' %}
+                        <i class="fas fa-paper-plane"></i>
+                    {% else %}
+                        <i class="fas fa-circle"></i>
+                    {% endif %}
+                </div>
+                <div class="feed-content">
+                    <span class="feed-text">
+                        <strong>{{ log.name }}</strong> {{ log.action|replace('_', ' ') }}
+                        {% if log.detail %}- {{ log.detail }}{% endif %}
+                    </span>
+                    <span class="feed-time">{{ log.created_at.strftime('%I:%M %p') if log.created_at else '' }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+.filter-card {
+    margin-bottom: 20px;
+}
+.filter-bar {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.filter-group select,
+.filter-group input {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    min-width: 150px;
+}
+.search-box {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+}
+.search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+.search-box input {
+    width: 100%;
+    padding: 10px 15px 10px 40px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+.timestamp {
+    display: flex;
+    flex-direction: column;
+}
+.timestamp .date {
+    font-weight: 500;
+    color: #333;
+}
+.timestamp .time {
+    font-size: 0.8rem;
+    color: #888;
+}
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.role-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+.role-admin { background: #fce4ec; color: #c2185b; }
+.role-mentor { background: #e3f2fd; color: #1565c0; }
+.role-trainee { background: #e8f5e9; color: #2e7d32; }
+.action-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+.action-login { background: #d4edda; color: #155724; }
+.action-logout { background: #fff3cd; color: #856404; }
+.action-register { background: #cce5ff; color: #004085; }
+.action-submit, .action-submit_task { background: #e8f4fd; color: #1976d2; }
+.detail-text {
+    color: #666;
+    font-size: 0.9rem;
+}
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+.btn-page {
+    padding: 8px 15px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.btn-page:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.page-info {
+    color: #666;
+    font-size: 0.9rem;
+}
+.live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #28a745;
+    font-weight: 500;
+}
+.pulse {
+    width: 10px;
+    height: 10px;
+    background: #28a745;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+.activity-feed {
+    max-height: 400px;
+    overflow-y: auto;
+}
+.feed-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.feed-item:last-child {
+    border-bottom: none;
+}
+.feed-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.feed-icon.action-login { background: #d4edda; color: #155724; }
+.feed-icon.action-logout { background: #fff3cd; color: #856404; }
+.feed-icon.action-submit { background: #e8f4fd; color: #1976d2; }
+.feed-content {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.feed-text {
+    color: #555;
+}
+.feed-time {
+    color: #999;
+    font-size: 0.8rem;
+}
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+</style>
+
+<script>
+function filterLogs() {
+    const action = document.getElementById('actionFilter').value;
+    const role = document.getElementById('roleFilter').value;
+    const rows = document.querySelectorAll('#logsTable tbody tr');
+    
+    rows.forEach(row => {
+        const matchAction = !action || row.dataset.action === action;
+        const matchRole = !role || row.dataset.role === role;
+        row.style.display = (matchAction && matchRole) ? '' : 'none';
+    });
+}
+
+function searchLogs() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#logsTable tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+    });
+}
+
+function refreshLogs() {
+    location.reload();
+}
+
+function exportLogs() {
+    alert('Exporting logs...');
+}
+
+function clearOldLogs() {
+    if (confirm('This will delete logs older than 30 days. Continue?')) {
+        alert('Clearing old logs...');
+    }
+}
+</script>
+{% endblock %}

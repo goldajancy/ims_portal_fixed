@@ -1,0 +1,37 @@
+{%% extends "base.html" %%}
+{%% from "macros.html" import sidebar, topbar, flash_messages %%}
+{%% block title %%}Announcements – IMS Mentor{%% endblock %%}
+{%% block body %%}
+<div class="app-layout">
+  {{ sidebar('mentor', 'announcements') }}
+  <div class="main-content">
+    {{ topbar('Announcements') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="page-toolbar"><h4>Announcements</h4>
+<button class="btn-primary" onclick="openModal('addAnnModal')"><i class="fas fa-plus"></i> Post</button></div>
+<div class="card"><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Title</th><th>Target</th><th>By</th><th>Date</th></tr></thead>
+<tbody>
+{% for a in announcements %}
+<tr><td><strong>{{ a.title }}</strong></td>
+<td><span class="badge badge-blue">{{ a.target_role|capitalize }}</span></td>
+<td>{{ a.author }}</td>
+<td>{{ a.created_at.strftime('%b %d, %Y') if a.created_at else '' }}</td>
+</tr>
+{% else %}<tr><td colspan="4" class="empty-state">No announcements</td></tr>{% endfor %}
+</tbody></table></div></div>
+<div class="modal" id="addAnnModal"><div class="modal-box">
+<div class="modal-header"><h3>Post Announcement</h3><button onclick="closeModal('addAnnModal')">×</button></div>
+<form method="POST" action="/mentor/announcements" class="form-vertical">
+<div class="form-group"><label>Title</label><input type="text" name="title" required/></div>
+<div class="form-group"><label>Target</label><select name="target_role"><option value="trainee">Trainees</option><option value="all">All</option></select></div>
+<div class="form-group"><label>Content</label><textarea name="content" rows="4" required></textarea></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Post</button><button type="button" class="btn-outline" onclick="closeModal('addAnnModal')">Cancel</button></div>
+</form></div></div>
+    </div>
+  </div>
+</div>
+{%% endblock %%}

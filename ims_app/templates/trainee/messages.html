@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Messages – IMS Trainee{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('trainee', 'messages') }}
+  <div class="main-content">
+    {{ topbar('Messages') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="dash-grid dash-grid-2">
+<div class="card"><div class="card-header"><h3>Inbox</h3></div><div class="card-body">
+{% for m in messages %}
+<div class="message-item">
+  <div class="avatar-sm">{{ m.sender_name[0]|upper }}</div>
+  <div class="msg-body"><div class="msg-sender">{{ m.sender_name }}</div>
+  <div class="msg-text">{{ m.content }}</div>
+  <div class="msg-time">{{ m.created_at.strftime('%b %d, %H:%M') if m.created_at else '' }}</div></div>
+</div>
+{% else %}<p class="empty-state">No messages yet</p>{% endfor %}
+</div></div>
+<div class="card"><div class="card-header"><h3>Message Your Mentor</h3></div><div class="card-body">
+<form method="POST" action="/trainee/messages" class="form-vertical">
+<div class="form-group"><label>To (Mentor)</label>
+<select name="receiver_id" required><option value="">-- Select Mentor --</option>
+{% for m in mentors %}<option value="{{ m.id }}">{{ m.name }}</option>{% endfor %}</select></div>
+<div class="form-group"><label>Message</label><textarea name="content" rows="4" required></textarea></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Send</button></div>
+</form></div></div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

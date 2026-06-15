@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Users – IMS Admin{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('admin', 'users') }}
+  <div class="main-content">
+    {{ topbar('All Users', 'Manage all users on the platform') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      <div class="page-toolbar">
+        <form method="GET" class="search-form">
+          <input type="text" name="search" value="{{ search }}" placeholder="Search name or email…"/>
+          <select name="role">
+            <option value="">All Roles</option>
+            <option value="admin" {{ 'selected' if role_filter=='admin' }}>Admin</option>
+            <option value="mentor" {{ 'selected' if role_filter=='mentor' }}>Mentor</option>
+            <option value="trainee" {{ 'selected' if role_filter=='trainee' }}>Trainee</option>
+          </select>
+          <button type="submit" class="btn-primary"><i class="fas fa-search"></i> Search</button>
+        </form>
+        <a href="/admin/users/add" class="btn-primary"><i class="fas fa-plus"></i> Add User</a>
+      </div>
+      <div class="card">
+        <div class="card-body p0">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+            {% for u in users %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td><div class="user-cell"><div class="avatar-sm">{{ u.name[0]|upper }}</div>{{ u.name }}</div></td>
+              <td>{{ u.email }}</td>
+              <td>{{ u.phone or '–' }}</td>
+              <td><span class="badge badge-{{ u.role }}">{{ u.role|capitalize }}</span></td>
+              <td>{{ u.created_at.strftime('%b %d, %Y') if u.created_at else '' }}</td>
+              <td><span class="badge {{ 'badge-success' if u.is_active else 'badge-danger' }}">{{ 'Active' if u.is_active else 'Inactive' }}</span></td>
+              <td>
+                <form method="POST" action="/admin/users/toggle/{{ u.id }}" style="display:inline">
+                  <button class="btn-sm {{ 'btn-danger' if u.is_active else 'btn-success' }}">
+                    {{ 'Deactivate' if u.is_active else 'Activate' }}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="empty-state">No users found</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

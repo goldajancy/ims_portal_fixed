@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}My Tasks – IMS Trainee{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('trainee', 'tasks') }}
+  <div class="main-content">
+    {{ topbar('My Tasks') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="card"><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Title</th><th>Class</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>
+<tbody>
+{% for t in tasks %}
+<tr><td>{{ t.title }}</td><td>{{ t.class_name }}</td><td>{{ t.due_date or '–' }}</td>
+<td><span class="badge {{ 'badge-success' if t.submission_id else 'badge-warning' }}">{{ 'Completed' if t.submission_id else 'Pending' }}</span></td>
+<td>{% if not t.submission_id %}<button class="btn-sm btn-primary" onclick="openTaskModal({{ t.id }},'{{ t.title }}')">Mark Done</button>
+{% else %}<span class="text-success"><i class="fas fa-check"></i> Done</span>{% endif %}</td>
+</tr>
+{% else %}<tr><td colspan="5" class="empty-state">No tasks yet</td></tr>{% endfor %}
+</tbody></table></div></div>
+<div class="modal" id="taskModal"><div class="modal-box">
+<div class="modal-header"><h3>Complete: <span id="taskTitle"></span></h3><button onclick="closeModal('taskModal')">×</button></div>
+<form method="POST" id="taskForm" class="form-vertical">
+<div class="form-group"><label>Completion Notes</label><textarea name="content" rows="3" placeholder="Brief description of what you did..."></textarea></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Submit</button><button type="button" class="btn-outline" onclick="closeModal('taskModal')">Cancel</button></div>
+</form></div></div>
+<script>function openTaskModal(id,title){document.getElementById('taskTitle').textContent=title;document.getElementById('taskForm').action='/trainee/tasks/submit/'+id;openModal('taskModal');}</script>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Admin Dashboard – IMS{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('admin', 'dashboard') }}
+  <div class="main-content">
+    {{ topbar('Welcome back, ' ~ session.name ~ '! 👋', "Here's what's happening on your platform today.") }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <!-- Stats Row -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value">{{ stats.total_users }}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="fas fa-user-tie"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">Mentors</div>
+            <div class="stat-value">{{ stats.mentors }}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon teal"><i class="fas fa-user-graduate"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">Trainees</div>
+            <div class="stat-value">{{ stats.trainees }}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange"><i class="fas fa-user-plus"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">New Signups (30d)</div>
+            <div class="stat-value">{{ stats.new_signups }}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="fas fa-school"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">Active Classes</div>
+            <div class="stat-value">{{ stats.active_classes }}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red"><i class="fas fa-tasks"></i></div>
+          <div class="stat-info">
+            <div class="stat-label">Total Assignments</div>
+            <div class="stat-value">{{ stats.total_assignments }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="dash-grid dash-grid-3">
+
+        <!-- Registration Trend Chart -->
+        <div class="card col-span-2">
+          <div class="card-header">
+            <h3>User Registrations (Last 6 Months)</h3>
+          </div>
+          <div class="card-body">
+            <canvas id="regChart" height="120"></canvas>
+          </div>
+        </div>
+
+        <!-- System Activity -->
+        <div class="card">
+          <div class="card-header">
+            <h3>System Activity</h3>
+            <a href="/admin/system-logs" class="link-sm">View All</a>
+          </div>
+          <div class="card-body">
+            {% if activity_log %}
+            {% for log in activity_log %}
+            <div class="activity-item">
+              <div class="activity-dot"></div>
+              <div class="activity-info">
+                <div class="activity-text">{{ log.name }} – {{ log.detail }}</div>
+                <div class="activity-time">{{ log.created_at.strftime('%b %d, %I:%M %p') if log.created_at else '' }}</div>
+              </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="empty-state">No recent activity</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="dash-grid dash-grid-3">
+
+        <!-- Recent Users -->
+        <div class="card col-span-2">
+          <div class="card-header">
+            <h3>Recent Users</h3>
+            <a href="/admin/users" class="link-sm">View All</a>
+          </div>
+          <div class="card-body p0">
+            <table class="data-table">
+              <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Status</th></tr></thead>
+              <tbody>
+              {% for u in recent_users %}
+              <tr>
+                <td><div class="user-cell"><div class="avatar-sm">{{ u.name[0]|upper }}</div>{{ u.name }}</div></td>
+                <td>{{ u.email }}</td>
+                <td><span class="badge badge-{{ u.role }}">{{ u.role|capitalize }}</span></td>
+                <td>{{ u.created_at.strftime('%b %d, %Y') if u.created_at else '' }}</td>
+                <td><span class="badge {{ 'badge-success' if u.is_active else 'badge-danger' }}">{{ 'Active' if u.is_active else 'Inactive' }}</span></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="empty-state">No users yet</td></tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Top Trainees -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Top Performing Trainees</h3>
+          </div>
+          <div class="card-body">
+            {% for t in top_trainees %}
+            <div class="trainee-rank">
+              <div class="rank-num">{{ loop.index }}</div>
+              <div class="avatar-sm">{{ t.name[0]|upper }}</div>
+              <div class="rank-info">
+                <div class="rank-name">{{ t.name }}</div>
+                <div class="rank-sub">Avg: {{ t.avg_marks or 'N/A' }}% | Att: {{ t.attendance or 'N/A' }}%</div>
+              </div>
+            </div>
+            {% else %}
+            <p class="empty-state">No data yet</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4: Attendance + Quick Actions -->
+      <div class="dash-grid dash-grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3>Attendance by Batch</h3>
+          </div>
+          <div class="card-body">
+            <canvas id="attChart" height="150"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Quick Actions</h3></div>
+          <div class="card-body">
+            <div class="quick-actions">
+              <a href="/admin/users/add" class="qa-btn"><i class="fas fa-user-plus"></i><span>Add User</span></a>
+              <a href="/admin/classes" class="qa-btn"><i class="fas fa-school"></i><span>Create Class</span></a>
+              <a href="/admin/assignments" class="qa-btn"><i class="fas fa-tasks"></i><span>Assignment</span></a>
+              <a href="/admin/announcements" class="qa-btn"><i class="fas fa-bullhorn"></i><span>Announce</span></a>
+              <a href="/admin/exams" class="qa-btn"><i class="fas fa-file-alt"></i><span>Schedule Exam</span></a>
+              <a href="/admin/reports" class="qa-btn"><i class="fas fa-chart-bar"></i><span>Reports</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+var regData = {{ reg_trend | tojson }};
+var attData = {{ batch_attendance | tojson }};
+
+if(regData.length){
+  new Chart(document.getElementById('regChart'), {
+    type:'line',
+    data:{
+      labels: regData.map(d=>d.mon),
+      datasets:[{label:'Registrations',data:regData.map(d=>d.cnt),
+        borderColor:'#5c6bc0',backgroundColor:'rgba(92,107,192,0.1)',
+        fill:true,tension:0.4,pointBackgroundColor:'#5c6bc0',pointRadius:5}]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
+  });
+}else{
+  document.getElementById('regChart').parentElement.innerHTML='<p class="empty-state">No registration data yet</p>';
+}
+
+if(attData.length){
+  new Chart(document.getElementById('attChart'), {
+    type:'bar',
+    data:{
+      labels: attData.map(d=>d.batch),
+      datasets:[{label:'Attendance %',data:attData.map(d=>d.pct),
+        backgroundColor:['#22c55e','#3b82f6','#f59e0b','#8b5cf6'],borderRadius:6}]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100}}}
+  });
+}else{
+  document.getElementById('attChart').parentElement.innerHTML='<p class="empty-state">No attendance data yet</p>';
+}
+</script>
+{% endblock %}

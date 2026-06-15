@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}My Assignments – IMS Trainee{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('trainee', 'assignments') }}
+  <div class="main-content">
+    {{ topbar('My Assignments') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="card"><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Title</th><th>Class</th><th>Due Date</th><th>Status</th><th>Marks</th><th>Feedback</th><th>Action</th></tr></thead>
+<tbody>
+{% for a in assignments %}
+<tr><td>{{ a.title }}</td><td>{{ a.class_name }}</td><td>{{ a.due_date or '–' }}</td>
+<td><span class="badge {{ 'badge-success' if a.submission_id else 'badge-warning' }}">{{ 'Submitted' if a.submission_id else 'Pending' }}</span></td>
+<td>{{ a.marks if a.marks is not none else '–' }}</td>
+<td>{{ a.feedback or '–' }}</td>
+<td>{% if not a.submission_id %}<button class="btn-sm btn-primary" onclick="openSubmitModal({{ a.id }},'{{ a.title }}')">Submit</button>
+{% else %}<span class="text-success"><i class="fas fa-check"></i> Done</span>{% endif %}</td>
+</tr>
+{% else %}<tr><td colspan="7" class="empty-state">No assignments yet</td></tr>{% endfor %}
+</tbody></table></div></div>
+<div class="modal" id="submitModal"><div class="modal-box">
+<div class="modal-header"><h3>Submit: <span id="submitTitle"></span></h3><button onclick="closeModal('submitModal')">×</button></div>
+<form method="POST" id="submitForm" class="form-vertical">
+<div class="form-group"><label>Your Answer / Notes</label><textarea name="content" rows="4" placeholder="Write your solution..."></textarea></div>
+<div class="form-group"><label>Submission Link (GitHub, Drive, etc.)</label><input type="url" name="link" placeholder="https://..."/></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Submit</button><button type="button" class="btn-outline" onclick="closeModal('submitModal')">Cancel</button></div>
+</form></div></div>
+<script>function openSubmitModal(id,title){document.getElementById('submitTitle').textContent=title;document.getElementById('submitForm').action='/trainee/assignments/submit/'+id;openModal('submitModal');}</script>
+    </div>
+  </div>
+</div>
+{% endblock %}

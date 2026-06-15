@@ -1,0 +1,32 @@
+{%% extends "base.html" %%}
+{%% from "macros.html" import sidebar, topbar, flash_messages %%}
+{%% block title %%}Messages – IMS Mentor{%% endblock %%}
+{%% block body %%}
+<div class="app-layout">
+  {{ sidebar('mentor', 'messages') }}
+  <div class="main-content">
+    {{ topbar('Messages') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="dash-grid dash-grid-2">
+<div class="card"><div class="card-header"><h3>Inbox</h3></div><div class="card-body">
+{% for m in messages %}
+<div class="message-item">
+  <div class="avatar-sm">{{ m.sender_name[0]|upper }}</div>
+  <div class="msg-body"><div class="msg-sender">{{ m.sender_name }}</div>
+  <div class="msg-text">{{ m.content }}</div>
+  <div class="msg-time">{{ m.created_at.strftime('%b %d, %H:%M') if m.created_at else '' }}</div></div>
+</div>
+{% else %}<p class="empty-state">No messages</p>{% endfor %}
+</div></div>
+<div class="card"><div class="card-header"><h3>Send Message</h3></div><div class="card-body">
+<form method="POST" action="/mentor/messages/send" class="form-vertical">
+<div class="form-group"><label>To (Trainee User ID)</label><input type="number" name="receiver_id" required/></div>
+<div class="form-group"><label>Message</label><textarea name="content" rows="4" required></textarea></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Send</button></div>
+</form></div></div></div>
+    </div>
+  </div>
+</div>
+{%% endblock %%}

@@ -1,0 +1,34 @@
+{%% extends "base.html" %%}
+{%% from "macros.html" import sidebar, topbar, flash_messages %%}
+{%% block title %%}Exams – IMS Mentor{%% endblock %%}
+{%% block body %%}
+<div class="app-layout">
+  {{ sidebar('mentor', 'exams') }}
+  <div class="main-content">
+    {{ topbar('Exams') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="page-toolbar"><h4>Exams</h4>
+<button class="btn-primary" onclick="openModal('addExamModal')"><i class="fas fa-plus"></i> Schedule Exam</button></div>
+<div class="card"><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Title</th><th>Class</th><th>Date</th><th>Max Marks</th><th>Avg Score</th></tr></thead>
+<tbody>
+{% for e in exams %}
+<tr><td>{{ e.title }}</td><td>{{ e.class_name }}</td><td>{{ e.exam_date or '–' }}</td><td>{{ e.max_marks }}</td><td>{{ e.avg_score or '–' }}</td></tr>
+{% else %}<tr><td colspan="5" class="empty-state">No exams yet</td></tr>{% endfor %}
+</tbody></table></div></div>
+<div class="modal" id="addExamModal"><div class="modal-box">
+<div class="modal-header"><h3>Schedule Exam</h3><button onclick="closeModal('addExamModal')">×</button></div>
+<form method="POST" action="/mentor/exams/add" class="form-vertical">
+<div class="form-group"><label>Title</label><input type="text" name="title" required/></div>
+<div class="form-group"><label>Class</label><select name="class_id" required>{% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+<div class="form-group"><label>Exam Date</label><input type="date" name="exam_date"/></div>
+<div class="form-group"><label>Max Marks</label><input type="number" name="max_marks" value="100"/></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Schedule</button><button type="button" class="btn-outline" onclick="closeModal('addExamModal')">Cancel</button></div>
+</form></div></div>
+    </div>
+  </div>
+</div>
+{%% endblock %%}

@@ -115,7 +115,7 @@
                                 {% set today = now %}
                                 {% if exam.exam_date > today %}
                                     <span class="status-badge status-upcoming">Upcoming</span>
-                                {% elif exam.exam_date.date() == today %}
+                                {% elif exam.exam_date == today %}
                                     <span class="status-badge status-today">Today</span>
                                 {% else %}
                                     <span class="status-badge status-completed">Completed</span>

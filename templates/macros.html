@@ -91,7 +91,19 @@
     {% if subtitle %}<p>{{ subtitle }}</p>{% endif %}
   </div>
   <div class="topbar-right">
-    <div class="topbar-icon"><i class="fas fa-bell"></i></div>
+    <div class="topbar-icon notification-wrapper">
+
+    <a href="/notifications">
+        <i class="fas fa-bell"></i>
+
+        {% if unread_notifications|default(0) > 0 %}
+        <span class="notif-badge">
+            {{ unread_notifications }}
+        </span>
+        {% endif %}
+    </a>
+
+</div>
     <div class="topbar-icon"><i class="fas fa-envelope"></i></div>
     <div class="topbar-user">
       <div class="avatar-circle">{{ session.name[0]|upper }}</div>

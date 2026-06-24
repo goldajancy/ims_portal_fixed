@@ -20,8 +20,8 @@ app.secret_key = os.getenv('SECRET_KEY', 'ims-super-secret-key-2025')
 app.config['MAIL_SERVER']   = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
 app.config['MAIL_PORT']     = int(os.getenv('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS']  = True
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'goldajancy5@gmail.com')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'zfab mhah waud jfhr')
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'aruljose1101974@gmail.com')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'nnbu vlba vhmk xvkz')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME', 'noreply@ims.com')
 
 mail  = Mail(app)
@@ -31,7 +31,7 @@ bcrypt = Bcrypt(app)
 DB_CFG = dict(
     host     = os.getenv('DB_HOST',   'localhost'),
     user     = os.getenv('DB_USER',   'root'),
-    password = os.getenv('DB_PASS',   '123456'),
+    password = os.getenv('DB_PASS',   'Avj#2603'),
     db       = os.getenv('DB_NAME',   'ims_db'),
     charset  = 'utf8mb4',
     cursorclass = pymysql.cursors.DictCursor,
@@ -117,6 +117,15 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
+def create_notification(user_id, title, message):
+    try:
+        query("""
+            INSERT INTO notifications
+            (user_id,title,message,is_read,created_at)
+            VALUES(%s,%s,%s,0,NOW())
+        """,(user_id,title,message),commit=True)
+    except:
+        pass
 def register():
     if request.method == 'POST':
         name  = request.form.get('name', '').strip()
@@ -142,6 +151,7 @@ def register():
             "INSERT INTO users (name,email,phone,role,password_hash,is_active,created_at) VALUES(%s,%s,%s,%s,%s,1,NOW())",
             (name, email, phone, role, pw_hash), commit=True
         )
+
         # Send welcome email (best-effort)
         try:
             send_mail(email, f"Welcome to IMS, {name}!",
@@ -324,6 +334,30 @@ def toggle_user(uid):
     if user:
         query("UPDATE users SET is_active=%s WHERE id=%s",(0 if user['is_active'] else 1, uid), commit=True)
     return redirect(url_for('admin_users'))
+
+@app.route('/admin/users/delete/<int:uid>', methods=['POST'])
+@login_required
+@role_required('admin')
+def delete_user(uid):
+
+    # Prevent admin from deleting themselves
+    if uid == session.get('user_id'):
+        flash('You cannot delete your own account.', 'error')
+        return redirect(url_for('admin_users'))
+
+    try:
+        query(
+            "DELETE FROM users WHERE id=%s",
+            (uid,),
+            commit=True
+        )
+
+        flash('User deleted successfully.', 'success')
+
+    except Exception as e:
+        flash(f'Error deleting user: {str(e)}', 'error')
+
+    return redirect(request.referrer or url_for('admin_users'))
 
 @app.route('/admin/classes')
 @login_required
@@ -573,6 +607,19 @@ def mentor_add_task():
     desc     = request.form.get('description','').strip()
     query("INSERT INTO tasks(title,class_id,description,due_date,created_by,created_at) VALUES(%s,%s,%s,%s,%s,NOW())",
           (title,class_id,desc,due_date,session['user_id']), commit=True)
+    trainees = query("""
+    SELECT user_id
+    FROM class_enrollments
+    WHERE class_id=%s
+""", (class_id,))
+
+    for trainee in trainees:
+        create_notification(
+        trainee['user_id'],
+        'New Task',
+        f'{title} has been posted',
+        '/trainee/tasks'
+    )
     flash('Task created.','success')
     return redirect(url_for('mentor_tasks'))
 
@@ -603,6 +650,31 @@ def mentor_add_assignment():
     desc     = request.form.get('description','').strip()
     query("INSERT INTO assignments(title,class_id,description,due_date,created_by,created_at) VALUES(%s,%s,%s,%s,%s,NOW())",
           (title,class_id,desc,due_date,session['user_id']), commit=True)
+    trainees = query("""
+    SELECT user_id
+    FROM class_enrollments
+    WHERE class_id=%s
+""", (class_id,))
+
+    for trainee in trainees:
+        create_notification(
+        trainee['user_id'],
+        'New Assignment',
+        f'{title} has been posted',
+        '/trainee/assignments'
+    )
+    trainees = query("""
+    SELECT user_id
+    FROM class_enrollments
+    WHERE class_id=%s
+""",(class_id,))
+
+    for t in trainees:
+        create_notification(
+        t['user_id'],
+        'New Assignment',
+        f'{title} has been assigned'
+    )
     flash('Assignment created.','success')
     return redirect(url_for('mentor_assignments'))
 
@@ -684,6 +756,19 @@ def mentor_add_lecture():
     desc     = request.form.get('description','').strip()
     query("INSERT INTO lectures(title,class_id,url,description,created_by,created_at) VALUES(%s,%s,%s,%s,%s,NOW())",
           (title,class_id,url_link,desc,session['user_id']), commit=True)
+    trainees = query("""
+    SELECT user_id
+    FROM class_enrollments
+    WHERE class_id=%s
+""", (class_id,))
+
+    for trainee in trainees:
+        create_notification(
+        trainee['user_id'],
+        'New Lecture',
+        f'{title} is available',
+        '/trainee/lectures'
+    )
     flash('Lecture uploaded.','success')
     return redirect(url_for('mentor_lectures'))
 
@@ -759,12 +844,35 @@ def mentor_announcements():
 @login_required
 @role_required('mentor')
 def mentor_messages():
+
+    mid = session['user_id']
+
     msgs = query("""
-        SELECT m.*,u.name as sender_name FROM messages m
-        JOIN users u ON m.sender_id=u.id
-        WHERE m.receiver_id=%s ORDER BY m.created_at DESC LIMIT 30
-    """, (session['user_id'],))
-    return render_template('mentor/messages.html', messages=msgs)
+        SELECT
+            m.*,
+            su.name as sender_name,
+            ru.name as receiver_name
+        FROM messages m
+        JOIN users su ON m.sender_id=su.id
+        JOIN users ru ON m.receiver_id=ru.id
+        WHERE m.sender_id=%s OR m.receiver_id=%s
+        ORDER BY m.created_at DESC
+    """,(mid,mid))
+
+    trainees = query("""
+        SELECT DISTINCT u.id,u.name
+        FROM users u
+        JOIN class_enrollments ce ON ce.user_id=u.id
+        JOIN classes c ON c.id=ce.class_id
+        WHERE c.mentor_id=%s
+        ORDER BY u.name
+    """,(mid,))
+
+    return render_template(
+        'mentor/messages.html',
+        messages=msgs,
+        trainees=trainees
+    )
 
 @app.route('/mentor/messages/send', methods=['POST'])
 @login_required
@@ -774,6 +882,12 @@ def mentor_send_message():
     content     = request.form['content'].strip()
     query("INSERT INTO messages(sender_id,receiver_id,content,created_at) VALUES(%s,%s,%s,NOW())",
           (session['user_id'],receiver_id,content), commit=True)
+    create_notification(
+    receiver_id,
+    'New Message',
+    f'{session["name"]} sent you a message',
+    '/trainee/messages'
+)
     flash('Message sent.','success')
     return redirect(url_for('mentor_messages'))
 
@@ -1057,9 +1171,25 @@ def trainee_messages():
         content     = request.form['content'].strip()
         query("INSERT INTO messages(sender_id,receiver_id,content,created_at) VALUES(%s,%s,%s,NOW())",
               (tid,receiver_id,content), commit=True)
+        create_notification(
+            receiver_id,
+            'New Message',
+             f'{session["name"]} sent you a message',
+            '/mentor/messages')
+        
         flash('Message sent.','success')
         return redirect(url_for('trainee_messages'))
-    msgs    = query("SELECT m.*,u.name as sender_name FROM messages m JOIN users u ON m.sender_id=u.id WHERE m.receiver_id=%s ORDER BY m.created_at DESC LIMIT 20", (tid,))
+    msgs = query("""
+    SELECT
+        m.*,
+        su.name as sender_name,
+        ru.name as receiver_name
+    FROM messages m
+    JOIN users su ON m.sender_id=su.id
+    JOIN users ru ON m.receiver_id=ru.id
+    WHERE m.sender_id=%s OR m.receiver_id=%s
+    ORDER BY m.created_at DESC
+""", (tid, tid))
     mentors = query("""
         SELECT DISTINCT u.id,u.name FROM users u
         JOIN classes c ON c.mentor_id=u.id
@@ -1165,6 +1295,9 @@ def trainee_settings():
     user = query("SELECT * FROM users WHERE id=%s",(session['user_id'],), one=True)
     return render_template('trainee/settings.html', user=user)
 
+
+
+
 # ─── API (JSON) ───────────────────────────────────────────────────────────────
 
 @app.route('/api/stats')
@@ -1186,6 +1319,13 @@ def log_activity(user_id, action, detail=''):
               (user_id, action, detail), commit=True)
     except Exception:
         pass
+
+def create_notification(user_id, title, message, link=None):
+    query("""
+        INSERT INTO notifications
+        (user_id, title, message, link, is_read, created_at)
+        VALUES(%s,%s,%s,%s,0,NOW())
+    """, (user_id, title, message, link), commit=True)
 
 def send_mail(to, subject, body):
     msg = Message(subject, recipients=[to], body=body)

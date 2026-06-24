@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block title %}Class Students{% endblock %}
+
+
+{% block body %}
+
+<div class="app-layout">
+
+{{ sidebar('admin','dashboard') }}
+
+<div class="main-content">
+
+{{ topbar('Manage Students','Assign students to this class') }}
+
+<div class="content-area">
+
+{{ flash_messages() }}
+
+
+<div class="card">
+
+<div class="card-header">
+    <h3>Enrolled Students</h3>
+</div>
+
+
+<div class="card-body">
+
+{% if enrolled_students %}
+
+<table class="data-table">
+
+<thead>
+<tr>
+<th>Name</th>
+<th>Email</th>
+<th>Action</th>
+</tr>
+</thead>
+
+
+<tbody>
+
+{% for student in enrolled_students %}
+
+<tr>
+
+<td>{{ student.name }}</td>
+
+<td>{{ student.email }}</td>
+
+<td>
+<form action="{{ url_for('remove_student_from_class', class_id=class_id, student_id=student.id) }}"
+      method="POST"
+      style="display:inline;">
+
+    <button type="submit"
+            class="btn btn-danger"
+            onclick="return confirm('Remove this student from class?')">
+        <i class="fas fa-user-minus"></i> Remove
+    </button>
+
+</form>
+</td>
+
+</tr>
+
+{% endfor %}
+
+
+</tbody>
+
+</table>
+
+
+{% else %}
+
+<p>No students assigned yet.</p>
+
+{% endif %}
+
+
+</div>
+
+</div>
+
+
+
+
+<div class="card">
+
+<div class="card-header">
+<h3>Add Students</h3>
+</div>
+
+
+<div class="card-body">
+
+
+{% for student in available_students %}
+
+<div>
+
+{{ student.name }}
+
+<form action="{{ url_for('add_student_to_class', class_id=class_id, student_id=student.id) }}"
+      method="POST"
+      style="display:inline;">
+
+    <button type="submit"
+            class="btn btn-primary">
+        <i class="fas fa-user-plus"></i> Add
+    </button>
+
+</form>
+
+</div>
+
+
+{% else %}
+
+<p>No available students.</p>
+
+{% endfor %}
+
+
+</div>
+
+</div>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+{% endblock %}

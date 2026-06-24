@@ -335,6 +335,120 @@ def toggle_user(uid):
         query("UPDATE users SET is_active=%s WHERE id=%s",(0 if user['is_active'] else 1, uid), commit=True)
     return redirect(url_for('admin_users'))
 
+@app.route('/admin/class/<int:class_id>')
+def admin_view_class(class_id):
+
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+
+    cur.execute("""
+        SELECT c.*, u.name as mentor_name
+        FROM classes c
+        LEFT JOIN users u ON c.mentor_id=u.id
+        WHERE c.id=%s
+    """, (class_id,))
+
+    cls = cur.fetchone()
+
+    return render_template(
+        'admin/class_details.html',
+        cls=cls
+    )
+
+
+@app.route('/admin/class/<int:class_id>/edit',
+           methods=['GET','POST'])
+def admin_edit_class(class_id):
+
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+
+    if request.method == 'POST':
+
+        cur.execute("""
+            UPDATE classes
+            SET name=%s,
+                mentor_id=%s,
+                description=%s
+            WHERE id=%s
+        """, (
+            request.form['name'],
+            request.form['mentor_id'] or None,
+            request.form['description'],
+            class_id
+        ))
+
+        conn.commit()
+
+        flash('Class updated successfully','success')
+
+        return redirect(url_for('admin_classes'))
+
+    cur.execute("SELECT * FROM classes WHERE id=%s",(class_id,))
+    cls = cur.fetchone()
+
+    cur.execute("""
+        SELECT id,name
+        FROM users
+        WHERE role='mentor'
+    """)
+    mentors = cur.fetchall()
+
+    return render_template(
+        'admin/edit_class.html',
+        cls=cls,
+        mentors=mentors
+    )
+
+@app.route('/admin/class/<int:class_id>/delete',
+           methods=['POST'])
+def admin_delete_class(class_id):
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "DELETE FROM classes WHERE id=%s",
+        (class_id,)
+    )
+
+    conn.commit()
+
+    flash('Class deleted successfully','success')
+
+    return redirect(url_for('admin_classes'))
+
+@app.route('/admin/class/<int:class_id>/students')
+@login_required
+@role_required('admin')
+def admin_class_students(class_id):
+
+    enrolled_students = query("""
+    SELECT u.*
+    FROM users u
+    JOIN class_enrollments ce
+        ON ce.user_id = u.id
+    WHERE ce.class_id = %s
+""", (class_id,))
+
+    available_students = query("""
+    SELECT *
+    FROM users
+    WHERE role='trainee'
+    AND is_active=1
+    AND id NOT IN (
+        SELECT user_id
+        FROM class_enrollments
+        WHERE class_id=%s
+    )
+""", (class_id,))
+
+    return render_template(
+        'admin/class_students.html',
+        enrolled_students=enrolled_students,
+        available_students=available_students,
+        class_id=class_id
+    )
 @app.route('/admin/users/delete/<int:uid>', methods=['POST'])
 @login_required
 @role_required('admin')
@@ -358,6 +472,68 @@ def delete_user(uid):
         flash(f'Error deleting user: {str(e)}', 'error')
 
     return redirect(request.referrer or url_for('admin_users'))
+
+@app.route('/admin/class/<int:class_id>/add_student/<int:student_id>', methods=['POST'])
+@login_required
+@role_required('admin')
+def add_student_to_class(class_id, student_id):
+
+    # prevent duplicate enrollment
+    existing = query("""
+        SELECT id 
+        FROM class_enrollments
+        WHERE class_id=%s AND user_id=%s
+    """, (class_id, student_id), one=True)
+
+
+    if not existing:
+
+        query("""
+            INSERT INTO class_enrollments(class_id, user_id)
+            VALUES(%s,%s)
+        """,
+        (class_id, student_id),
+        commit=True)
+
+        flash("Student added successfully", "success")
+
+    else:
+
+        flash("Student already exists in this class", "warning")
+
+
+    return redirect(
+        url_for(
+            'admin_class_students',
+            class_id=class_id
+        )
+    )
+
+@app.route('/admin/class/<int:class_id>/remove_student/<int:student_id>', methods=['POST'])
+@login_required
+@role_required('admin')
+def remove_student_from_class(class_id, student_id):
+
+    query("""
+        DELETE FROM class_enrollments
+        WHERE class_id=%s
+        AND user_id=%s
+    """,
+    (class_id, student_id),
+    commit=True)
+
+
+    flash("Student removed from class", "success")
+
+
+    return redirect(
+        url_for(
+            'admin_class_students',
+            class_id=class_id
+        )
+    )
+
+
 
 @app.route('/admin/classes')
 @login_required

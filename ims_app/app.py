@@ -8,6 +8,8 @@ from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
 import pymysql
 from dotenv import load_dotenv
+from datetime import datetime
+
 
 load_dotenv()
 
@@ -18,8 +20,8 @@ app.secret_key = os.getenv('SECRET_KEY', 'ims-super-secret-key-2025')
 app.config['MAIL_SERVER']   = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
 app.config['MAIL_PORT']     = int(os.getenv('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS']  = True
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', '')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', '')
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'aruljose1101974@gmail.com')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'nnbu vlba vhmk xvkz')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME', 'noreply@ims.com')
 
 mail  = Mail(app)
@@ -29,7 +31,7 @@ bcrypt = Bcrypt(app)
 DB_CFG = dict(
     host     = os.getenv('DB_HOST',   'localhost'),
     user     = os.getenv('DB_USER',   'root'),
-    password = os.getenv('DB_PASS',   '123456'),
+    password = os.getenv('DB_PASS',   'Avj#2603'),
     db       = os.getenv('DB_NAME',   'ims_db'),
     charset  = 'utf8mb4',
     cursorclass = pymysql.cursors.DictCursor,
@@ -247,26 +249,26 @@ def admin_dashboard():
     activity_log = query("SELECT al.*,u.name FROM activity_log al JOIN users u ON al.user_id=u.id ORDER BY al.created_at DESC LIMIT 8")
     top_trainees = query("""
         SELECT u.name, ROUND(AVG(s.marks),1) as avg_marks,
-               (SELECT ROUND(SUM(at2.present)/NULLIF(COUNT(at2.id),0)*100,0)
-                FROM attendance at2 WHERE at2.user_id=u.id) as attendance
+               ROUND(AVG(a.present)*100,0) as attendance
         FROM users u
         LEFT JOIN submissions s ON s.user_id=u.id AND s.marks IS NOT NULL
+        LEFT JOIN attendance a  ON a.user_id=u.id
         WHERE u.role='trainee' AND u.is_active=1
         GROUP BY u.id ORDER BY avg_marks DESC LIMIT 5
     """)
     reg_trend = query("""
-    SELECT 
-        DATE_FORMAT(created_at,'%%b') as mon,
-        YEAR(created_at) as yr,
-        MONTH(created_at) as mn,
-        COUNT(*) as cnt
+    SELECT
+        YEAR(created_at) AS yr,
+        MONTH(created_at) AS mon_num,
+        DATE_FORMAT(MIN(created_at), '%%b') AS mon,
+        COUNT(*) AS cnt
     FROM users
     WHERE created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-    GROUP BY YEAR(created_at), MONTH(created_at), DATE_FORMAT(created_at,'%%b')
-    ORDER BY yr, mn
+    GROUP BY YEAR(created_at), MONTH(created_at)
+    ORDER BY yr, mon_num
 """)
     batch_attendance = query("""
-        SELECT c.name as batch, ROUND(SUM(a.present)/NULLIF(COUNT(a.id),0)*100,0) as pct
+        SELECT c.name as batch, ROUND(AVG(a.present)*100,0) as pct
         FROM attendance a JOIN classes c ON a.class_id=c.id
         GROUP BY c.id ORDER BY c.name LIMIT 4
     """)
@@ -360,7 +362,7 @@ def admin_assignments():
         ORDER BY a.created_at DESC
     """)
     classes = query("SELECT id,name FROM classes WHERE is_active=1")
-    return render_template('admin/assignments.html', assignments=assignments, classes=classes)
+    return render_template('admin/assignments.html', assignments=assignments, classes=classes,now=datetime.now().date())
 
 @app.route('/admin/assignments/add', methods=['POST'])
 @login_required
@@ -402,7 +404,7 @@ def admin_exams():
         FROM exams e LEFT JOIN classes c ON e.class_id=c.id ORDER BY e.exam_date DESC
     """)
     classes = query("SELECT id,name FROM classes WHERE is_active=1")
-    return render_template('admin/exams.html', exams=exams, classes=classes)
+    return render_template('admin/exams.html', exams=exams, classes=classes,now=datetime.now().date())
 
 @app.route('/admin/exams/add', methods=['POST'])
 @login_required
@@ -444,7 +446,7 @@ def admin_reports():
         SELECT u.name, u.role,
                ROUND(AVG(s.marks),1) as avg_marks,
                COUNT(DISTINCT s.assignment_id) as submissions,
-               (SELECT ROUND(SUM(a2.present)/NULLIF(COUNT(a2.id),0)*100,0) FROM attendance a2 WHERE a2.user_id=u.id) as att_pct
+               (SELECT ROUND(AVG(a2.present)*100,0) FROM attendance a2 WHERE a2.user_id=u.id) as att_pct
         FROM users u
         LEFT JOIN submissions s ON s.user_id=u.id AND s.marks IS NOT NULL
         WHERE u.role IN ('trainee','mentor') AND u.is_active=1
@@ -509,28 +511,16 @@ def mentor_dashboard():
         WHERE a.class_id IN ({fmt}) AND a.due_date >= CURDATE()
         ORDER BY a.due_date LIMIT 4
     """, class_ids)
-    trainee_perf = query(
-        f"""
+    trainee_perf = query(f"""
         SELECT u.name,
                ROUND(AVG(s.marks),1) as avg_marks,
-               (SELECT ROUND(SUM(at2.present)/NULLIF(COUNT(at2.id),0)*100,0)
-                FROM attendance at2
-                WHERE at2.user_id=u.id
-                AND at2.class_id IN ({fmt})) as att_pct,
+               (SELECT ROUND(AVG(at2.present)*100,0) FROM attendance at2 WHERE at2.user_id=u.id AND at2.class_id IN ({fmt})) as att_pct,
                COUNT(s.id) as task_done
         FROM users u
-        JOIN class_enrollments ce
-             ON ce.user_id=u.id
-             AND ce.class_id IN ({fmt})
-        LEFT JOIN submissions s
-             ON s.user_id=u.id
-             AND s.marks IS NOT NULL
-        WHERE u.role='trainee'
-        GROUP BY u.id
-        ORDER BY avg_marks DESC
-        """,
-        tuple(class_ids) * 3
-    )
+        JOIN class_enrollments ce ON ce.user_id=u.id AND ce.class_id IN ({fmt})
+        LEFT JOIN submissions s ON s.user_id=u.id AND s.marks IS NOT NULL
+        WHERE u.role='trainee' GROUP BY u.id ORDER BY avg_marks DESC
+    """, class_ids * 2)
     announcements = query("SELECT * FROM announcements WHERE (target_role='mentor' OR target_role='all') ORDER BY created_at DESC LIMIT 3")
     return render_template('mentor/dashboard.html',
         stats=stats, my_classes=my_classes, trainees=trainees,
@@ -548,7 +538,7 @@ def mentor_trainees():
     trainees = query(f"""
         SELECT u.*, c.name as class_name,
                ROUND(AVG(s.marks),1) as avg_marks,
-               (SELECT ROUND(SUM(a2.present)/NULLIF(COUNT(a2.id),0)*100,0) FROM attendance a2 WHERE a2.user_id=u.id) as att_pct
+               (SELECT ROUND(AVG(a2.present)*100,0) FROM attendance a2 WHERE a2.user_id=u.id) as att_pct
         FROM users u
         JOIN class_enrollments ce ON ce.user_id=u.id AND ce.class_id IN ({fmt})
         JOIN classes c ON ce.class_id=c.id
@@ -737,7 +727,7 @@ def mentor_analytics():
     perf = query(f"""
         SELECT u.name,
                ROUND(AVG(s.marks),1) as avg_marks,
-               (SELECT ROUND(SUM(at2.present)/NULLIF(COUNT(at2.id),0)*100,0) FROM attendance at2 WHERE at2.user_id=u.id AND at2.class_id IN ({fmt})) as att_pct,
+               (SELECT ROUND(AVG(at2.present)*100,0) FROM attendance at2 WHERE at2.user_id=u.id AND at2.class_id IN ({fmt})) as att_pct,
                COUNT(s.id) as submissions
         FROM users u
         JOIN class_enrollments ce ON ce.user_id=u.id AND ce.class_id IN ({fmt})
@@ -904,7 +894,7 @@ def trainee_dashboard():
         SELECT ROUND(AVG(s.marks),1) as avg FROM submissions s WHERE s.user_id=%s AND s.marks IS NOT NULL
     """, (tid,), one=True)
     avg_marks = avg_marks_row['avg'] if avg_marks_row and avg_marks_row['avg'] else 0
-    att_row   = query("SELECT ROUND(SUM(present)/NULLIF(COUNT(id),0)*100,0) as pct FROM attendance WHERE user_id=%s",(tid,), one=True)
+    att_row   = query("SELECT ROUND(AVG(present)*100,0) as pct FROM attendance WHERE user_id=%s",(tid,), one=True)
     attendance = att_row['pct'] if att_row and att_row['pct'] else 0
     present_days= query("SELECT COUNT(*) as c FROM attendance WHERE user_id=%s AND present=1",(tid,), one=True)['c']
     absent_days = query("SELECT COUNT(*) as c FROM attendance WHERE user_id=%s AND present=0",(tid,), one=True)['c']
@@ -914,13 +904,13 @@ def trainee_dashboard():
     upcoming  = [a for a in my_assignments if not a['submitted_id'] and a.get('due_date')]
     marks_trend = query("""
     SELECT
-        DATE_FORMAT(MAX(s.submitted_at),'%%b') as mon,
-        ROUND(AVG(s.marks),0) as avg
+        DATE_FORMAT(MIN(s.submitted_at), '%%b') AS mon,
+        ROUND(AVG(s.marks), 0) AS avg
     FROM submissions s
-    WHERE s.user_id=%s
+    WHERE s.user_id = %s
       AND s.marks IS NOT NULL
     GROUP BY YEAR(s.submitted_at), MONTH(s.submitted_at)
-    ORDER BY YEAR(s.submitted_at), MONTH(s.submitted_at)
+    ORDER BY MIN(s.submitted_at)
     LIMIT 6
 """, (tid,))
     announcements = query("""
@@ -1085,13 +1075,18 @@ def trainee_progress():
     tid = session['user_id']
     marks_trend = query("""
     SELECT
-        DATE_FORMAT(MAX(s.submitted_at),'%%b %%Y') as period,
-        ROUND(AVG(s.marks),0) as avg
-    FROM submissions s
-    WHERE s.user_id=%s
-      AND s.marks IS NOT NULL
-    GROUP BY YEAR(s.submitted_at), MONTH(s.submitted_at)
-    ORDER BY YEAR(s.submitted_at), MONTH(s.submitted_at)
+        DATE_FORMAT(period_date,'%%b %%Y') AS period,
+        ROUND(AVG(marks),0) AS avg
+    FROM (
+        SELECT
+            marks,
+            DATE_FORMAT(submitted_at,'%%Y-%%m-01') AS period_date
+        FROM submissions
+        WHERE user_id=%s
+          AND marks IS NOT NULL
+    ) x
+    GROUP BY period_date
+    ORDER BY period_date
 """, (tid,))
     subject_perf = query("""
         SELECT c.name as class_name, ROUND(AVG(s.marks),1) as avg_marks
@@ -1196,6 +1191,8 @@ def send_mail(to, subject, body):
     msg = Message(subject, recipients=[to], body=body)
     mail.send(msg)
 
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
 
 @app.route('/api/class-students/<int:class_id>')
 @login_required
@@ -1207,6 +1204,3 @@ def api_class_students(class_id):
         ORDER BY u.name
     """, (class_id,))
     return jsonify(list(students))
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)

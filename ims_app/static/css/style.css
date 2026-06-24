@@ -475,3 +475,4 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
   .topbar-user .user-name, .topbar-user .user-role { display: none; }
 }
 .text-success { color: var(--success); font-size: 12px; font-weight: 600; }
+

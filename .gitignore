@@ -31,3 +31,7 @@ ims_app/.env.*
 # Database
 *.db
 *.sqlite3
+
+# Uploaded files
+static/uploads/
+ims_app/static/uploads/

@@ -9,19 +9,175 @@
     <div class="content-area">
       {{ flash_messages() }}
       
-<div class="card"><div class="card-body p0">
-<table class="data-table">
-<thead><tr><th>Title</th><th>Class</th><th>Date</th><th>Max Marks</th><th>My Score</th><th>Percentage</th></tr></thead>
-<tbody>
-{% for e in exams %}
-<tr><td>{{ e.title }}</td><td>{{ e.class_name }}</td><td>{{ e.exam_date or '–' }}</td><td>{{ e.max_marks }}</td>
-<td>{{ e.my_marks if e.my_marks is not none else '–' }}</td>
-<td>{% if e.my_marks is not none %}
-<span class="badge {{ 'badge-success' if (e.my_marks/e.max_marks*100)>=50 else 'badge-danger' }}">{{ ((e.my_marks/e.max_marks)*100)|round(1) }}%</span>
-{% else %}–{% endif %}</td></tr>
-{% else %}<tr><td colspan="6" class="empty-state">No exams yet</td></tr>{% endfor %}
-</tbody></table></div></div>
+      <div class="card">
+        <div class="card-body p0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Class</th>
+                <th>Date</th>
+                <th>Max Marks</th>
+                <th>My Score</th>
+                <th>Percentage</th>
+                <th>AI Feedback</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in exams %}
+              <tr>
+                <td><strong>{{ e.title }}</strong></td>
+                <td>{{ e.class_name }}</td>
+                <td>{{ e.exam_date or '–' }}</td>
+                <td>{{ e.max_marks }}</td>
+                <td>
+                  {% if e.my_marks is not none %}
+                    <span style="font-weight: 700;">{{ e.my_marks }}</span>
+                  {% else %}
+                    <span class="text-muted">–</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if e.my_marks is not none %}
+                    <span class="badge {{ 'badge-success' if (e.my_marks/e.max_marks*100)>=50 else 'badge-danger' }}">
+                      {{ ((e.my_marks/e.max_marks)*100)|round(1) }}%
+                    </span>
+                  {% else %}
+                    <span class="text-muted">–</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if e.my_marks is not none %}
+                    <button class="btn-sm" onclick="openAiExamFeedbackModal({{ e.id }}, `{{ e.title|replace('`','\\`') }}`)"
+                            style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                      <i class="fas fa-chart-line"></i> ✨ AI Study Plan
+                    </button>
+                  {% else %}
+                    <span class="text-muted" style="font-size: 13px;">Scores pending</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="7" class="empty-state">No exams yet</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- AI Exam Feedback Modal -->
+      <div class="modal" id="aiExamModal">
+        <div class="modal-box" style="max-width: 650px; width: 90%;">
+          <div class="modal-header" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; border-radius: 12px 12px 0 0; padding: 16px 20px;">
+            <h3 style="color: white; display: flex; align-items: center; gap: 8px; margin: 0;">
+              <i class="fas fa-brain"></i> AI Exam Performance & Study Plan
+            </h3>
+            <button onclick="closeModal('aiExamModal')" style="color: white; font-size: 24px; background: none; border: none; cursor: pointer;">×</button>
+          </div>
+          <div class="modal-body" style="padding: 20px; max-height: 480px; overflow-y: auto;">
+            <h4 id="aiExamTitle" style="color: #1e1b4b; margin-top: 0; margin-bottom: 6px;"></h4>
+            <div id="aiExamScoreBadge" style="margin-bottom: 16px;"></div>
+
+            <div id="aiExamLoading" style="text-align: center; padding: 30px 20px;">
+              <i class="fas fa-circle-notch fa-spin fa-2x" style="color: #6366f1;"></i>
+              <p style="margin-top: 12px; color: #6b7280; font-weight: 500;">Analyzing your exam performance and building personalized revision roadmap with Gemini AI...</p>
+            </div>
+
+            <div id="aiExamContent" style="display: none;">
+              <!-- Summary -->
+              <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px 16px; border-radius: 6px; margin-bottom: 14px;">
+                <h5 style="margin: 0 0 6px 0; color: #166534; font-size: 14px;"><i class="fas fa-check-circle"></i> Performance Analysis</h5>
+                <p id="aiPerfSummary" style="margin: 0; color: #14532d; font-size: 13.5px; line-height: 1.5;"></p>
+              </div>
+
+              <!-- Strengths & Improvements -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px;">
+                  <h6 style="margin: 0 0 6px 0; color: #0f172a; font-size: 13px;"><i class="fas fa-thumbs-up text-success"></i> Strengths</h6>
+                  <div id="aiStrengths" style="font-size: 12.5px; color: #334155; line-height: 1.4;"></div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px;">
+                  <h6 style="margin: 0 0 6px 0; color: #0f172a; font-size: 13px;"><i class="fas fa-bullseye text-warning"></i> Key Focus Areas</h6>
+                  <div id="aiImprovements" style="font-size: 12.5px; color: #334155; line-height: 1.4;"></div>
+                </div>
+              </div>
+
+              <!-- Study Plan -->
+              <div style="background: #fdf4ff; border: 1px solid #f0abfc; padding: 14px; border-radius: 8px;">
+                <h5 style="margin: 0 0 10px 0; color: #86198f; font-size: 14px;"><i class="fas fa-list-ol"></i> Recommended 3-Step Study Plan</h5>
+                <ul id="aiStudyPlanList" style="margin: 0; padding-left: 20px; font-size: 13px; color: #701a75; line-height: 1.6;"></ul>
+              </div>
+            </div>
+          </div>
+          <div class="form-actions" style="padding: 12px 20px; background: #f3f4f6; border-radius: 0 0 12px 12px; display: flex; justify-content: flex-end;">
+            <button class="btn-outline" onclick="closeModal('aiExamModal')">Close</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
+
+<script>
+async function openAiExamFeedbackModal(id, title) {
+    document.getElementById('aiExamTitle').textContent = title;
+    const loading = document.getElementById('aiExamLoading');
+    const content = document.getElementById('aiExamContent');
+    const badge = document.getElementById('aiExamScoreBadge');
+    
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    badge.innerHTML = '';
+    openModal('aiExamModal');
+
+    try {
+        const resp = await fetch(`/api/ai/exam/feedback/${id}`);
+        const result = await resp.json();
+        if (result.success && result.feedback) {
+            const fb = result.feedback;
+            badge.innerHTML = `<span class="badge badge-primary" style="font-size: 13px; padding: 4px 10px;">Score: ${result.student_marks} / ${result.max_marks}</span>`;
+            document.getElementById('aiPerfSummary').textContent = fb.performance_summary || 'Analysis complete.';
+            
+            // Strengths
+            const strengthsDiv = document.getElementById('aiStrengths');
+            if (Array.isArray(fb.strengths)) {
+                strengthsDiv.innerHTML = fb.strengths.map(s => `<div>• ${s}</div>`).join('');
+            } else {
+                strengthsDiv.textContent = fb.strengths || 'Solid fundamentals.';
+            }
+
+            // Improvements
+            const impDiv = document.getElementById('aiImprovements');
+            if (Array.isArray(fb.areas_to_improve)) {
+                impDiv.innerHTML = fb.areas_to_improve.map(s => `<div>• ${s}</div>`).join('');
+            } else {
+                impDiv.textContent = fb.areas_to_improve || 'Practice complex problems.';
+            }
+
+            // Study Plan
+            const planList = document.getElementById('aiStudyPlanList');
+            planList.innerHTML = '';
+            if (Array.isArray(fb.study_plan)) {
+                fb.study_plan.forEach(step => {
+                    const li = document.createElement('li');
+                    li.textContent = step;
+                    planList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'Review challenging topics and practice sample questions.';
+                planList.appendChild(li);
+            }
+
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        } else {
+            loading.innerHTML = '<p class="text-danger">Could not generate AI exam feedback. Please try again.</p>';
+        }
+    } catch (err) {
+        loading.innerHTML = '<p class="text-danger">Error connecting to AI service.</p>';
+    }
+}
+</script>
 {% endblock %}

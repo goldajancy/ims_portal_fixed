@@ -9,16 +9,23 @@
     <div class="content-area">
       {{ flash_messages() }}
 
-      <!-- Tabs -->
-      <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab('assignments')">
-          <i class="fas fa-file-alt"></i> Assignments
-          <span class="tab-count">{{ assignment_subs|length }}</span>
-        </button>
-        <button class="tab-btn" onclick="switchTab('tasks')">
-          <i class="fas fa-tasks"></i> Tasks
-          <span class="tab-count">{{ task_subs|length }}</span>
-        </button>
+      <!-- Tabs & AI Action -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <div class="tab-bar" style="margin-bottom: 0;">
+          <button class="tab-btn active" onclick="switchTab('assignments')">
+            <i class="fas fa-file-alt"></i> Assignments
+            <span class="tab-count">{{ assignment_subs|length }}</span>
+          </button>
+          <button class="tab-btn" onclick="switchTab('tasks')">
+            <i class="fas fa-tasks"></i> Tasks
+            <span class="tab-count">{{ task_subs|length }}</span>
+          </button>
+        </div>
+        <form method="POST" action="/mentor/submissions/ai-grade-all" onsubmit="return confirm('Use AI to automatically grade and generate marks & feedback for all pending submissions?');">
+          <button type="submit" class="btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; border: none; border-radius: 8px; padding: 10px 18px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);">
+            <i class="fas fa-bolt"></i> ⚡ Auto-Grade All Pending with AI
+          </button>
+        </form>
       </div>
 
       <!-- Assignment Submissions -->
@@ -78,7 +85,7 @@
                   </td>
                   <td>
                     <button class="btn-sm btn-primary"
-                            onclick="openGrade({{ s.id }}, '{{ s.trainee_name }}')">
+                            onclick="openGrade({{ s.id }}, '{{ s.trainee_name }}', '{{ s.marks if s.marks is not none else '' }}', `{{ (s.feedback or '')|replace('`','\\`') }}`)">
                       <i class="fas fa-pen"></i> Grade
                     </button>
                   </td>
@@ -145,7 +152,7 @@
                   </td>
                   <td>
                     <button class="btn-sm btn-primary"
-                            onclick="openTaskGrade({{ s.id }}, '{{ s.trainee_name }}')">
+                            onclick="openTaskGrade({{ s.id }}, '{{ s.trainee_name }}', '{{ s.marks if s.marks is not none else '' }}', `{{ (s.feedback or '')|replace('`','\\`') }}`)">
                       <i class="fas fa-pen"></i> Grade
                     </button>
                   </td>
@@ -167,17 +174,26 @@
 <div class="modal" id="gradeModal">
   <div class="modal-box">
     <div class="modal-header">
-      <h3>Grade – <span id="gradeTrainee"></span></h3>
+      <h3>Grade Assignment – <span id="gradeTrainee"></span></h3>
       <button onclick="closeModal('gradeModal')">×</button>
     </div>
     <form method="POST" id="gradeForm" class="form-vertical">
+      <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+        <span class="text-muted" style="font-size: 13px;">Need assistance grading?</span>
+        <button type="button" class="btn-sm" id="aiEvaluateBtn" onclick="runAiAssignmentEvaluate()"
+                style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; border: none; border-radius: 6px; font-weight: 600;">
+          <i class="fas fa-magic"></i> ✨ AI Auto-Evaluate
+        </button>
+      </div>
+      <div id="aiGradingStatus" style="display:none; margin-bottom: 12px; padding: 10px; border-radius: 6px; font-size: 13px;"></div>
+
       <div class="form-group">
         <label>Marks (0–100)</label>
-        <input type="number" name="marks" min="0" max="100" required/>
+        <input type="number" id="gradeMarksInput" name="marks" min="0" max="100" step="0.5" required/>
       </div>
       <div class="form-group">
         <label>Feedback</label>
-        <textarea name="feedback" rows="3"></textarea>
+        <textarea id="gradeFeedbackInput" name="feedback" rows="4" placeholder="Feedback for trainee..."></textarea>
       </div>
       <div class="form-actions">
         <button type="submit" class="btn-primary">Save</button>
@@ -195,18 +211,26 @@
       <button onclick="closeModal('taskGradeModal')">×</button>
     </div>
     <form method="POST" id="taskGradeForm" class="form-vertical">
+      <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+        <span class="text-muted" style="font-size: 13px;">Need assistance grading?</span>
+        <button type="button" class="btn-sm" id="aiTaskEvaluateBtn" onclick="runAiTaskEvaluate()"
+                style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; border: none; border-radius: 6px; font-weight: 600;">
+          <i class="fas fa-magic"></i> ✨ AI Auto-Evaluate
+        </button>
+      </div>
+      <div id="aiTaskGradingStatus" style="display:none; margin-bottom: 12px; padding: 10px; border-radius: 6px; font-size: 13px;"></div>
+
       <div class="form-group">
         <label>Marks (0–100)</label>
-        <input type="number" name="marks" min="0" max="100" required/>
+        <input type="number" id="taskGradeMarksInput" name="marks" min="0" max="100" step="0.5" required/>
       </div>
       <div class="form-group">
         <label>Feedback</label>
-        <textarea name="feedback" rows="3"></textarea>
+        <textarea id="taskGradeFeedbackInput" name="feedback" rows="4" placeholder="Feedback for trainee..."></textarea>
       </div>
       <div class="form-actions">
         <button type="submit" class="btn-primary">Save</button>
-        <button type="button" class="btn-outline"
-                onclick="closeModal('taskGradeModal')">Cancel</button>
+        <button type="button" class="btn-outline" onclick="closeModal('taskGradeModal')">Cancel</button>
       </div>
     </form>
   </div>
@@ -277,6 +301,9 @@
 </style>
 
 <script>
+let currentAssignmentSubId = null;
+let currentTaskSubId = null;
+
 function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -284,9 +311,15 @@ function switchTab(tab) {
     event.target.closest('.tab-btn').classList.add('active');
 }
 
-function openGrade(id, name) {
+function openGrade(id, name, marks = '', feedback = '') {
+    currentAssignmentSubId = id;
     document.getElementById('gradeTrainee').textContent = name;
     document.getElementById('gradeForm').action = '/mentor/submissions/grade/' + id;
+    document.getElementById('gradeMarksInput').value = marks || '';
+    document.getElementById('gradeFeedbackInput').value = feedback || '';
+    const statusBox = document.getElementById('aiGradingStatus');
+    statusBox.style.display = 'none';
+    statusBox.innerHTML = '';
     openModal('gradeModal');
 }
 
@@ -296,10 +329,98 @@ function viewContent(name, content) {
     openModal('contentModal');
 }
 
-function openTaskGrade(id, name) {
+function openTaskGrade(id, name, marks = '', feedback = '') {
+    currentTaskSubId = id;
     document.getElementById('taskGradeTrainee').textContent = name;
     document.getElementById('taskGradeForm').action = '/mentor/tasks/grade/' + id;
+    document.getElementById('taskGradeMarksInput').value = marks || '';
+    document.getElementById('taskGradeFeedbackInput').value = feedback || '';
+    const statusBox = document.getElementById('aiTaskGradingStatus');
+    statusBox.style.display = 'none';
+    statusBox.innerHTML = '';
     openModal('taskGradeModal');
+}
+
+async function runAiAssignmentEvaluate() {
+    if (!currentAssignmentSubId) return;
+    const btn = document.getElementById('aiEvaluateBtn');
+    const statusBox = document.getElementById('aiGradingStatus');
+    const marksInput = document.getElementById('gradeMarksInput');
+    const feedbackInput = document.getElementById('gradeFeedbackInput');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Evaluating...';
+    statusBox.style.display = 'block';
+    statusBox.style.background = '#eef2ff';
+    statusBox.style.color = '#3730a3';
+    statusBox.innerHTML = '<i class="fas fa-robot"></i> AI is analyzing submission content & rubric...';
+
+    try {
+        const resp = await fetch(`/api/ai/assignment/evaluate/${currentAssignmentSubId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const result = await resp.json();
+        if (result.success && result.evaluation) {
+            marksInput.value = result.evaluation.suggested_marks;
+            feedbackInput.value = result.evaluation.feedback;
+            statusBox.style.background = '#dcfce7';
+            statusBox.style.color = '#15803d';
+            statusBox.innerHTML = `<strong>✨ AI Suggestion Applied:</strong> ${result.evaluation.suggested_marks} marks. You can edit the feedback or save directly.`;
+        } else {
+            statusBox.style.background = '#fee2e2';
+            statusBox.style.color = '#991b1b';
+            statusBox.innerHTML = `Could not generate AI evaluation: ${result.error || 'Unknown error'}`;
+        }
+    } catch (err) {
+        statusBox.style.background = '#fee2e2';
+        statusBox.style.color = '#991b1b';
+        statusBox.innerHTML = 'Error communicating with AI service.';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-magic"></i> ✨ AI Auto-Evaluate';
+    }
+}
+
+async function runAiTaskEvaluate() {
+    if (!currentTaskSubId) return;
+    const btn = document.getElementById('aiTaskEvaluateBtn');
+    const statusBox = document.getElementById('aiTaskGradingStatus');
+    const marksInput = document.getElementById('taskGradeMarksInput');
+    const feedbackInput = document.getElementById('taskGradeFeedbackInput');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Evaluating...';
+    statusBox.style.display = 'block';
+    statusBox.style.background = '#eef2ff';
+    statusBox.style.color = '#3730a3';
+    statusBox.innerHTML = '<i class="fas fa-robot"></i> AI is analyzing task completion...';
+
+    try {
+        const resp = await fetch(`/api/ai/task/evaluate/${currentTaskSubId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const result = await resp.json();
+        if (result.success && result.evaluation) {
+            marksInput.value = result.evaluation.suggested_marks;
+            feedbackInput.value = result.evaluation.feedback;
+            statusBox.style.background = '#dcfce7';
+            statusBox.style.color = '#15803d';
+            statusBox.innerHTML = `<strong>✨ AI Suggestion Applied:</strong> ${result.evaluation.suggested_marks} marks. You can edit the feedback or save directly.`;
+        } else {
+            statusBox.style.background = '#fee2e2';
+            statusBox.style.color = '#991b1b';
+            statusBox.innerHTML = `Could not generate AI evaluation: ${result.error || 'Unknown error'}`;
+        }
+    } catch (err) {
+        statusBox.style.background = '#fee2e2';
+        statusBox.style.color = '#991b1b';
+        statusBox.innerHTML = 'Error communicating with AI service.';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-magic"></i> ✨ AI Auto-Evaluate';
+    }
 }
 </script>
 {% endblock %}

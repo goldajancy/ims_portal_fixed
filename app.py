@@ -15,6 +15,7 @@ from werkzeug.utils import secure_filename
 from google import genai
 import requests
 load_dotenv()
+import ai_service
 from notifications import Notify
 from scheduler import start_scheduler
 
@@ -1460,12 +1461,79 @@ def mentor_submissions():
                            assignment_subs=assignment_subs,
                            task_subs=task_subs)
 
+@app.route('/mentor/submissions/ai-grade-all', methods=['POST'])
+@login_required
+@role_required('mentor', 'admin')
+def mentor_ai_grade_all():
+    mid = session['user_id']
+    classes = query("SELECT id FROM classes WHERE mentor_id=%s AND is_active=1", (mid,))
+    cids = [c['id'] for c in classes] or [0]
+    fmt = ','.join(['%s'] * len(cids))
+
+    # 1. Grade all pending assignments
+    pending_assignments = query(f"""
+        SELECT s.id, s.content, s.user_id, COALESCE(a.max_marks, 100) as max_marks,
+               a.title as assignment_title, a.description as assignment_desc,
+               u.name as trainee_name
+        FROM submissions s
+        JOIN assignments a ON s.assignment_id=a.id
+        JOIN users u ON s.user_id=u.id
+        WHERE a.class_id IN ({fmt}) AND (s.marks IS NULL OR s.marks = '')
+    """, cids)
+
+    graded_count = 0
+    for sub in pending_assignments:
+        eval_res = ai_service.evaluate_assignment_submission(
+            title=sub['assignment_title'],
+            description=sub.get('assignment_desc') or '',
+            content=sub.get('content') or '',
+            max_marks=float(sub['max_marks']),
+            student_name=sub['trainee_name']
+        )
+        marks = eval_res['suggested_marks']
+        feedback = eval_res['feedback']
+        query("UPDATE submissions SET marks=%s, feedback=%s WHERE id=%s", (marks, feedback, sub['id']), commit=True)
+        graded_count += 1
+
+    # 2. Grade all pending tasks
+    pending_tasks = query(f"""
+        SELECT ts.id, ts.content, ts.user_id,
+               t.title as task_title, t.description as task_desc,
+               u.name as trainee_name
+        FROM task_submissions ts
+        JOIN tasks t ON ts.task_id=t.id
+        JOIN users u ON ts.user_id=u.id
+        WHERE t.class_id IN ({fmt}) AND (ts.marks IS NULL OR ts.marks = '')
+    """, cids)
+
+    for sub in pending_tasks:
+        eval_res = ai_service.evaluate_task_submission(
+            title=sub['task_title'],
+            description=sub.get('task_desc') or '',
+            content=sub.get('content') or '',
+            student_name=sub['trainee_name']
+        )
+        marks = eval_res['suggested_marks']
+        feedback = eval_res['feedback']
+        query("UPDATE task_submissions SET marks=%s, feedback=%s WHERE id=%s", (marks, feedback, sub['id']), commit=True)
+        graded_count += 1
+
+    flash(f'✨ AI Auto-Grading Complete! Successfully generated marks and feedback for {graded_count} submissions.', 'success')
+    return redirect(url_for('mentor_submissions'))
+
 @app.route('/mentor/submissions/grade/<int:sid>', methods=['POST'])
 @login_required
 @role_required('mentor')
 def mentor_grade(sid):
     marks    = request.form.get('marks')
     feedback = request.form.get('feedback','').strip()
+
+    # If feedback was left empty in form, preserve existing AI feedback
+    if not feedback:
+        existing_sub = query("SELECT feedback FROM submissions WHERE id=%s", (sid,), one=True)
+        if existing_sub and existing_sub.get('feedback'):
+            feedback = existing_sub['feedback']
+
     query("UPDATE submissions SET marks=%s,feedback=%s WHERE id=%s",(marks,feedback,sid), commit=True)
 
     sub = query("""
@@ -1501,6 +1569,13 @@ def mentor_grade(sid):
 def mentor_grade_task(sid):
     marks    = request.form.get('marks')
     feedback = request.form.get('feedback','').strip()
+
+    # If feedback was left empty in form, preserve existing AI feedback
+    if not feedback:
+        existing_sub = query("SELECT feedback FROM task_submissions WHERE id=%s", (sid,), one=True)
+        if existing_sub and existing_sub.get('feedback'):
+            feedback = existing_sub['feedback']
+
     query("UPDATE task_submissions SET marks=%s, feedback=%s WHERE id=%s",
           (marks, feedback, sid), commit=True)
 
@@ -2133,10 +2208,22 @@ def trainee_submit_assignment(aid):
 
     existing = query("SELECT id FROM submissions WHERE assignment_id=%s AND user_id=%s",(aid,tid), one=True)
     if not existing:
-        query("INSERT INTO submissions(assignment_id,user_id,content,link,attachment,submitted_at) VALUES(%s,%s,%s,%s,%s,NOW())",
-              (aid,tid,content,link,attachment), commit=True)
+        asgn = query("SELECT title, description, COALESCE(max_marks, 100) as max_marks, class_id FROM assignments WHERE id=%s", (aid,), one=True)
 
-        asgn = query("SELECT title, class_id FROM assignments WHERE id=%s", (aid,), one=True)
+        # ✨ AI Auto-Grading & Mark Generation on Submission
+        eval_res = ai_service.evaluate_assignment_submission(
+            title=asgn['title'] if asgn else 'Assignment',
+            description=(asgn.get('description') or '') if asgn else '',
+            content=content,
+            max_marks=float(asgn.get('max_marks') or 100) if asgn else 100.0,
+            student_name=session.get('name', 'Student')
+        )
+        ai_marks = eval_res['suggested_marks']
+        ai_feedback = eval_res['feedback']
+
+        query("INSERT INTO submissions(assignment_id,user_id,content,link,attachment,marks,feedback,submitted_at) VALUES(%s,%s,%s,%s,%s,%s,%s,NOW())",
+              (aid,tid,content,link,attachment,ai_marks,ai_feedback), commit=True)
+
         if asgn:
             notify.assignment_submitted(aid, session['name'], asgn['title'])
 
@@ -2150,14 +2237,14 @@ def trainee_submit_assignment(aid):
                 try:
                     send_mail(
                         mentor['email'],
-                        f"Assignment Submitted: {asgn['title']}",
-                        f"Hi {mentor['name']},\n\n{session['name']} has submitted the assignment.\n\nAssignment: {asgn['title']}\n\nLog in to review and grade it.\n\nRegards,\nIMS Team"
+                        f"Assignment Submitted & Auto-Graded: {asgn['title']}",
+                        f"Hi {mentor['name']},\n\n{session['name']} has submitted the assignment.\n\nAssignment: {asgn['title']}\nAI Generated Marks: {ai_marks}/{asgn.get('max_marks',100)}\nAI Feedback: {ai_feedback}\n\nLog in to review or update marks.\n\nRegards,\nIMS Team"
                     )
                 except Exception as e:
                     print(f"Email failed: {e}")
 
-        log_activity(tid,'submit',f'Submitted assignment id={aid}')
-        flash('Assignment submitted!','success')
+        log_activity(tid,'submit',f'Submitted assignment id={aid} (AI graded: {ai_marks})')
+        flash(f'✨ Assignment submitted and automatically graded by AI! Marks: {ai_marks}/{asgn.get("max_marks", 100) if asgn else 100}', 'success')
     else:
         flash('Already submitted.','info')
     return redirect(url_for('trainee_assignments'))
@@ -2169,7 +2256,7 @@ def trainee_tasks():
     tid = session['user_id']
     tasks = query("""
         SELECT t.*,c.name as class_name,
-               ts.id as submission_id, ts.submitted_at
+               ts.id as submission_id, ts.submitted_at, ts.marks, ts.feedback
         FROM tasks t
         JOIN classes c ON t.class_id=c.id
         JOIN class_enrollments ce ON ce.class_id=t.class_id AND ce.user_id=%s
@@ -2189,10 +2276,21 @@ def trainee_submit_task(tid_):
 
     existing = query("SELECT id FROM task_submissions WHERE task_id=%s AND user_id=%s",(tid_,tid), one=True)
     if not existing:
-        query("INSERT INTO task_submissions(task_id,user_id,content,attachment,submitted_at) VALUES(%s,%s,%s,%s,NOW())",
-              (tid_,tid,content,attachment), commit=True)
+        task = query("SELECT title, description, class_id FROM tasks WHERE id=%s", (tid_,), one=True)
 
-        task = query("SELECT title, class_id FROM tasks WHERE id=%s", (tid_,), one=True)
+        # ✨ AI Auto-Grading & Mark Generation on Submission
+        eval_res = ai_service.evaluate_task_submission(
+            title=task['title'] if task else 'Task',
+            description=(task.get('description') or '') if task else '',
+            content=content,
+            student_name=session.get('name', 'Student')
+        )
+        ai_marks = eval_res['suggested_marks']
+        ai_feedback = eval_res['feedback']
+
+        query("INSERT INTO task_submissions(task_id,user_id,content,attachment,marks,feedback,submitted_at) VALUES(%s,%s,%s,%s,%s,%s,NOW())",
+              (tid_,tid,content,attachment,ai_marks,ai_feedback), commit=True)
+
         if task:
             # WhatsApp
             notify.task_submitted(tid_, session['name'], task['title'])
@@ -2205,14 +2303,14 @@ def trainee_submit_task(tid_):
                 try:
                     send_mail(
                         mentor['email'],
-                        f"Task Submitted: {task['title']}",
-                        f"Hi {mentor['name']},\n\n{session['name']} has submitted a task.\n\nTask: {task['title']}\n\nLog in to review it.\n\nRegards,\nIMS Team"
+                        f"Task Submitted & Auto-Graded: {task['title']}",
+                        f"Hi {mentor['name']},\n\n{session['name']} has submitted a task.\n\nTask: {task['title']}\nAI Generated Marks: {ai_marks}/100\nAI Feedback: {ai_feedback}\n\nLog in to review it.\n\nRegards,\nIMS Team"
                     )
                 except Exception as e:
                     print(f"Email failed: {e}")
 
-        log_activity(tid,'submit_task',f'Submitted task id={tid_}')
-        flash('Task submitted!','success')
+        log_activity(tid,'submit_task',f'Submitted task id={tid_} (AI graded: {ai_marks})')
+        flash(f'✨ Task completed and automatically graded by AI! Marks: {ai_marks}/100', 'success')
     else:
         flash('Already submitted.','info')
     return redirect(url_for('trainee_tasks'))
@@ -3241,6 +3339,39 @@ def admin_exam_scores(exam_id):
         exam['exam_date'] = exam['exam_date'].strftime('%Y-%m-%d')
     return jsonify({'success': True, 'exam': exam, 'scores': scores})
 
+@app.route('/admin/exams/<int:exam_id>/ai-scores', methods=['POST', 'GET'])
+@login_required
+@role_required('admin', 'mentor')
+def admin_ai_exam_scores(exam_id):
+    exam = query("SELECT * FROM exams WHERE id=%s", (exam_id,), one=True)
+    if not exam:
+        return jsonify({'success': False, 'message': 'Exam not found'}), 404
+    
+    max_m = float(exam.get('max_marks') or 100)
+    class_id = exam.get('class_id')
+    
+    trainees = query("""
+        SELECT u.id, u.name
+        FROM users u
+        JOIN class_enrollments ce ON ce.user_id=u.id
+        WHERE ce.class_id=%s AND u.role='trainee' AND u.is_active=1
+    """, (class_id,))
+
+    results = []
+    for t in trainees:
+        uid = t['id']
+        asgn_avg = query("""
+            SELECT AVG(s.marks / NULLIF(a.max_marks, 0) * 100) as avg_pct
+            FROM submissions s
+            JOIN assignments a ON s.assignment_id=a.id
+            WHERE s.user_id=%s AND s.marks IS NOT NULL
+        """, (uid,), one=True)
+        pct = float(asgn_avg['avg_pct']) if asgn_avg and asgn_avg.get('avg_pct') is not None else 82.0
+        calculated_marks = round((pct / 100.0) * max_m, 1)
+        results.append({'user_id': uid, 'name': t['name'], 'suggested_marks': calculated_marks})
+
+    return jsonify({'success': True, 'scores': results})
+
 @app.route('/admin/exams/<int:exam_id>/scores/save', methods=['POST'])
 @login_required
 @role_required('admin')
@@ -3295,6 +3426,165 @@ def admin_add_exam():
     if class_id:
         notify.exam_timetable(int(class_id), title, exam_date)
     return redirect(url_for('admin_exams'))
+
+
+# ── AI API Endpoints (Assignments, Tasks, Exams, Question Bank) ───────────────
+
+@app.route('/api/ai/assignment/solution/<int:aid>', methods=['GET', 'POST'])
+@login_required
+def api_ai_assignment_solution(aid):
+    asgn = query("""
+        SELECT a.id, a.title, a.description, a.max_marks, c.name as class_name
+        FROM assignments a
+        LEFT JOIN classes c ON a.class_id = c.id
+        WHERE a.id = %s
+    """, (aid,), one=True)
+    if not asgn:
+        return jsonify({"success": False, "error": "Assignment not found"}), 404
+
+    result = ai_service.generate_assignment_solution(
+        title=asgn['title'],
+        description=asgn.get('description') or '',
+        class_name=asgn.get('class_name') or ''
+    )
+    return jsonify({"success": True, "data": result})
+
+
+@app.route('/api/ai/assignment/evaluate/<int:sid>', methods=['POST'])
+@login_required
+@role_required('mentor', 'admin')
+def api_ai_assignment_evaluate(sid):
+    sub = query("""
+        SELECT s.id, s.content, s.link, s.attachment,
+               a.title as assignment_title, a.description as assignment_desc,
+               COALESCE(a.max_marks, 100) as max_marks,
+               u.name as trainee_name
+        FROM submissions s
+        JOIN assignments a ON s.assignment_id = a.id
+        JOIN users u ON s.user_id = u.id
+        WHERE s.id = %s
+    """, (sid,), one=True)
+    if not sub:
+        return jsonify({"success": False, "error": "Submission not found"}), 404
+
+    eval_result = ai_service.evaluate_assignment_submission(
+        title=sub['assignment_title'],
+        description=sub.get('assignment_desc') or '',
+        content=sub.get('content') or '',
+        max_marks=float(sub.get('max_marks') or 100),
+        student_name=sub.get('trainee_name') or ''
+    )
+    return jsonify({"success": True, "evaluation": eval_result})
+
+
+@app.route('/api/ai/task/solution/<int:tid>', methods=['GET', 'POST'])
+@login_required
+def api_ai_task_solution(tid):
+    task = query("""
+        SELECT t.id, t.title, t.description, c.name as class_name
+        FROM tasks t
+        LEFT JOIN classes c ON t.class_id = c.id
+        WHERE t.id = %s
+    """, (tid,), one=True)
+    if not task:
+        return jsonify({"success": False, "error": "Task not found"}), 404
+
+    result = ai_service.generate_task_solution(
+        title=task['title'],
+        description=task.get('description') or '',
+        class_name=task.get('class_name') or ''
+    )
+    return jsonify({"success": True, "data": result})
+
+
+@app.route('/api/ai/task/evaluate/<int:sid>', methods=['POST'])
+@login_required
+@role_required('mentor', 'admin')
+def api_ai_task_evaluate(sid):
+    sub = query("""
+        SELECT ts.id, ts.content, ts.attachment,
+               t.title as task_title, t.description as task_desc,
+               u.name as trainee_name
+        FROM task_submissions ts
+        JOIN tasks t ON ts.task_id = t.id
+        JOIN users u ON ts.user_id = u.id
+        WHERE ts.id = %s
+    """, (sid,), one=True)
+    if not sub:
+        return jsonify({"success": False, "error": "Task submission not found"}), 404
+
+    eval_result = ai_service.evaluate_task_submission(
+        title=sub['task_title'],
+        description=sub.get('task_desc') or '',
+        content=sub.get('content') or '',
+        student_name=sub.get('trainee_name') or ''
+    )
+    return jsonify({"success": True, "evaluation": eval_result})
+
+
+@app.route('/api/ai/exam/feedback/<int:exam_id>', methods=['GET', 'POST'])
+@login_required
+def api_ai_exam_feedback(exam_id):
+    user_id = session.get('user_id')
+    user_name = session.get('name', 'Trainee')
+    exam = query("""
+        SELECT e.id, e.title, e.max_marks, c.name as class_name
+        FROM exams e
+        LEFT JOIN classes c ON e.class_id = c.id
+        WHERE e.id = %s
+    """, (exam_id,), one=True)
+    if not exam:
+        return jsonify({"success": False, "error": "Exam not found"}), 404
+
+    score = query("SELECT marks FROM exam_scores WHERE exam_id=%s AND user_id=%s", (exam_id, user_id), one=True)
+    student_marks = float(score['marks']) if score and score.get('marks') is not None else 0.0
+    max_marks = float(exam.get('max_marks') or 100)
+
+    feedback = ai_service.generate_exam_feedback(
+        exam_title=exam['title'],
+        max_marks=max_marks,
+        student_marks=student_marks,
+        class_name=exam.get('class_name') or '',
+        student_name=user_name
+    )
+    return jsonify({
+        "success": True,
+        "exam_title": exam['title'],
+        "student_marks": student_marks,
+        "max_marks": max_marks,
+        "feedback": feedback
+    })
+
+
+@app.route('/api/ai/question/solve', methods=['POST'])
+@login_required
+def api_ai_question_solve():
+    data = request.get_json() or {}
+    question = data.get('question', '').strip()
+    qtype = data.get('qtype', 'mcq')
+    options = data.get('options', '').strip()
+
+    if not question:
+        return jsonify({"success": False, "error": "Question is required"}), 400
+
+    result = ai_service.generate_question_answer(question=question, qtype=qtype, options=options)
+    return jsonify({"success": True, "data": result})
+
+
+@app.route('/api/ai/question/generate', methods=['POST'])
+@login_required
+@role_required('mentor', 'admin')
+def api_ai_question_generate():
+    data = request.get_json() or {}
+    topic = data.get('topic', '').strip()
+    count = int(data.get('count', 3))
+    qtype = data.get('qtype', 'mcq')
+
+    if not topic:
+        return jsonify({"success": False, "error": "Topic is required"}), 400
+
+    questions = ai_service.generate_practice_questions(topic=topic, count=count, qtype=qtype)
+    return jsonify({"success": True, "questions": questions})
 
 
 if __name__ == '__main__':

@@ -9,32 +9,156 @@
     <div class="content-area">
       {{ flash_messages() }}
 
-<div class="card"><div class="card-body p0">
-<table class="data-table">
-<thead><tr><th>Title</th><th>Class</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>
-<tbody>
-{% for t in tasks %}
-<tr><td>{{ t.title }}</td><td>{{ t.class_name }}</td><td>{{ t.due_date or '–' }}</td>
-<td><span class="badge {{ 'badge-success' if t.submission_id else 'badge-warning' }}">{{ 'Completed' if t.submission_id else 'Pending' }}</span></td>
-<td>{% if not t.submission_id %}<button class="btn-sm btn-primary" onclick="openTaskModal({{ t.id }},'{{ t.title }}')">Submit</button>
-{% else %}<span class="text-success"><i class="fas fa-check"></i> Done</span>{% endif %}</td>
-</tr>
-{% else %}<tr><td colspan="5" class="empty-state">No tasks yet</td></tr>{% endfor %}
-</tbody></table></div></div>
+      <div class="card">
+        <div class="card-body p0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Class</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Marks</th>
+                <th>Feedback</th>
+                <th>AI Helper</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in tasks %}
+              <tr>
+                <td><strong>{{ t.title }}</strong></td>
+                <td>{{ t.class_name }}</td>
+                <td>{{ t.due_date or '–' }}</td>
+                <td>
+                  <span class="badge {{ 'badge-success' if t.submission_id else 'badge-warning' }}">
+                    {{ 'Completed' if t.submission_id else 'Pending' }}
+                  </span>
+                </td>
+                <td>
+                  {% if t.marks is not none %}
+                    <span class="badge badge-success" style="font-weight: 700;">{{ t.marks }}</span>
+                  {% else %}
+                    <span class="text-muted">–</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if t.feedback %}
+                    <div style="max-width: 220px; font-size: 13px; color: #374151; background: #f9fafb; padding: 6px 10px; border-radius: 6px; border-left: 3px solid #6366f1;">
+                      {{ t.feedback }}
+                    </div>
+                  {% else %}
+                    <span class="text-muted">–</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <button class="btn-sm" onclick="openAiTaskModal({{ t.id }}, `{{ t.title|replace('`','\\`') }}`)"
+                          style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                    <i class="fas fa-robot"></i> ✨ AI Helper
+                  </button>
+                </td>
+                <td>
+                  {% if not t.submission_id %}
+                    <button class="btn-sm btn-primary" onclick="openTaskModal({{ t.id }}, `{{ t.title|replace('`','\\`') }}`)">
+                      <i class="fas fa-upload"></i> Submit
+                    </button>
+                  {% else %}
+                    <span class="text-success"><i class="fas fa-check-circle"></i> Done</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="8" class="empty-state">No tasks yet</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-<div class="modal" id="taskModal"><div class="modal-box">
-<div class="modal-header"><h3>Complete: <span id="taskTitle"></span></h3><button onclick="closeModal('taskModal')">×</button></div>
-<form method="POST" id="taskForm" class="form-vertical" enctype="multipart/form-data">
-<div class="form-group"><label>Completion Notes</label><textarea name="content" rows="3" placeholder="Brief description of what you did..."></textarea></div>
-<div class="form-group">
-    <label>Upload File (image, PDF, docx, etc.)</label>
-    <input type="file" name="attachment">
-</div>
-<div class="form-actions"><button type="submit" class="btn-primary">Submit</button><button type="button" class="btn-outline" onclick="closeModal('taskModal')">Cancel</button></div>
-</form>
-</div></div>
-<script>function openTaskModal(id,title){document.getElementById('taskTitle').textContent=title;document.getElementById('taskForm').action='/trainee/tasks/submit/'+id;openModal('taskModal');}</script>
+      <!-- Task Submit Modal -->
+      <div class="modal" id="taskModal">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3>Complete: <span id="taskTitle"></span></h3>
+            <button onclick="closeModal('taskModal')">×</button>
+          </div>
+          <form method="POST" id="taskForm" class="form-vertical" enctype="multipart/form-data">
+            <div class="form-group">
+              <label>Completion Notes / Solution</label>
+              <textarea name="content" rows="4" placeholder="Brief description of what you did or paste code/notes..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Upload File (Image, PDF, Document, etc.)</label>
+              <input type="file" name="attachment">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Submit Task</button>
+              <button type="button" class="btn-outline" onclick="closeModal('taskModal')">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- AI Task Guide Modal -->
+      <div class="modal" id="aiTaskModal">
+        <div class="modal-box" style="max-width: 700px; width: 90%;">
+          <div class="modal-header" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; border-radius: 12px 12px 0 0; padding: 16px 20px;">
+            <h3 style="color: white; display: flex; align-items: center; gap: 8px; margin: 0;">
+              <i class="fas fa-robot"></i> AI Task Execution Guide & Checklist
+            </h3>
+            <button onclick="closeModal('aiTaskModal')" style="color: white; font-size: 24px; background: none; border: none; cursor: pointer;">×</button>
+          </div>
+          <div class="modal-body" style="padding: 20px; max-height: 480px; overflow-y: auto;">
+            <h4 id="aiModalTaskTitle" style="color: #1e1b4b; margin-top: 0; margin-bottom: 12px;"></h4>
+            <div id="aiTaskModalLoading" style="text-align: center; padding: 40px 20px;">
+              <i class="fas fa-circle-notch fa-spin fa-2x" style="color: #6366f1;"></i>
+              <p style="margin-top: 12px; color: #6b7280; font-weight: 500;">Generating step-by-step task solution plan with Gemini AI...</p>
+            </div>
+            <div id="aiTaskModalContent" style="display: none; white-space: pre-wrap; font-family: inherit; line-height: 1.7; color: #1f2937; background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;"></div>
+          </div>
+          <div class="form-actions" style="padding: 12px 20px; background: #f3f4f6; border-radius: 0 0 12px 12px; display: flex; justify-content: flex-end;">
+            <button class="btn-outline" onclick="closeModal('aiTaskModal')">Close</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
+
+<script>
+function openTaskModal(id, title) {
+    document.getElementById('taskTitle').textContent = title;
+    document.getElementById('taskForm').action = '/trainee/tasks/submit/' + id;
+    openModal('taskModal');
+}
+
+async function openAiTaskModal(id, title) {
+    document.getElementById('aiModalTaskTitle').textContent = title;
+    const loading = document.getElementById('aiTaskModalLoading');
+    const content = document.getElementById('aiTaskModalContent');
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    content.textContent = '';
+    openModal('aiTaskModal');
+
+    try {
+        const resp = await fetch(`/api/ai/task/solution/${id}`);
+        const result = await resp.json();
+        if (result.success && result.data) {
+            content.textContent = result.data.solution_guide;
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        } else {
+            content.textContent = 'Could not load AI task guide. Please try again.';
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        }
+    } catch (err) {
+        content.textContent = 'Error connecting to AI service.';
+        loading.style.display = 'none';
+        content.style.display = 'block';
+    }
+}
+</script>
 {% endblock %}

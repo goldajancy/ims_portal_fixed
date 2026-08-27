@@ -9,35 +9,160 @@
     <div class="content-area">
       {{ flash_messages() }}
 
-<div class="card"><div class="card-body p0">
-<table class="data-table">
-<thead><tr><th>Title</th><th>Class</th><th>Due Date</th><th>Status</th><th>Marks</th><th>Feedback</th><th>Action</th></tr></thead>
-<tbody>
-{% for a in assignments %}
-<tr><td>{{ a.title }}</td><td>{{ a.class_name }}</td><td>{{ a.due_date or '–' }}</td>
-<td><span class="badge {{ 'badge-success' if a.submission_id else 'badge-warning' }}">{{ 'Submitted' if a.submission_id else 'Pending' }}</span></td>
-<td>{{ a.marks if a.marks is not none else '–' }}</td>
-<td>{{ a.feedback or '–' }}</td>
-<td>{% if not a.submission_id %}<button class="btn-sm btn-primary" onclick="openSubmitModal({{ a.id }},'{{ a.title }}')">Submit</button>
-{% else %}<span class="text-success"><i class="fas fa-check"></i> Done</span>{% endif %}</td>
-</tr>
-{% else %}<tr><td colspan="7" class="empty-state">No assignments yet</td></tr>{% endfor %}
-</tbody></table></div></div>
+      <div class="card">
+        <div class="card-body p0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Class</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Marks</th>
+                <th>Feedback</th>
+                <th>AI Helper</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in assignments %}
+              <tr>
+                <td><strong>{{ a.title }}</strong></td>
+                <td>{{ a.class_name }}</td>
+                <td>{{ a.due_date or '–' }}</td>
+                <td>
+                  <span class="badge {{ 'badge-success' if a.submission_id else 'badge-warning' }}">
+                    {{ 'Submitted' if a.submission_id else 'Pending' }}
+                  </span>
+                </td>
+                <td>
+                  {% if a.marks is not none %}
+                    <span class="badge badge-success" style="font-weight: 700;">{{ a.marks }}</span>
+                  {% else %}
+                    <span class="text-muted">–</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if a.feedback %}
+                    <div style="max-width: 200px; font-size: 13px; color: #374151; background: #f9fafb; padding: 6px 10px; border-radius: 6px; border-left: 3px solid #6366f1;">
+                      {{ a.feedback }}
+                    </div>
+                  {% else %}
+                    <span class="text-muted">–</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <button class="btn-sm" onclick="openAiSolutionModal({{ a.id }}, `{{ a.title|replace('`','\\`') }}`)"
+                          style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                    <i class="fas fa-robot"></i> ✨ AI Guide
+                  </button>
+                </td>
+                <td>
+                  {% if not a.submission_id %}
+                    <button class="btn-sm btn-primary" onclick="openSubmitModal({{ a.id }}, `{{ a.title|replace('`','\\`') }}`)">
+                      <i class="fas fa-upload"></i> Submit
+                    </button>
+                  {% else %}
+                    <span class="text-success"><i class="fas fa-check-circle"></i> Done</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="8" class="empty-state">No assignments yet</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-<div class="modal" id="submitModal"><div class="modal-box">
-<div class="modal-header"><h3>Submit: <span id="submitTitle"></span></h3><button onclick="closeModal('submitModal')">×</button></div>
-<form method="POST" id="submitForm" class="form-vertical" enctype="multipart/form-data">
-<div class="form-group"><label>Your Answer / Notes</label><textarea name="content" rows="4" placeholder="Write your solution..."></textarea></div>
-<div class="form-group"><label>Submission Link (GitHub, Drive, etc.)</label><input type="url" name="link" placeholder="https://..."/></div>
-<div class="form-group">
-    <label>Upload File (image, PDF, docx, etc.)</label>
-    <input type="file" name="attachment">
-</div>
-<div class="form-actions"><button type="submit" class="btn-primary">Submit</button><button type="button" class="btn-outline" onclick="closeModal('submitModal')">Cancel</button></div>
-</form>
-</div></div>
-<script>function openSubmitModal(id,title){document.getElementById('submitTitle').textContent=title;document.getElementById('submitForm').action='/trainee/assignments/submit/'+id;openModal('submitModal');}</script>
+      <!-- Submit Modal -->
+      <div class="modal" id="submitModal">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3>Submit: <span id="submitTitle"></span></h3>
+            <button onclick="closeModal('submitModal')">×</button>
+          </div>
+          <form method="POST" id="submitForm" class="form-vertical" enctype="multipart/form-data">
+            <div class="form-group">
+              <label>Your Answer / Solution Notes</label>
+              <textarea id="submissionContentArea" name="content" rows="5" placeholder="Write or paste your solution notes..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Submission Link (GitHub, Google Drive, etc.)</label>
+              <input type="url" name="link" placeholder="https://..."/>
+            </div>
+            <div class="form-group">
+              <label>Upload File (Image, PDF, Document, Zip)</label>
+              <input type="file" name="attachment">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Submit Assignment</button>
+              <button type="button" class="btn-outline" onclick="closeModal('submitModal')">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- AI Solution Guide Modal -->
+      <div class="modal" id="aiSolutionModal">
+        <div class="modal-box" style="max-width: 700px; width: 90%;">
+          <div class="modal-header" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; border-radius: 12px 12px 0 0; padding: 16px 20px;">
+            <h3 style="color: white; display: flex; align-items: center; gap: 8px; margin: 0;">
+              <i class="fas fa-robot"></i> AI Solution Guide & Breakdown
+            </h3>
+            <button onclick="closeModal('aiSolutionModal')" style="color: white; font-size: 24px; background: none; border: none; cursor: pointer;">×</button>
+          </div>
+          <div class="modal-body" style="padding: 20px; max-height: 480px; overflow-y: auto;">
+            <h4 id="aiModalAssignmentTitle" style="color: #1e1b4b; margin-top: 0; margin-bottom: 12px;"></h4>
+            <div id="aiModalLoading" style="text-align: center; padding: 40px 20px;">
+              <i class="fas fa-circle-notch fa-spin fa-2x" style="color: #6366f1;"></i>
+              <p style="margin-top: 12px; color: #6b7280; font-weight: 500;">Generating comprehensive model answer & solution guide with Gemini AI...</p>
+            </div>
+            <div id="aiModalContent" style="display: none; white-space: pre-wrap; font-family: inherit; line-height: 1.7; color: #1f2937; background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;"></div>
+          </div>
+          <div class="form-actions" style="padding: 12px 20px; background: #f3f4f6; border-radius: 0 0 12px 12px; display: flex; justify-content: flex-end;">
+            <button class="btn-outline" onclick="closeModal('aiSolutionModal')">Close</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
+
+<script>
+function openSubmitModal(id, title) {
+    document.getElementById('submitTitle').textContent = title;
+    document.getElementById('submitForm').action = '/trainee/assignments/submit/' + id;
+    openModal('submitModal');
+}
+
+async function openAiSolutionModal(id, title) {
+    document.getElementById('aiModalAssignmentTitle').textContent = title;
+    const loading = document.getElementById('aiModalLoading');
+    const content = document.getElementById('aiModalContent');
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    content.textContent = '';
+    openModal('aiSolutionModal');
+
+    try {
+        const resp = await fetch(`/api/ai/assignment/solution/${id}`);
+        const result = await resp.json();
+        if (result.success && result.data) {
+            content.textContent = result.data.solution_guide;
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        } else {
+            content.textContent = 'Could not load AI solution guide. Please try again.';
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        }
+    } catch (err) {
+        content.textContent = 'Error connecting to AI service.';
+        loading.style.display = 'none';
+        content.style.display = 'block';
+    }
+}
+</script>
 {% endblock %}

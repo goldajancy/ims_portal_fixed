@@ -9,28 +9,310 @@
     <div class="content-area">
       {{ flash_messages() }}
       
-<div class="page-toolbar"><h4>Question Bank</h4>
-<button class="btn-primary" onclick="openModal('addQModal')"><i class="fas fa-plus"></i> Add Question</button></div>
-<div class="card"><div class="card-body p0">
-<table class="data-table">
-<thead><tr><th>#</th><th>Question</th><th>Type</th><th>Answer</th></tr></thead>
-<tbody>
-{% for q in questions %}
-<tr><td>{{ loop.index }}</td><td>{{ q.question[:80] }}</td>
-<td><span class="badge badge-blue">{{ q.qtype|upper }}</span></td>
-<td>{{ q.answer[:40] if q.answer else '–' }}</td></tr>
-{% else %}<tr><td colspan="4" class="empty-state">No questions yet</td></tr>{% endfor %}
-</tbody></table></div></div>
-<div class="modal" id="addQModal"><div class="modal-box">
-<div class="modal-header"><h3>Add Question</h3><button onclick="closeModal('addQModal')">×</button></div>
-<form method="POST" action="/mentor/question-bank/add" class="form-vertical">
-<div class="form-group"><label>Type</label><select name="qtype"><option value="mcq">MCQ</option><option value="short">Short Answer</option><option value="long">Long Answer</option></select></div>
-<div class="form-group"><label>Question</label><textarea name="question" rows="3" required></textarea></div>
-<div class="form-group"><label>Options (MCQ, comma-separated)</label><input type="text" name="options" placeholder="A, B, C, D"/></div>
-<div class="form-group"><label>Correct Answer</label><input type="text" name="answer"/></div>
-<div class="form-actions"><button type="submit" class="btn-primary">Add</button><button type="button" class="btn-outline" onclick="closeModal('addQModal')">Cancel</button></div>
-</form></div></div>
+      <div class="page-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h4 style="margin: 0;">Question Bank</h4>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-sm" onclick="openModal('generateQModal')"
+                  style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer;">
+            <i class="fas fa-sparkles"></i> ✨ AI Generate Questions
+          </button>
+          <button class="btn-primary" onclick="openModal('addQModal')">
+            <i class="fas fa-plus"></i> Add Question
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body p0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Question</th>
+                <th>Type</th>
+                <th>Options</th>
+                <th>Answer</th>
+                <th>AI Explain</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for q in questions %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ q.question }}</strong></td>
+                <td><span class="badge badge-blue">{{ q.qtype|upper }}</span></td>
+                <td><span class="text-muted" style="font-size: 12px;">{{ q.options or '–' }}</span></td>
+                <td><span class="badge badge-success">{{ q.answer or '–' }}</span></td>
+                <td>
+                  <button class="btn-sm" onclick="explainQuestion(`{{ q.question|replace('`','\\`') }}`, '{{ q.qtype }}', `{{ (q.options or '')|replace('`','\\`') }}`)"
+                          style="background: #f3f4f6; color: #4338ca; border: 1px solid #c7d2fe; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-robot"></i> Explain
+                  </button>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="6" class="empty-state">No questions yet</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Add Question Modal -->
+      <div class="modal" id="addQModal">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3>Add Question</h3>
+            <button onclick="closeModal('addQModal')">×</button>
+          </div>
+          <form method="POST" action="/mentor/question-bank/add" class="form-vertical">
+            <div class="form-group">
+              <label>Type</label>
+              <select name="qtype" id="newQType">
+                <option value="mcq">MCQ</option>
+                <option value="short">Short Answer</option>
+                <option value="long">Long Answer</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Question</label>
+              <textarea name="question" id="newQText" rows="3" required placeholder="Enter question text..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Options (MCQ, comma-separated)</label>
+              <input type="text" name="options" id="newQOptions" placeholder="A) ..., B) ..., C) ..., D) ..."/>
+            </div>
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="margin: 0;">Correct Answer</label>
+                <button type="button" class="btn-sm" onclick="runAiAnswerForNewQ()"
+                        style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; padding: 2px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                  <i class="fas fa-magic"></i> ✨ AI Generate Answer
+                </button>
+              </div>
+              <input type="text" name="answer" id="newQAnswer" placeholder="Correct answer..."/>
+            </div>
+            <div id="newQAiStatus" style="display:none; font-size: 12px; padding: 8px; border-radius: 4px; margin-bottom: 10px;"></div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Add Question</button>
+              <button type="button" class="btn-outline" onclick="closeModal('addQModal')">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- AI Generate Questions Modal -->
+      <div class="modal" id="generateQModal">
+        <div class="modal-box" style="max-width: 650px; width: 90%;">
+          <div class="modal-header" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; border-radius: 12px 12px 0 0; padding: 16px 20px;">
+            <h3 style="color: white; display: flex; align-items: center; gap: 8px; margin: 0;">
+              <i class="fas fa-magic"></i> AI Question Generator
+            </h3>
+            <button onclick="closeModal('generateQModal')" style="color: white; font-size: 24px; background: none; border: none; cursor: pointer;">×</button>
+          </div>
+          <div class="modal-body" style="padding: 20px;">
+            <div class="form-group">
+              <label>Topic / Subject Area</label>
+              <input type="text" id="aiGenTopic" placeholder="e.g. Python Object Oriented Programming, SQL Joins, REST APIs" />
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="form-group">
+                <label>Question Type</label>
+                <select id="aiGenType">
+                  <option value="mcq">Multiple Choice (MCQ)</option>
+                  <option value="short">Short Answer</option>
+                  <option value="long">Long Answer</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Number of Questions</label>
+                <select id="aiGenCount">
+                  <option value="2">2 Questions</option>
+                  <option value="3" selected>3 Questions</option>
+                  <option value="5">5 Questions</option>
+                </select>
+              </div>
+            </div>
+            <button type="button" class="btn-primary" id="aiGenSubmitBtn" onclick="runAiGenerateQuestions()" style="width: 100%; margin-top: 8px;">
+              <i class="fas fa-wand-magic-sparkles"></i> Generate Questions with Gemini
+            </button>
+
+            <div id="aiGenResultsArea" style="margin-top: 20px; display: none;">
+              <h5 style="margin: 0 0 10px 0; color: #1e1b4b;">Generated Questions:</h5>
+              <div id="aiGenCardsContainer" style="display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto;"></div>
+            </div>
+          </div>
+          <div class="form-actions" style="padding: 12px 20px; background: #f3f4f6; border-radius: 0 0 12px 12px; display: flex; justify-content: flex-end;">
+            <button class="btn-outline" onclick="closeModal('generateQModal')">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Explain Question Modal -->
+      <div class="modal" id="explainQModal">
+        <div class="modal-box" style="max-width: 600px; width: 90%;">
+          <div class="modal-header">
+            <h3>AI Explanation & Solution Key</h3>
+            <button onclick="closeModal('explainQModal')">×</button>
+          </div>
+          <div class="modal-body" style="padding: 20px;">
+            <div id="explainLoading" style="text-align: center; padding: 20px;">
+              <i class="fas fa-circle-notch fa-spin fa-2x" style="color: #6366f1;"></i>
+              <p style="margin-top: 10px; color: #6b7280;">Generating pedagogical explanation...</p>
+            </div>
+            <div id="explainContent" style="display:none;">
+              <div style="background: #eef2ff; border-left: 4px solid #6366f1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                <strong style="color: #312e81;">Correct Answer:</strong>
+                <span id="expCorrectAnswer" style="color: #1e1b4b; font-weight: 600;"></span>
+              </div>
+              <div style="margin-bottom: 12px;">
+                <strong style="color: #374151;">Detailed Explanation:</strong>
+                <p id="expDetailText" style="margin-top: 6px; line-height: 1.6; color: #4b5563;"></p>
+              </div>
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 6px;">
+                <strong style="color: #166534;"><i class="fas fa-lightbulb"></i> Key Takeaway:</strong>
+                <p id="expKeyTakeaway" style="margin: 4px 0 0 0; font-size: 13px; color: #14532d;"></p>
+              </div>
+            </div>
+          </div>
+          <div class="form-actions" style="padding: 12px 20px; background: #f3f4f6; display: flex; justify-content: flex-end;">
+            <button class="btn-outline" onclick="closeModal('explainQModal')">Close</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
+
+<script>
+async function runAiAnswerForNewQ() {
+    const qText = document.getElementById('newQText').value.trim();
+    const qType = document.getElementById('newQType').value;
+    const qOptions = document.getElementById('newQOptions').value.trim();
+    const statusBox = document.getElementById('newQAiStatus');
+    const answerInput = document.getElementById('newQAnswer');
+
+    if (!qText) {
+        alert('Please enter a question first.');
+        return;
+    }
+
+    statusBox.style.display = 'block';
+    statusBox.style.background = '#eef2ff';
+    statusBox.style.color = '#3730a3';
+    statusBox.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating correct answer with Gemini...';
+
+    try {
+        const resp = await fetch('/api/ai/question/solve', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({question: qText, qtype: qType, options: qOptions})
+        });
+        const result = await resp.json();
+        if (result.success && result.data) {
+            answerInput.value = result.data.correct_answer;
+            statusBox.style.background = '#dcfce7';
+            statusBox.style.color = '#15803d';
+            statusBox.innerHTML = `<strong>Answer Found:</strong> ${result.data.correct_answer}. <span style="font-size: 11px; display: block; margin-top: 2px;">${result.data.explanation}</span>`;
+        } else {
+            statusBox.style.background = '#fee2e2';
+            statusBox.style.color = '#991b1b';
+            statusBox.textContent = 'Could not generate answer.';
+        }
+    } catch (err) {
+        statusBox.style.background = '#fee2e2';
+        statusBox.style.color = '#991b1b';
+        statusBox.textContent = 'Error connecting to AI service.';
+    }
+}
+
+async function explainQuestion(question, qtype, options) {
+    const loading = document.getElementById('explainLoading');
+    const content = document.getElementById('explainContent');
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    openModal('explainQModal');
+
+    try {
+        const resp = await fetch('/api/ai/question/solve', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({question: question, qtype: qtype, options: options})
+        });
+        const result = await resp.json();
+        if (result.success && result.data) {
+            document.getElementById('expCorrectAnswer').textContent = result.data.correct_answer || 'See details';
+            document.getElementById('expDetailText').textContent = result.data.explanation || 'No explanation available.';
+            document.getElementById('expKeyTakeaway').textContent = result.data.key_takeaway || 'Core subject principle.';
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        } else {
+            loading.innerHTML = '<p class="text-danger">Could not generate explanation.</p>';
+        }
+    } catch (err) {
+        loading.innerHTML = '<p class="text-danger">Error connecting to AI service.</p>';
+    }
+}
+
+async function runAiGenerateQuestions() {
+    const topic = document.getElementById('aiGenTopic').value.trim();
+    const qtype = document.getElementById('aiGenType').value;
+    const count = parseInt(document.getElementById('aiGenCount').value) || 3;
+    const btn = document.getElementById('aiGenSubmitBtn');
+    const resultsArea = document.getElementById('aiGenResultsArea');
+    const container = document.getElementById('aiGenCardsContainer');
+
+    if (!topic) {
+        alert('Please enter a topic.');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating with Gemini AI...';
+
+    try {
+        const resp = await fetch('/api/ai/question/generate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({topic: topic, qtype: qtype, count: count})
+        });
+        const result = await resp.json();
+        if (result.success && Array.isArray(result.questions) && result.questions.length > 0) {
+            container.innerHTML = '';
+            result.questions.forEach((q, idx) => {
+                const card = document.createElement('div');
+                card.style.background = '#f9fafb';
+                card.style.border = '1px solid #e5e7eb';
+                card.style.borderRadius = '8px';
+                card.style.padding = '12px';
+
+                card.innerHTML = `
+                    <div style="font-weight: 600; font-size: 13.5px; color: #111827;">${idx + 1}. ${q.question}</div>
+                    ${q.options ? `<div style="font-size: 12px; color: #4b5563; margin-top: 4px;"><strong>Options:</strong> ${q.options}</div>` : ''}
+                    <div style="font-size: 12px; color: #166534; margin-top: 4px;"><strong>Answer:</strong> ${q.answer}</div>
+                    <form method="POST" action="/mentor/question-bank/add" style="margin-top: 8px;">
+                        <input type="hidden" name="qtype" value="${q.qtype || qtype}">
+                        <input type="hidden" name="question" value="${q.question.replace(/"/g, '&quot;')}">
+                        <input type="hidden" name="options" value="${(q.options || '').replace(/"/g, '&quot;')}">
+                        <input type="hidden" name="answer" value="${(q.answer || '').replace(/"/g, '&quot;')}">
+                        <button type="submit" class="btn-sm btn-primary" style="padding: 4px 10px; font-size: 12px;">
+                            <i class="fas fa-plus"></i> Save to Question Bank
+                        </button>
+                    </form>
+                `;
+                container.appendChild(card);
+            });
+            resultsArea.style.display = 'block';
+        } else {
+            alert('No questions could be generated. Please try a different topic.');
+        }
+    } catch (err) {
+        alert('Error connecting to AI question generator.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate Questions with Gemini';
+    }
+}
+</script>
 {% endblock %}

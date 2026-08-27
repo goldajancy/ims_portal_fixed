@@ -209,12 +209,19 @@
 </div>
 <!-- Scores Modal -->
 <div class="modal" id="scoresModal">
-    <div class="modal-content" style="width:600px;">
+    <div class="modal-content" style="width:650px;">
         <div class="modal-header">
             <h3 id="scoresModalTitle"><i class="fas fa-chart-bar"></i> Exam Scores</h3>
             <button class="modal-close" onclick="closeModal('scoresModal')">&times;</button>
         </div>
         <form id="scoresForm" method="POST">
+            <div style="padding: 12px 20px 0 20px; display: flex; justify-content: space-between; align-items: center;" id="aiExamScoresToolbar">
+                <span class="text-muted" style="font-size: 13px;">Auto-generate predicted marks with AI:</span>
+                <button type="button" class="btn-sm" id="aiCalcScoresBtn" onclick="autoCalculateAiExamScores()"
+                        style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; border: none; border-radius: 6px; padding: 6px 12px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-magic"></i> ✨ AI Auto-Calculate Marks
+                </button>
+            </div>
             <div class="modal-body" style="max-height:400px;overflow-y:auto;">
                 <table class="data-table">
                     <thead><tr><th>Student</th><th>Marks</th><th>Grade</th></tr></thead>
@@ -231,11 +238,13 @@
 
 <script>
 let currentMode = 'view';
+let currentExamIdForScores = null;
 
 function viewScores(examId) { currentMode = 'view'; loadScores(examId); }
 function enterScores(examId) { currentMode = 'edit'; loadScores(examId); }
 
 function loadScores(examId) {
+    currentExamIdForScores = examId;
     fetch(`/admin/exams/${examId}/scores`)
         .then(r => r.json())
         .then(data => {
@@ -244,13 +253,16 @@ function loadScores(examId) {
             document.getElementById('scoresModalTitle').innerHTML =
                 '<i class="fas fa-chart-bar"></i> ' + data.exam.title + ' - Scores';
 
+            const toolbar = document.getElementById('aiExamScoresToolbar');
+            if (toolbar) toolbar.style.display = currentMode === 'edit' ? 'flex' : 'none';
+
             const tbody = document.getElementById('scoresTableBody');
             tbody.innerHTML = '';
             data.scores.forEach(s => {
                 const tr = document.createElement('tr');
                 if (currentMode === 'edit') {
                     tr.innerHTML = `<td>${s.name}</td>
-                        <td><input type="number" name="marks_${s.id}" value="${s.marks ?? ''}" min="0" max="${data.exam.max_marks}" style="width:80px;padding:6px;border:1px solid #e5e7eb;border-radius:8px;"></td>
+                        <td><input type="number" id="input_marks_${s.id}" name="marks_${s.id}" value="${s.marks ?? ''}" min="0" max="${data.exam.max_marks}" step="0.5" style="width:80px;padding:6px;border:1px solid #e5e7eb;border-radius:8px;"></td>
                         <td>${s.grade ?? '-'}</td>`;
                 } else {
                     tr.innerHTML = `<td>${s.name}</td><td>${s.marks ?? '-'}</td><td>${s.grade ?? '-'}</td>`;
@@ -265,6 +277,34 @@ function loadScores(examId) {
             openModal('scoresModal');
         })
         .catch(() => alert('Failed to load scores.'));
+}
+
+async function autoCalculateAiExamScores() {
+    if (!currentExamIdForScores) return;
+    const btn = document.getElementById('aiCalcScoresBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calculating...';
+
+    try {
+        const resp = await fetch(`/admin/exams/${currentExamIdForScores}/ai-scores`);
+        const data = await resp.json();
+        if (data.success && Array.isArray(data.scores)) {
+            data.scores.forEach(s => {
+                const input = document.getElementById(`input_marks_${s.user_id}`);
+                if (input) {
+                    input.value = s.suggested_marks;
+                }
+            });
+            alert('✨ AI Marks generated and populated for all enrolled students based on continuous progress! Click "Save Scores" to confirm.');
+        } else {
+            alert('Could not calculate AI scores: ' + (data.message || 'Error'));
+        }
+    } catch (err) {
+        alert('Error connecting to AI service.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-magic"></i> ✨ AI Auto-Calculate Marks';
+    }
 }
 
 function deleteExam(examId) {

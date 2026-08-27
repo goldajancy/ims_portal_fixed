@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Mentor Notes – IMS Mentor{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('mentor', 'notes') }}
+  <div class="main-content">
+    {{ topbar('Mentor Notes') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="dash-grid dash-grid-2">
+<div class="card"><div class="card-header"><h3>Add Note</h3></div><div class="card-body">
+<form method="POST" action="/mentor/notes" class="form-vertical">
+<div class="form-group"><label>Trainee</label>
+<select name="trainee_id" required><option value="">-- Select Trainee --</option>
+{% for t in trainees %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select></div>
+<div class="form-group"><label>Note</label><textarea name="note" rows="4" required placeholder="Private notes about this trainee..."></textarea></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Save Note</button></div>
+</form></div></div>
+<div class="card"><div class="card-header"><h3>My Notes</h3></div><div class="card-body">
+{% for n in notes %}
+<div class="note-item">
+  <div class="note-trainee"><i class="fas fa-user-graduate"></i> {{ n.trainee_name }}</div>
+  <div class="note-text">{{ n.note }}</div>
+  <div class="note-time">{{ n.created_at.strftime('%b %d, %Y') if n.created_at else '' }}</div>
+</div>
+{% else %}<p class="empty-state">No notes yet</p>{% endfor %}
+</div></div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

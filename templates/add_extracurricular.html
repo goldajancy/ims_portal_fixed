@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block body %}
+{{ sidebar() }}
+{{ topbar() }}
+
+<div class="content">
+  <h2>Add Extracurricular Activity</h2>
+  {{ flash_messages() }}
+
+  <form method="POST" action="{{ url_for('trainee_add_extracurricular') }}">
+    <div class="form-group">
+      <label for="title">Title</label>
+      <input type="text" id="title" name="title" class="form-control" required>
+    </div>
+
+    <div class="form-group">
+      <label for="category">Category</label>
+      <input type="text" id="category" name="category" class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea id="description" name="description" class="form-control" rows="4"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="date">Date</label>
+      <input type="date" id="date" name="date" class="form-control">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Add Activity</button>
+    <a href="{{ url_for('trainee_extracurricular') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

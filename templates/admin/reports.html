@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block title %}Reports & Analytics – IMS Admin{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+
+    {{ sidebar('admin', 'reports') }}
+
+    <div class="main-content">
+
+        {{ topbar('Reports & Analytics') }}
+
+        <div class="content-area">
+
+            {{ flash_messages() }}
+
+            <style>
+                .main-content{
+                    margin-left:260px;
+                    padding:20px;
+                    background:#f5f7fb;
+                    min-height:100vh;
+                }
+                .card{
+                    border:0;
+                    border-radius:14px;
+                    box-shadow:0 2px 10px rgba(0,0,0,0.05);
+                    margin-bottom:20px;
+                    background:#fff;
+                }
+                .card-header{
+                    background:#fff;
+                    border-bottom:1px solid #eee;
+                    padding:14px 18px;
+                    font-weight:600;
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                }
+                .card-header small{
+                    font-weight:400;
+                    color:#888;
+                    font-size:0.8rem;
+                }
+                .card-body{
+                    padding:18px;
+                }
+                .table-scroll{
+                    max-height:480px;
+                    overflow-y:auto;
+                }
+                .data-table{
+                    width:100%;
+                    border-collapse:collapse;
+                }
+                .data-table th,
+                .data-table td{
+                    padding:12px;
+                    text-align:center;
+                    border-bottom:1px solid #f1f1f1;
+                }
+                .data-table th{
+                    background:#f8fafc;
+                    font-weight:600;
+                    position:sticky;
+                    top:0;
+                    z-index:1;
+                }
+                .data-table tr:hover{
+                    background:#f9fafb;
+                }
+                .empty-state{
+                    text-align:center;
+                    padding:30px;
+                    color:#888;
+                }
+                .badge-low{
+                    color:#b91c1c;
+                    font-weight:600;
+                }
+                .badge-ok{
+                    color:#475569;
+                }
+            </style>
+
+            <!-- CHART CARD -->
+            <div class="card">
+                <div class="card-header">
+                    <span>Students Needing Attention</span>
+                    <small>Lowest 15 by average marks</small>
+                </div>
+                <div class="card-body">
+                    <canvas id="perfChart" height="90"></canvas>
+                </div>
+            </div>
+
+            <!-- TABLE CARD -->
+            <div class="card">
+                <div class="card-header">
+                    <span>All Students – Summary</span>
+                    <small>{{ perf|selectattr('role','equalto','trainee')|list|length }} total</small>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Avg Marks</th>
+                                    <th>Attendance %</th>
+                                    <th>Submissions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% set students = perf|selectattr('role','equalto','trainee')|list %}
+                            {% for t in students %}
+                                <tr>
+                                    <td>{{ t.name }}</td>
+                                    <td class="{{ 'badge-low' if (t.avg_marks or 0) < 50 else 'badge-ok' }}">
+                                        {{ t.avg_marks if t.avg_marks is not none else '–' }}
+                                    </td>
+                                    <td class="{{ 'badge-low' if (t.att_pct or 0) < 75 else 'badge-ok' }}">
+                                        {{ t.att_pct if t.att_pct is not none else '–' }}
+                                    </td>
+                                    <td>{{ t.submissions }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="empty-state">No data yet</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+<script>
+// Only trainees, sorted ascending by avg marks, lowest 15 shown in the chart
+// so it stays readable no matter how many students you have.
+var allStudents = {{ perf|selectattr('role','equalto','trainee')|list|tojson }};
+
+var withMarks = allStudents.filter(function(s){ return s.avg_marks !== null && s.avg_marks !== undefined; });
+withMarks.sort(function(a, b){ return (a.avg_marks || 0) - (b.avg_marks || 0); });
+var chartData = withMarks.slice(0, 15);
+
+if (chartData.length > 0) {
+    new Chart(document.getElementById('perfChart'), {
+        type: 'bar',
+        data: {
+            labels: chartData.map(function(t){ return t.name; }),
+            datasets: [
+                {
+                    label: 'Avg Marks',
+                    data: chartData.map(function(t){ return parseFloat(t.avg_marks || 0); }),
+                    backgroundColor: 'rgba(100,116,139,0.75)',   // slate
+                    borderRadius: 6
+                },
+                {
+                    label: 'Attendance %',
+                    data: chartData.map(function(t){ return parseFloat(t.att_pct || 0); }),
+                    backgroundColor: 'rgba(148,163,184,0.6)',   // lighter slate
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: '#475569' } }
+            },
+            scales: {
+                x: { ticks: { color: '#64748b' } },
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { color: '#64748b' }
+                }
+            }
+        }
+    });
+} else {
+    document.getElementById('perfChart').outerHTML =
+        '<p class="empty-state">No marks recorded yet.</p>';
+}
+</script>
+
+{% endblock %}

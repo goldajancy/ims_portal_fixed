@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}My Progress – IMS Trainee{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('trainee', 'progress') }}
+  <div class="main-content">
+    {{ topbar('My Progress') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="dash-grid dash-grid-2">
+<div class="card"><div class="card-header"><h3>Marks Trend</h3></div>
+<div class="card-body"><canvas id="trendChart" height="140"></canvas></div></div>
+<div class="card"><div class="card-header"><h3>Performance by Subject</h3></div>
+<div class="card-body"><canvas id="subChart" height="140"></canvas></div></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+var trend={{ marks_trend|tojson }}, sub={{ subject_perf|tojson }};
+if(trend.length)new Chart(document.getElementById('trendChart'),{type:'line',data:{labels:trend.map(d=>d.period),datasets:[{label:'Avg Marks',data:trend.map(d=>d.avg),borderColor:'#0891b2',fill:true,tension:0.4}]},options:{responsive:true,scales:{y:{beginAtZero:true,max:100}}}});
+else document.getElementById('trendChart').parentElement.innerHTML='<p class="empty-state">No marks data yet</p>';
+if(sub.length)new Chart(document.getElementById('subChart'),{type:'bar',data:{labels:sub.map(d=>d.class_name),datasets:[{label:'Avg Marks',data:sub.map(d=>d.avg_marks),backgroundColor:'rgba(8,145,178,0.8)',borderRadius:4}]},options:{responsive:true,scales:{y:{beginAtZero:true,max:100}}}});
+else document.getElementById('subChart').parentElement.innerHTML='<p class="empty-state">No subject data yet</p>';
+</script>
+    </div>
+  </div>
+</div>
+{% endblock %}

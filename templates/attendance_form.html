@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance – {{ cls.name }}</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f3f4f6; color: #111827; min-height: 100vh; }
+  .header { background: #4F46E5; color: white; padding: 16px 20px; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header p  { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+  .container { max-width: 640px; margin: 20px auto; padding: 0 16px 40px; }
+  .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .card h2 { font-size: 15px; font-weight: 600; color: #374151; margin-bottom: 14px;
+             padding-bottom: 10px; border-bottom: 1px solid #e5e7eb; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px; }
+  .info-item label { display: block; font-size: 11px; color: #6b7280; text-transform: uppercase;
+                     letter-spacing: 0.05em; margin-bottom: 4px; }
+  .info-item span  { font-size: 14px; font-weight: 500; color: #111827; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #d1d5db;
+    border-radius: 8px; font-size: 14px; outline: none; transition: border-color .2s;
+    background: white; color: #111827;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: #4F46E5; }
+  .trainee-list { display: flex; flex-direction: column; gap: 8px; }
+  .trainee-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: 8px; border: 1.5px solid #e5e7eb;
+    cursor: pointer; transition: all .15s; user-select: none;
+  }
+  .trainee-item:hover { border-color: #4F46E5; background: #f5f3ff; }
+  .trainee-item.absent { border-color: #ef4444; background: #fef2f2; }
+  .trainee-item input[type=checkbox] { display: none; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: #e0e7ff;
+             color: #4F46E5; font-weight: 600; font-size: 15px;
+             display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .trainee-item.absent .avatar { background: #fee2e2; color: #dc2626; }
+  .trainee-name { flex: 1; font-size: 14px; font-weight: 500; }
+  .status-badge {
+    font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+    background: #dcfce7; color: #166534;
+  }
+  .trainee-item.absent .status-badge { background: #fee2e2; color: #991b1b; }
+  .summary-bar {
+    display: flex; gap: 12px; padding: 12px 16px; background: #f9fafb;
+    border-radius: 8px; margin-bottom: 14px; font-size: 13px;
+  }
+  .summary-bar span { font-weight: 600; }
+  .sum-present { color: #16a34a; } .sum-absent { color: #dc2626; }
+  .upload-zone {
+    border: 2px dashed #d1d5db; border-radius: 10px; padding: 20px;
+    text-align: center; cursor: pointer; transition: border-color .2s;
+    background: #fafafa;
+  }
+  .upload-zone:hover { border-color: #4F46E5; }
+  .upload-zone i { font-size: 28px; color: #9ca3af; margin-bottom: 8px; display: block; }
+  .upload-zone p { font-size: 13px; color: #6b7280; }
+  #preview-img { max-width: 100%; border-radius: 8px; margin-top: 12px; display: none; }
+  .ai-result { margin-top: 14px; padding: 12px; background: #f0fdf4;
+               border: 1px solid #bbf7d0; border-radius: 8px; font-size: 13px; display: none; }
+  .ai-result h4 { font-size: 13px; font-weight: 600; color: #166534; margin-bottom: 6px; }
+  .ai-result p  { color: #166534; line-height: 1.6; white-space: pre-wrap; }
+  .ai-loader { display: none; text-align: center; padding: 16px; color: #6b7280; font-size: 13px; }
+  .btn { display: block; width: 100%; padding: 14px; border: none; border-radius: 10px;
+         font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
+  .btn-primary { background: #4F46E5; color: white; }
+  .btn-primary:hover { background: #4338ca; }
+  .btn-outline { background: white; color: #4F46E5; border: 2px solid #4F46E5;
+                 margin-bottom: 10px; }
+  .tabs { display: flex; gap: 0; border: 1.5px solid #e5e7eb; border-radius: 8px;
+          overflow: hidden; margin-bottom: 16px; }
+  .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 13px;
+         font-weight: 500; color: #6b7280; background: white; border: none;
+         transition: all .15s; }
+  .tab.active { background: #4F46E5; color: white; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><i class="fas fa-clipboard-check" style="margin-right:8px"></i>Attendance Form</h1>
+  <p>{{ cls.name }} &nbsp;|&nbsp; {{ rec.date }} &nbsp;|&nbsp; Period {{ rec.period }}{% if rec.section %} &nbsp;|&nbsp; Section {{ rec.section }}{% endif %}</p>
+</div>
+
+<div class="container">
+
+  <!-- Mentor info -->
+  <div class="card">
+    <h2><i class="fas fa-user-tie" style="color:#4F46E5;margin-right:8px"></i>Mentor details</h2>
+    <div class="field">
+      <label>Your name</label>
+      <input type="text" id="mentor-name" placeholder="Enter your name" required>
+    </div>
+    <div class="info-grid">
+      <div class="info-item"><label>Class</label><span>{{ cls.name }}</span></div>
+      <div class="info-item"><label>Date</label><span>{{ rec.date }}</span></div>
+      <div class="info-item"><label>Period</label><span>{{ rec.period }}</span></div>
+      <div class="info-item"><label>Section</label><span>{{ rec.section or '—' }}</span></div>
+    </div>
+  </div>
+
+  <!-- Mode tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('manual', this)">
+      <i class="fas fa-list-check"></i> Manual checklist
+    </button>
+    <button class="tab" onclick="switchTab('image', this)">
+      <i class="fas fa-camera"></i> Upload image
+    </button>
+  </div>
+
+  <!-- Manual tab -->
+  <div id="tab-manual">
+    <div class="card">
+      <h2><i class="fas fa-users" style="color:#4F46E5;margin-right:8px"></i>
+        Mark absentees ({{ trainees|length }} students)
+      </h2>
+      <div class="summary-bar">
+        Total: <span>{{ trainees|length }}</span> &nbsp;|&nbsp;
+        Present: <span class="sum-present" id="sum-present">{{ trainees|length }}</span> &nbsp;|&nbsp;
+        Absent: <span class="sum-absent" id="sum-absent">0</span>
+      </div>
+      <div class="trainee-list" id="trainee-list">
+        {% for t in trainees %}
+        <label class="trainee-item" id="row-{{ t.id }}">
+          <input type="checkbox" name="check_{{ t.id }}" value="{{ t.id }}"
+                 onchange="toggleAbsent({{ t.id }}, this)">
+          <div class="avatar">{{ t.name[0]|upper }}</div>
+          <span class="trainee-name">{{ t.name }}</span>
+          <span class="status-badge" id="badge-{{ t.id }}">Present</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Image tab -->
+  <div id="tab-image" style="display:none">
+    <div class="card">
+      <h2><i class="fas fa-camera" style="color:#4F46E5;margin-right:8px"></i>Upload attendance image</h2>
+      <p style="font-size:13px;color:#6b7280;margin-bottom:14px">
+        Take a photo of the attendance notebook. AI will read the names and mark attendance automatically.
+      </p>
+      <div class="upload-zone" onclick="document.getElementById('img-input').click()">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p>Tap to take photo or upload from gallery</p>
+        <input type="file" id="img-input" accept="image/*" capture="environment"
+               style="display:none" onchange="handleImage(this)">
+      </div>
+      <img id="preview-img" src="" alt="preview">
+      <div class="ai-loader" id="ai-loader">
+        <i class="fas fa-spinner fa-spin" style="margin-right:6px"></i> Analyzing image with AI…
+      </div>
+      <div class="ai-result" id="ai-result-box">
+        <h4><i class="fas fa-robot" style="margin-right:6px"></i>AI analysis result</h4>
+        <p id="ai-result-text"></p>
+      </div>
+      <button class="btn btn-outline" style="margin-top:14px" onclick="runAI()" id="btn-analyze" style="display:none">
+        <i class="fas fa-magic"></i> Analyze with AI
+      </button>
+    </div>
+  </div>
+
+  <!-- Remarks -->
+  <div class="card">
+    <h2><i class="fas fa-comment-alt" style="color:#4F46E5;margin-right:8px"></i>Additional info</h2>
+    <div class="field">
+      <label>Remarks (optional)</label>
+      <textarea id="remarks" rows="3" placeholder="e.g. Holiday, special class, field trip..."></textarea>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="submitForm()">
+    <i class="fas fa-paper-plane" style="margin-right:8px"></i>Submit attendance
+  </button>
+
+</div>
+
+<form id="hidden-form" method="POST" action="">
+  <input type="hidden" name="mentor_name" id="f-mentor-name">
+  <input type="hidden" name="remarks" id="f-remarks">
+  <input type="hidden" name="image_data" id="f-image-data">
+  <input type="hidden" name="ai_result" id="f-ai-result">
+  <div id="absent-inputs"></div>
+</form>
+
+<script>
+const totalStudents = {{ trainees|length }};
+let absentIds = new Set();
+let imageBase64 = '';
+let aiResultText = '';
+
+function toggleAbsent(uid, cb) {
+  const row   = document.getElementById('row-' + uid);
+  const badge = document.getElementById('badge-' + uid);
+  if (cb.checked) {
+    absentIds.add(uid);
+    row.classList.add('absent');
+    badge.textContent = 'Absent';
+  } else {
+    absentIds.delete(uid);
+    row.classList.remove('absent');
+    badge.textContent = 'Present';
+  }
+  document.getElementById('sum-absent').textContent  = absentIds.size;
+  document.getElementById('sum-present').textContent = totalStudents - absentIds.size;
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-manual').style.display = tab === 'manual' ? '' : 'none';
+  document.getElementById('tab-image').style.display  = tab === 'image'  ? '' : 'none';
+}
+
+function handleImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    imageBase64 = e.target.result;
+    const img = document.getElementById('preview-img');
+    img.src = imageBase64;
+    img.style.display = 'block';
+    document.getElementById('btn-analyze').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function runAI() {
+  if (!imageBase64) return;
+  document.getElementById('ai-loader').style.display = 'block';
+  document.getElementById('ai-result-box').style.display = 'none';
+
+  const names = {{ trainees | map(attribute='name') | list | tojson }};
+
+  try {
+    const resp = await fetch('/api/analyze-attendance-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_data: imageBase64, names: names })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    aiResultText = data.result || 'Could not analyze image.';
+
+    const absentLine = aiResultText.match(/ABSENT:\s*(.+)/i);
+    if (absentLine && absentLine[1].toLowerCase().trim() !== 'none') {
+      const absentNames = absentLine[1].split(',').map(n => n.trim().toLowerCase());
+      document.querySelectorAll('.trainee-item').forEach(label => {
+        const name = label.querySelector('.trainee-name').textContent.toLowerCase().trim();
+        if (absentNames.some(an => name.includes(an) || an.includes(name))) {
+          const cb = label.querySelector('input[type=checkbox]');
+          if (!cb.checked) { cb.checked = true; cb.dispatchEvent(new Event('change')); }
+        }
+      });
+    }
+  } catch (err) {
+    aiResultText = 'AI analysis failed: ' + err.message;
+  }
+
+  document.getElementById('ai-loader').style.display = 'none';
+  document.getElementById('ai-result-box').style.display = 'block';
+  document.getElementById('ai-result-text').textContent = aiResultText;
+}
+
+function submitForm() {
+  const mentorName = document.getElementById('mentor-name').value.trim();
+  if (!mentorName) { alert('Please enter your name.'); return; }
+
+  document.getElementById('f-mentor-name').value = mentorName;
+  document.getElementById('f-remarks').value     = document.getElementById('remarks').value;
+  document.getElementById('f-image-data').value  = imageBase64;
+  document.getElementById('f-ai-result').value   = aiResultText;
+
+  const container = document.getElementById('absent-inputs');
+  container.innerHTML = '';
+  absentIds.forEach(id => {
+    const inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = 'absent_ids'; inp.value = id;
+    container.appendChild(inp);
+  });
+  document.getElementById('hidden-form').submit();
+}
+</script>
+</body>
+</html>
+</body>
+</html>

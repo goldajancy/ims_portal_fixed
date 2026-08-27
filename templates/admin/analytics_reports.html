@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block title %}Analytics & Reports – IMS Mentor{% endblock %}
+
+{% block body %}
+
+<div class="app-layout">
+
+    {{ sidebar('mentor', 'analytics') }}
+
+    <div class="main-content">
+
+        {{ topbar('Reports & Analytics') }}
+
+        <div class="content-area">
+
+            {{ flash_messages() }}
+
+            <style>
+                .main-content {
+                    margin-left: 260px;
+                    padding: 20px;
+                    background: #f5f7fb;
+                    min-height: 100vh;
+                }
+
+                .card {
+                    border: 0;
+                    border-radius: 14px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                    margin-bottom: 20px;
+                    background: #fff;
+                }
+
+                .card-header {
+                    background: #fff;
+                    border-bottom: 1px solid #eee;
+                    padding: 14px 18px;
+                    font-weight: 600;
+                }
+
+                .card-body {
+                    padding: 18px;
+                }
+
+                .data-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+
+                .data-table th,
+                .data-table td {
+                    padding: 12px;
+                    text-align: center;
+                    border-bottom: 1px solid #f1f1f1;
+                }
+
+                .data-table th {
+                    background: #f8fafc;
+                    font-weight: 600;
+                }
+
+                .data-table tr:hover {
+                    background: #f9fafb;
+                }
+
+                .empty-state {
+                    text-align: center;
+                    padding: 30px;
+                    color: #888;
+                }
+            </style>
+
+
+            <!-- ========================= -->
+            <!-- CHART CARD -->
+            <!-- ========================= -->
+
+            <div class="card">
+
+                <div class="card-header">
+                    Trainee Performance
+                </div>
+
+                <div class="card-body">
+
+                    <canvas id="perfChart" height="90"></canvas>
+
+                </div>
+
+            </div>
+
+
+            <!-- ========================= -->
+            <!-- TABLE CARD -->
+            <!-- ========================= -->
+
+            <div class="card">
+
+                <div class="card-header">
+                    Trainee Summary Table
+                </div>
+
+                <div class="card-body p-0">
+
+                    <table class="data-table">
+
+                        <thead>
+
+                            <tr>
+                                <th>Trainee</th>
+                                <th>Avg Marks</th>
+                                <th>Attendance %</th>
+                                <th>Submissions</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                        {% for t in perf %}
+
+                            <tr>
+
+                                <td>{{ t.name }}</td>
+
+                                <td>
+                                    {{ t.avg_marks|default(0)|float|round(1) }}
+                                </td>
+
+                                <td>
+                                    {{ t.att_pct|default(0)|float|round(1) }}
+                                </td>
+
+                                <td>
+                                    {{ t.submissions }}
+                                </td>
+
+                            </tr>
+
+                        {% else %}
+
+                            <tr>
+
+                                <td colspan="4" class="empty-state">
+                                    No data yet
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- CHART.JS -->
+<!-- ========================= -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+<script>
+
+var perf = {{ perf|tojson }};
+
+if (perf.length > 0) {
+
+    const ctx = document.getElementById('perfChart').getContext('2d');
+
+    new Chart(ctx, {
+
+        type: 'bar',
+
+        data: {
+
+            labels: perf.map(t => t.name),
+
+            datasets: [
+
+                {
+                    label: 'Avg Marks',
+
+                    data: perf.map(t =>
+                        parseFloat(t.avg_marks || 0)
+                    ),
+
+                    backgroundColor: '#4f46e5',
+
+                    borderColor: '#4f46e5',
+
+                    borderWidth: 1,
+
+                    borderRadius: 6,
+
+                    barPercentage: 0.7,
+
+                    categoryPercentage: 0.7
+                },
+
+                {
+                    label: 'Attendance %',
+
+                    data: perf.map(t =>
+                        parseFloat(t.att_pct || 0)
+                    ),
+
+                    backgroundColor: '#22c55e',
+
+                    borderColor: '#22c55e',
+
+                    borderWidth: 1,
+
+                    borderRadius: 6,
+
+                    barPercentage: 0.7,
+
+                    categoryPercentage: 0.7
+                }
+
+            ]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            plugins: {
+
+                legend: {
+                    display: true,
+
+                    labels: {
+                        usePointStyle: true
+                    }
+                }
+
+            },
+
+            scales: {
+
+                y: {
+
+                    beginAtZero: true,
+
+                    max: 100
+
+                }
+
+            }
+
+        }
+
+    });
+
+}
+
+</script>
+
+{% endblock %}

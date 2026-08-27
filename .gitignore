@@ -1,0 +1,33 @@
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.pyc
+
+# Environment Files
+.env
+.env.*
+ims_app/.env
+ims_app/.env.*
+
+# Keep example files
+!.env.example
+!ims_app/.env.example
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite3

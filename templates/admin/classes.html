@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Classes - Admin{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('admin', 'classes') }}
+   <div class="main-content"> 
+    {{ topbar('Class Management', 'Manage batches and class assignments') }} 
+    <div class="content-area"> 
+      {{ flash_messages() }} 
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-chalkboard"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ classes|length }}</span>
+            <span class="stat-label">Total Classes</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ classes|selectattr('is_active')|list|length }}</span>
+            <span class="stat-label">Active Classes</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-purple"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ classes|sum(attribute='student_count') }}</span>
+            <span class="stat-label">Total Enrollments</span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Classes List</h3>
+    </div>
+    <div class="card-body">
+        {% if classes %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Class Name</th>
+                        <th>Mentor</th>
+                        <th>Students</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cls in classes %}
+                    <tr>
+                        <td>
+                            <div class="class-name">
+                                <i class="fas fa-graduation-cap text-primary"></i>
+                                <strong>{{ cls.name }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            {% if cls.mentor_name %}
+                                <span class="mentor-badge">
+                                    <i class="fas fa-user-tie"></i> {{ cls.mentor_name }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Not assigned</span>
+                            {% endif %}
+                        </td>
+                       <td>
+                            <span class="badge badge-info">{{ cls.student_count }} students</span>
+
+                                <br><br>
+
+                                <a href="{{ url_for('admin_edit_class', class_id=cls.id) }}"
+                                 class="btn btn-sm btn-primary">
+                                 <i class="fas fa-users"></i> Manage
+                                </a>                        </td>
+                        <td>
+                            <span class="description-text">
+    {% if cls.description %}
+        {{ cls.description[:50] }}
+        {% if cls.description|length > 50 %}...{% endif %}
+    {% else %}
+        -
+    {% endif %}
+</span>
+                        </td>
+                        <td>
+                            {% if cls.is_active %}
+                                <span class="status-badge status-active">Active</span>
+                            {% else %}
+                                <span class="status-badge status-inactive">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ cls.created_at.strftime('%b %d, %Y') if cls.created_at else '-' }}</td>
+                       <td>
+    <div class="action-buttons">
+
+        <a href="{{ url_for('admin_view_class', class_id=cls.id) }}"
+           class="btn-icon"
+           title="View Details">
+            <i class="fas fa-eye"></i>
+        </a>
+
+        <a href="{{ url_for('admin_edit_class', class_id=cls.id) }}"
+           class="btn-icon"
+           title="Edit">
+            <i class="fas fa-edit"></i>
+        </a>
+
+        <form action="{{ url_for('admin_delete_class', class_id=cls.id) }}"
+              method="POST"
+              style="display:inline;">
+
+            <button type="submit"
+                    class="btn-icon btn-danger"
+                    title="Delete"
+                    onclick="return confirm('Delete this class?')">
+                <i class="fas fa-trash"></i>
+            </button>
+
+        </form>
+
+    </div>
+</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <h4>No Classes Yet</h4>
+            <p>Create your first class to get started</p>
+            <button class="btn btn-primary" onclick="openModal('addClassModal')">
+                <i class="fas fa-plus"></i> Create Class
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Class Modal -->
+<div class="modal" id="addClassModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus-circle"></i> Add New Class</h3>
+            <button class="modal-close" onclick="closeModal('addClassModal')">&times;</button>
+        </div>
+        <form action="{{ url_for('admin_add_class') }}" method="POST">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="name">Class Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" required placeholder="e.g., Python Batch 2025">
+                </div>
+                <div class="form-group">
+                    <label for="mentor_id">Assign Mentor</label>
+                    <select id="mentor_id" name="mentor_id">
+                        <option value="">-- Select Mentor --</option>
+                        {% for mentor in mentors %}
+                        <option value="{{ mentor.id }}">{{ mentor.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="3" placeholder="Brief description of the class..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Assign Trainees</label>
+                    <div class="student-att-list" style="max-height:220px;overflow-y:auto;">
+                        {% for t in trainees %}
+                        <label class="student-check-row">
+                            <input type="checkbox" name="trainee_ids" value="{{ t.id }}">
+                            <span>{{ t.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addClassModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Class</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.class-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.class-name i {
+    font-size: 1.2rem;
+}
+.mentor-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: #e8f4fd;
+    color: #1976d2;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+.description-text {
+    color: #666;
+    font-size: 0.9rem;
+}
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+.status-active {
+    background: #d4edda;
+    color: #155724;
+}
+.status-inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.student-check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.student-check-row:hover { background: #f5f7ff; }
+.student-check-row input[type="checkbox"] {
+    width: 16px; height: 16px; cursor: pointer;
+}
+/* Action buttons - matches exams page */
+.action-buttons{
+    display:flex;
+    gap:8px;
+}
+
+.btn-icon{
+    width:36px;
+    height:36px;
+    border:none;
+    background:#eef2ff;
+    color:#4f46e5;
+    border-radius:10px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    transition:.3s;
+}
+
+.btn-icon:hover{
+    background:#4f46e5;
+    color:white;
+}
+
+.btn-danger{
+    background:#fee2e2;
+    color:#ef4444;
+}
+
+.btn-danger:hover{
+    background:#ef4444;
+    color:white;
+}
+
+.stats-row{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:20px;
+    margin-bottom:25px;
+}
+
+.stats-row .stat-card{
+    background:#fff;
+    border-radius:14px;
+    padding:20px;
+    border:1px solid #e5e7eb;
+    box-shadow:0 3px 10px rgba(0,0,0,.05);
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+@media(max-width:768px){
+    .stats-row{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+
+
+{% endblock %}

@@ -1,0 +1,121 @@
+{% macro sidebar(role, active_page='dashboard') %}
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    {% if role == 'admin' %}
+      <div class="sidebar-logo"><i class="fas fa-shield-alt"></i></div>
+      <span>IMS Admin</span>
+    {% elif role == 'mentor' %}
+      <div class="sidebar-logo mentor"><i class="fas fa-chalkboard-teacher"></i></div>
+      <span>IMS Mentor</span>
+    {% else %}
+      <div class="sidebar-logo trainee"><i class="fas fa-graduation-cap"></i></div>
+      <span>IMS Trainee</span>
+    {% endif %}
+  </div>
+
+  <div class="sidebar-body">
+    {% if role == 'admin' %}
+      <a href="/admin/dashboard" class="nav-item {% if active_page=='dashboard' %}active{% endif %}"><i class="fas fa-home"></i><span>Dashboard</span></a>
+      <div class="nav-section">USERS</div>
+      <a href="/admin/users" class="nav-item {% if active_page=='users' %}active{% endif %}"><i class="fas fa-users"></i><span>All Users</span></a>
+      <a href="/admin/users?role=mentor" class="nav-item {% if active_page=='mentors' %}active{% endif %}"><i class="fas fa-user-tie"></i><span>Mentors</span></a>
+      <a href="/admin/users?role=trainee" class="nav-item {% if active_page=='trainees' %}active{% endif %}"><i class="fas fa-user-graduate"></i><span>Trainees</span></a>
+      <div class="nav-section">ACADEMIC</div>
+      <a href="/admin/classes" class="nav-item {% if active_page=='classes' %}active{% endif %}"><i class="fas fa-school"></i><span>Classes</span></a>
+      <a href="/admin/assignments" class="nav-item {% if active_page=='assignments' %}active{% endif %}"><i class="fas fa-tasks"></i><span>Assignments</span></a>
+      <a href="/admin/attendance" class="nav-item {% if active_page=='attendance' %}active{% endif %}"><i class="fas fa-calendar-check"></i><span>Attendance</span></a>
+      <a href="/admin/exams" class="nav-item {% if active_page=='exams' %}active{% endif %}"><i class="fas fa-file-alt"></i><span>Exams &amp; Marks</span></a>
+      <div class="nav-section">COMMUNICATION</div>
+      <a href="/admin/announcements" class="nav-item {% if active_page=='announcements' %}active{% endif %}"><i class="fas fa-bullhorn"></i><span>Announcements</span></a>
+      <div class="nav-section">REPORTS</div>
+      <a href="/admin/reports" class="nav-item {% if active_page=='reports' %}active{% endif %}"><i class="fas fa-chart-bar"></i><span>Reports &amp; Analytics</span></a>
+      <a href="/admin/system-logs" class="nav-item {% if active_page=='logs' %}active{% endif %}"><i class="fas fa-list-alt"></i><span>System Logs</span></a>
+      <div class="nav-section">SYSTEM</div>
+      <a href="/admin/settings" class="nav-item {% if active_page=='settings' %}active{% endif %}"><i class="fas fa-cog"></i><span>Settings</span></a>
+
+    {% elif role == 'mentor' %}
+      <a href="/mentor/dashboard" class="nav-item {% if active_page=='dashboard' %}active{% endif %}"><i class="fas fa-home"></i><span>Dashboard</span></a>
+      <div class="nav-section">MY WORK</div>
+      <a href="/mentor/trainees" class="nav-item {% if active_page=='trainees' %}active{% endif %}"><i class="fas fa-users"></i><span>My Trainees</span></a>
+      <a href="/mentor/tasks" class="nav-item {% if active_page=='tasks' %}active{% endif %}"><i class="fas fa-check-square"></i><span>Tasks</span></a>
+      <a href="/mentor/assignments" class="nav-item {% if active_page=='assignments' %}active{% endif %}"><i class="fas fa-tasks"></i><span>Assignments</span></a>
+      <a href="/mentor/submissions" class="nav-item {% if active_page=='submissions' %}active{% endif %}"><i class="fas fa-upload"></i><span>Submissions</span></a>
+      <div class="nav-section">TEACHING</div>
+      <a href="/mentor/lectures" class="nav-item {% if active_page=='lectures' %}active{% endif %}"><i class="fas fa-video"></i><span>Lectures</span></a>
+      <a href="/mentor/exams" class="nav-item {% if active_page=='exams' %}active{% endif %}"><i class="fas fa-file-alt"></i><span>Exams &amp; Marks</span></a>
+      <a href="/mentor/attendance" class="nav-item {% if active_page=='attendance' %}active{% endif %}"><i class="fas fa-calendar-check"></i><span>Attendance</span></a>
+      <div class="nav-section">INSIGHTS</div>
+      <a href="/mentor/analytics" class="nav-item {% if active_page=='analytics' %}active{% endif %}"><i class="fas fa-chart-line"></i><span>Analytics &amp; Reports</span></a>
+      <div class="nav-section">COMMUNICATION</div>
+      <a href="/mentor/announcements" class="nav-item {% if active_page=='announcements' %}active{% endif %}"><i class="fas fa-bullhorn"></i><span>Announcements</span></a>
+      <a href="/mentor/messages" class="nav-item {% if active_page=='messages' %}active{% endif %}"><i class="fas fa-envelope"></i><span>Messages</span></a>
+      <a href="/mentor/calendar" class="nav-item {% if active_page=='calendar' %}active{% endif %}"><i class="fas fa-calendar"></i><span>Calendar</span></a>
+      <div class="nav-section">TOOLS</div>
+      <a href="/mentor/question-bank" class="nav-item {% if active_page=='qbank' %}active{% endif %}"><i class="fas fa-question-circle"></i><span>Question Bank</span></a>
+      <a href="/mentor/office-hours" class="nav-item {% if active_page=='officehours' %}active{% endif %}"><i class="fas fa-clock"></i><span>Office Hours</span></a>
+      <a href="/mentor/notes" class="nav-item {% if active_page=='notes' %}active{% endif %}"><i class="fas fa-sticky-note"></i><span>Mentor Notes</span></a>
+      <a href="/mentor/settings" class="nav-item {% if active_page=='settings' %}active{% endif %}"><i class="fas fa-cog"></i><span>Settings</span></a>
+
+    {% else %}
+      <a href="/trainee/dashboard" class="nav-item {% if active_page=='dashboard' %}active{% endif %}"><i class="fas fa-home"></i><span>Dashboard</span></a>
+      <div class="nav-section">MY LEARNING</div>
+      <a href="/trainee/assignments" class="nav-item {% if active_page=='assignments' %}active{% endif %}"><i class="fas fa-tasks"></i><span>My Assignments</span></a>
+      <a href="/trainee/tasks" class="nav-item {% if active_page=='tasks' %}active{% endif %}"><i class="fas fa-check-square"></i><span>My Tasks</span></a>
+      <a href="/trainee/lectures" class="nav-item {% if active_page=='lectures' %}active{% endif %}"><i class="fas fa-video"></i><span>Lectures</span></a>
+      <a href="/trainee/exams" class="nav-item {% if active_page=='exams' %}active{% endif %}"><i class="fas fa-file-alt"></i><span>Exams &amp; Results</span></a>
+      <div class="nav-section">PROGRESS</div>
+      <a href="/trainee/attendance" class="nav-item {% if active_page=='attendance' %}active{% endif %}"><i class="fas fa-calendar-check"></i><span>Attendance</span></a>
+      <a href="/trainee/calendar" class="nav-item {% if active_page=='calendar' %}active{% endif %}"><i class="fas fa-calendar"></i><span>Calendar</span></a>
+      <a href="/trainee/progress" class="nav-item {% if active_page=='progress' %}active{% endif %}"><i class="fas fa-chart-line"></i><span>Progress</span></a>
+      <div class="nav-section">COMMUNICATION</div>
+      <a href="/trainee/announcements" class="nav-item {% if active_page=='announcements' %}active{% endif %}"><i class="fas fa-bullhorn"></i><span>Announcements</span></a>
+      <a href="/trainee/messages" class="nav-item {% if active_page=='messages' %}active{% endif %}"><i class="fas fa-envelope"></i><span>Messages</span></a>
+      <div class="nav-section">EXTRAS</div>
+      <a href="/trainee/bookmarks" class="nav-item {% if active_page=='bookmarks' %}active{% endif %}"><i class="fas fa-bookmark"></i><span>Bookmarks</span></a>
+      <a href="/trainee/profile" class="nav-item {% if active_page=='profile' %}active{% endif %}"><i class="fas fa-user"></i><span>My Profile</span></a>
+      <a href="/trainee/settings" class="nav-item {% if active_page=='settings' %}active{% endif %}"><i class="fas fa-cog"></i><span>Settings</span></a>
+    {% endif %}
+  </div>
+
+  <div class="sidebar-footer">
+    <a href="/logout" class="nav-item logout-btn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+  </div>
+</nav>
+{% endmacro %}
+
+{% macro topbar(title, subtitle='') %}
+<header class="topbar">
+  <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+  <div class="topbar-title">
+    <h1>{{ title }}</h1>
+    {% if subtitle %}<p>{{ subtitle }}</p>{% endif %}
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-icon"><i class="fas fa-bell"></i></div>
+    <div class="topbar-icon"><i class="fas fa-envelope"></i></div>
+    <div class="topbar-user">
+      <div class="avatar-circle">{{ session.name[0]|upper }}</div>
+      <div>
+        <div class="user-name">{{ session.name }}</div>
+        <div class="user-role">{{ session.role|capitalize }}</div>
+      </div>
+    </div>
+  </div>
+</header>
+{% endmacro %}
+
+{% macro flash_messages() %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-container">
+  {% for cat, msg in messages %}
+  <div class="flash flash-{{ cat }}">
+    <i class="fas {% if cat=='success' %}fa-check-circle{% elif cat=='error' %}fa-exclamation-circle{% elif cat=='info' %}fa-info-circle{% else %}fa-bell{% endif %}"></i>
+    {{ msg }}
+    <button onclick="this.parentElement.remove()">×</button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+{% endmacro %}

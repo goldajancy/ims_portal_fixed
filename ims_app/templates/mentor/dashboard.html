@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Mentor Dashboard – IMS{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('mentor', 'dashboard') }}
+  <div class="main-content">
+    {{ topbar('Welcome back, ' ~ session.name ~ '! 👋', "Here's what's happening with your classes today.") }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-users"></i></div><div class="stat-info"><div class="stat-label">My Trainees</div><div class="stat-value">{{ stats.total_trainees }}</div></div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="fas fa-tasks"></i></div><div class="stat-info"><div class="stat-label">Tasks Given</div><div class="stat-value">{{ stats.tasks }}</div></div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-file-alt"></i></div><div class="stat-info"><div class="stat-label">Assignments</div><div class="stat-value">{{ stats.total_assignments }}</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-upload"></i></div><div class="stat-info"><div class="stat-label">Submissions</div><div class="stat-value">{{ stats.submissions }}</div></div></div>
+        <div class="stat-card"><div class="stat-icon red"><i class="fas fa-hourglass-half"></i></div><div class="stat-info"><div class="stat-label">Pending Review</div><div class="stat-value">{{ stats.pending_review }}</div></div></div>
+      </div>
+      <div class="dash-grid dash-grid-3">
+        <div class="card col-span-2">
+          <div class="card-header"><h3>Recent Submissions</h3><a href="/mentor/submissions" class="link-sm">View All</a></div>
+          <div class="card-body p0">
+          <table class="data-table">
+          <thead><tr><th>Trainee</th><th>Assignment</th><th>Submitted</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+          {% for s in recent_subs %}
+          <tr>
+            <td>{{ s.trainee_name }}</td>
+            <td>{{ s.assignment_title }}</td>
+            <td>{{ s.submitted_at.strftime('%b %d') if s.submitted_at else '' }}</td>
+            <td><span class="badge {{ 'badge-success' if s.marks else 'badge-warning' }}">{{ 'Graded' if s.marks else 'Pending' }}</span></td>
+            <td><a href="/mentor/submissions" class="btn-sm btn-primary">Review</a></td>
+          </tr>
+          {% else %}<tr><td colspan="5" class="empty-state">No submissions yet</td></tr>{% endfor %}
+          </tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Upcoming Deadlines</h3></div>
+          <div class="card-body">
+          {% for d in deadlines %}
+          <div class="deadline-item">
+            <div class="deadline-date">{{ d.due_date.strftime('%b %d') if d.due_date else '–' }}</div>
+            <div class="deadline-info">
+              <div class="deadline-title">{{ d.title }}</div>
+              <div class="deadline-sub">{{ d.class_name }} · {{ d.sub_count }} submitted</div>
+            </div>
+          </div>
+          {% else %}<p class="empty-state">No upcoming deadlines</p>{% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="dash-grid dash-grid-2">
+        <div class="card">
+          <div class="card-header"><h3>Trainee Performance</h3><a href="/mentor/analytics" class="link-sm">Full Report</a></div>
+          <div class="card-body p0">
+          <table class="data-table">
+          <thead><tr><th>Trainee</th><th>Avg Marks</th><th>Attendance</th><th>Submissions</th></tr></thead>
+          <tbody>
+          {% for t in trainee_perf %}
+          <tr>
+            <td>{{ t.name }}</td><td>{{ t.avg_marks or '–' }}</td>
+            <td>{{ t.att_pct or '–' }}%</td><td>{{ t.task_done }}</td>
+          </tr>
+          {% else %}<tr><td colspan="4" class="empty-state">No data</td></tr>{% endfor %}
+          </tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Quick Actions</h3></div>
+          <div class="card-body">
+          <div class="quick-actions">
+            <a href="/mentor/tasks" class="qa-btn"><i class="fas fa-plus"></i><span>Create Task</span></a>
+            <a href="/mentor/assignments" class="qa-btn"><i class="fas fa-tasks"></i><span>Assignment</span></a>
+            <a href="/mentor/attendance" class="qa-btn"><i class="fas fa-calendar-check"></i><span>Attendance</span></a>
+            <a href="/mentor/exams" class="qa-btn"><i class="fas fa-file-alt"></i><span>Exam</span></a>
+            <a href="/mentor/announcements" class="qa-btn"><i class="fas fa-bullhorn"></i><span>Announce</span></a>
+            <a href="/mentor/analytics" class="qa-btn"><i class="fas fa-chart-bar"></i><span>Analytics</span></a>
+          </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

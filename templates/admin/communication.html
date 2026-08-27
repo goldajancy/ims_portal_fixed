@@ -1,0 +1,974 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block title %}Communication Skills{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/development.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block body %}
+
+{{ sidebar('admin','development') }}
+
+{{ topbar(
+'🎤 Communication Skills',
+'Evaluate speaking, writing, listening and interview performance'
+) }}
+
+{{ flash_messages() }}
+
+<div class="main-content">
+
+    <!-- =========================== -->
+    <!-- Header -->
+    <!-- =========================== -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h2>Communication Skills</h2>
+
+            <p>
+
+                Monitor communication development,
+                interview readiness and presentation confidence.
+
+            </p>
+
+        </div>
+
+        <div class="header-actions">
+
+            <button class="btn btn-success"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addCommunicationModal">
+
+                <i class="fas fa-plus-circle"></i>
+
+                Add Assessment
+
+            </button>
+
+            <button class="btn btn-primary">
+
+                <i class="fas fa-download"></i>
+
+                Export
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================== -->
+    <!-- Statistics -->
+    <!-- =========================== -->
+
+    <div class="stats-grid">
+
+        <div class="stat-card blue">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-comments"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>{{ total_assessments or 96 }}</h3>
+
+                <p>Total Assessments</p>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card green">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-microphone"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>84%</h3>
+
+                <p>Speaking</p>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card orange">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-pen"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>81%</h3>
+
+                <p>Writing</p>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card purple">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-headphones"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>86%</h3>
+
+                <p>Listening</p>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card red">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-user-tie"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>78%</h3>
+
+                <p>Interview</p>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card cyan">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-brain"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>83%</h3>
+
+                <p>AI Score</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================== -->
+    <!-- Filters -->
+    <!-- =========================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-search"></i>
+
+                Search Communication Records
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="filter-grid">
+
+                <div class="form-group">
+
+                    <label>Student</label>
+
+                    <input class="form-control"
+                           placeholder="Search Student">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Skill</label>
+
+                    <select class="form-control">
+
+                        <option>All</option>
+
+                        <option>Speaking</option>
+
+                        <option>Writing</option>
+
+                        <option>Listening</option>
+
+                        <option>Presentation</option>
+
+                        <option>Interview</option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Performance</label>
+
+                    <select class="form-control">
+
+                        <option>All</option>
+
+                        <option>Excellent</option>
+
+                        <option>Good</option>
+
+                        <option>Average</option>
+
+                        <option>Poor</option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Date</label>
+
+                    <input type="date"
+                           class="form-control">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================== -->
+    <!-- Assessment Table -->
+    <!-- =========================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-table"></i>
+
+                Communication Assessments
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover">
+
+                    <thead>
+
+                    <tr>
+
+                        <th>Student</th>
+
+                        <th>Speaking</th>
+
+                        <th>Writing</th>
+
+                        <th>Listening</th>
+
+                        <th>Presentation</th>
+
+                        <th>Interview</th>
+
+                        <th>Overall</th>
+
+                        <th>Status</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                                            {% for record in communication_records %}
+
+                    <tr>
+
+                        <td>
+
+                            <div class="student-info">
+
+                                <img src="{{ record.avatar or url_for('static', filename='img/default-avatar.png') }}"
+                                     class="student-avatar">
+
+                                <div>
+
+                                    <strong>{{ record.student_name }}</strong><br>
+
+                                    <small>{{ record.email }}</small>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-success">
+
+                                {{ record.speaking }}/10
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-primary">
+
+                                {{ record.writing }}/10
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-info">
+
+                                {{ record.listening }}/10
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-warning">
+
+                                {{ record.presentation }}/10
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-danger">
+
+                                {{ record.interview }}/10
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            <div class="d-flex align-items-center">
+
+                                <div class="progress flex-grow-1 me-2"
+                                     style="height:8px;">
+
+                                    <div class="progress-bar bg-success"
+                                         style="width:{{ record.overall*10 }}%">
+                                    </div>
+
+                                </div>
+
+                                <strong>
+
+                                    {{ record.overall }}/10
+
+                                </strong>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            {% if record.overall >= 8 %}
+
+                            <span class="badge bg-success">
+
+                                Excellent
+
+                            </span>
+
+                            {% elif record.overall >= 6 %}
+
+                            <span class="badge bg-warning">
+
+                                Good
+
+                            </span>
+
+                            {% else %}
+
+                            <span class="badge bg-danger">
+
+                                Needs Improvement
+
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <div class="btn-group">
+
+                                <button class="btn btn-info btn-sm">
+
+                                    <i class="fas fa-eye"></i>
+
+                                </button>
+
+                                <button class="btn btn-warning btn-sm">
+
+                                    <i class="fas fa-edit"></i>
+
+                                </button>
+
+                                <button class="btn btn-danger btn-sm">
+
+                                    <i class="fas fa-trash"></i>
+
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+
+                        <td colspan="9" class="text-center py-5">
+
+                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+
+                            <h5>No Communication Assessments</h5>
+
+                            <p class="text-muted">
+
+                                Click <strong>Add Assessment</strong> to create the first communication record.
+
+                            </p>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- Pagination -->
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+
+                <small>
+
+                    Showing {{ communication_records|length }} Records
+
+                </small>
+
+                <nav>
+
+                    <ul class="pagination">
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">Previous</a>
+
+                        </li>
+
+                        <li class="page-item active">
+
+                            <a class="page-link" href="#">1</a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">2</a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">3</a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">Next</a>
+
+                        </li>
+
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================================= -->
+
+    <!-- Communication Skill Breakdown -->
+
+    <!-- ================================= -->
+
+    <div class="dashboard-row">
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fas fa-chart-bar"></i>
+
+                    Communication Skill Breakdown
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Speaking</span>
+
+                        <span>84%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-success"
+                             style="width:84%"></div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Writing</span>
+
+                        <span>81%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-primary"
+                             style="width:81%"></div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Listening</span>
+
+                        <span>86%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-info"
+                             style="width:86%"></div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Presentation</span>
+
+                        <span>80%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-warning"
+                             style="width:80%"></div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Interview</span>
+
+                        <span>78%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-danger"
+                             style="width:78%"></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===== Part 3 Starts Here ===== -->
+
+        <!-- ===================================== -->
+    <!-- Add Communication Assessment Modal -->
+    <!-- ===================================== -->
+
+    <div class="modal fade" id="addCommunicationModal" tabindex="-1">
+
+        <div class="modal-dialog modal-lg">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+
+                        <i class="fas fa-comments"></i>
+
+                        Add Communication Assessment
+
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <form method="POST"
+                      action="/admin/communication/add">
+
+                    <div class="modal-body">
+
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Student</label>
+
+                                <select class="form-control"
+                                        name="student_id">
+
+                                    {% for s in students %}
+
+                                    <option value="{{ s.id }}">
+
+                                        {{ s.name }}
+
+                                    </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Assessment Date</label>
+
+                                <input type="date"
+                                       class="form-control"
+                                       name="assessment_date">
+
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+
+                                <label>Speaking</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="speaking">
+
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+
+                                <label>Writing</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="writing">
+
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+
+                                <label>Listening</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="listening">
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Presentation</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="presentation">
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Interview</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="interview">
+
+                            </div>
+
+                            <div class="col-12">
+
+                                <label>Mentor Remarks</label>
+
+                                <textarea class="form-control"
+                                          rows="4"
+                                          name="remarks"></textarea>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+
+                            Cancel
+
+                        </button>
+
+                        <button class="btn btn-success">
+
+                            Save Assessment
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const communicationChart =
+document.getElementById("communicationChart");
+
+if(communicationChart){
+
+new Chart(communicationChart,{
+
+type:"bar",
+
+data:{
+
+labels:[
+"Speaking",
+"Writing",
+"Listening",
+"Presentation",
+"Interview"
+],
+
+datasets:[{
+
+label:"Average Score",
+
+data:[
+84,
+81,
+86,
+80,
+78
+]
+
+}]
+
+},
+
+options:{
+
+responsive:true
+
+}
+
+});
+
+}
+
+
+
+const interviewChart =
+document.getElementById("interviewChart");
+
+if(interviewChart){
+
+new Chart(interviewChart,{
+
+type:"radar",
+
+data:{
+
+labels:[
+"Confidence",
+"Fluency",
+"Technical",
+"Body Language",
+"Problem Solving"
+],
+
+datasets:[{
+
+label:"Interview Skills",
+
+data:[
+88,
+84,
+86,
+76,
+82
+],
+
+fill:true
+
+}]
+
+},
+
+options:{
+
+responsive:true
+
+}
+
+});
+
+}
+
+</script>
+
+{% endblock %}

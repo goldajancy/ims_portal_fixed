@@ -1,0 +1,29 @@
+{% extends "base.html" %} {% from "macros.html" import sidebar, topbar, flash_messages %} {% block title %}AI Report – {{ student.name }}{% endblock %} {% block body %}
+{{ sidebar('mentor', 'risk') }}
+{{ topbar('🤖 AI Report: ' ~ student.name, student.email) }}
+{{ flash_messages() }} Back to Risk Dashboard
+Attendance
+{{ risk_data.attendance_pct }}%
+Avg Marks
+{{ risk_data.avg_marks_pct }}%
+Risk Score
+{{ risk_data.risk_score }} / 100
+Risk Classification
+{{ risk_data.risk_emoji }} {{ risk_data.risk_label }}
+Assignments: {{ risk_data.submitted }} / {{ risk_data.total_assignments }} submitted ({{ risk_data.pending_ratio }}% pending)
+
+🤖 AI-Generated Feedback
+{{ ai_feedback }}
+
+🎯 Career Growth Suggestion
+{{ suggestion }}
+
+{% if subject_strengths %}
+Performance by Subject
+{% for s in subject_strengths %} {% endfor %}
+Class / Subject	Average Marks
+{{ s.class_name }}	{{ s.avg_marks }}%
+{% endif %}
+Quick Actions
+Message Trainee Add Note Book Office Hour
+{% endblock %}

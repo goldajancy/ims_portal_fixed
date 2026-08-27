@@ -1,0 +1,77 @@
+{% extends "base.html" %} {% from "macros.html" import sidebar, topbar, flash_messages %} {% block title %}{{ student.name }} – Full Profile – Admin{% endblock %} {% block body %}
+{{ sidebar('admin', 'extra') }}
+{{ topbar('👤 ' ~ student.name ~ ' – Complete Profile', student.email) }}
+{{ flash_messages() }} Back to Dashboard
+{{ student.name[0]|upper }}
+{{ student.name }}
+{{ student.email }} · {{ student.phone or 'No phone' }}
+{% if student.department %}
+{{ student.department }}
+{% endif %} {% if student.semester %}
+Semester {{ student.semester }}
+{% endif %} {% if student.batch_year %}
+Batch {{ student.batch_year }}
+{% endif %}
+{% if student.skills %}
+Skills: {{ student.skills }}
+{% endif %}
+{% if student.github_url %}
+GitHub
+{% endif %} {% if student.linkedin_url %}
+LinkedIn
+{% endif %} {% if student.portfolio_url %}
+Portfolio
+{% endif %} {% if student.resume_path %}
+Resume
+{% endif %}
+🤖 AI Development Scores
+Overall: {{ scores.overall }}%
+{% for label, key, color in [ ('Academic','academic','#5c6bc0'),('Attendance','attendance','#0891b2'), ('Technical','technical','#7c3aed'),('Leadership','leadership','#d97706'), ('Communication','communication','#16a34a'),('Innovation','innovation','#ea580c'), ('Volunteer','volunteer','#ec4899'),('Professionalism','professionalism','#64748b'), ('Placement Ready','placement_readiness','#059669'),('Higher Studies','higher_studies','#0284c7') ] %}
+{{ scores[key] }}%
+{{ label }}
+{% endfor %}
+Activities ({{ activities|length }})
+{% for a in activities %} {% else %}{% endfor %}
+Category	Activity	Verified
+{{ a.cat_name or '–' }}	{{ a.activity_name }}	{{ a.verification_status }}
+None
+Certifications ({{ certifications|length }})
+{% for c in certifications %} {% else %}{% endfor %}
+Certificate	Provider	Hours
+{{ c.cert_name }}	{{ c.provider or '–' }}	{{ c.hours }}h
+None
+Competitions ({{ competitions|length }})
+{% for c in competitions %} {% else %}{% endfor %}
+Event	Level	Position
+{{ c.event_name }}	{{ c.level }}	{{ c.position or '–' }}
+None
+Leadership ({{ leadership|length }})
+{% for l in leadership %} {% else %}{% endfor %}
+Role	Club/Event
+{{ l.role }}	{{ l.club_event or '–' }}
+None
+Technical Achievements ({{ technical|length }})
+{% for t in technical %} {% else %}{% endfor %}
+Type	Title	Platform
+{{ t.type|replace('_',' ')|capitalize }}	{{ t.title }}	{{ t.platform or '–' }}
+None
+Volunteer Activities
+{% for v in volunteer %} {% else %}{% endfor %}
+Activity	Organization	Hours
+{{ v.activity }}	{{ v.ngo_org or '–' }}	{{ v.hours }}h
+None
+{% if skills_rating %}
+⭐ Soft Skills Rating
+{% for skill in ['communication','teamwork','leadership','creativity','problem_solving','time_management','adaptability','professionalism'] %}
+{{ skills_rating[skill] }} / 5
+{{ skill|replace('_',' ')|capitalize }}
+{% endfor %}
+{% if skills_rating.remarks %}
+Remarks: {{ skills_rating.remarks }}
+{% endif %}
+{% endif %}
+💡 AI Recommendations
+{% for r in recommendations %}
+{{ r.text }}
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Manage Students - Admin{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('admin', 'classes') }}
+  <div class="main-content">
+    {{ topbar('Manage Class Students', 'Add or remove trainees from this class') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <div class="page-header">
+        <a href="{{ url_for('admin_classes') }}" class="btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Classes
+        </a>
+      </div>
+
+      <div class="dash-grid dash-grid-2">
+
+        <!-- Enrolled Students -->
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-user-graduate"></i> Enrolled Students ({{ enrolled_students|length }})</h3>
+          </div>
+          <div class="card-body">
+            {% if enrolled_students %}
+              {% for s in enrolled_students %}
+              <div class="student-row">
+                <div class="student-info">
+                  <div class="avatar-sm">{{ s.name[0]|upper }}</div>
+                  <div>
+                    <div class="student-name">{{ s.name }}</div>
+                    <div class="student-email">{{ s.email }}</div>
+                  </div>
+                </div>
+                <form action="{{ url_for('remove_student_from_class', class_id=class_id, student_id=s.id) }}"
+                      method="POST" style="margin:0;">
+                  <button type="submit" class="btn-icon btn-danger" title="Remove"
+                          onclick="return confirm('Remove {{ s.name }} from this class?')">
+                    <i class="fas fa-user-minus"></i>
+                  </button>
+                </form>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty-state">
+                <i class="fas fa-user-graduate"></i>
+                <p>No students enrolled yet.</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Available Students -->
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-user-plus"></i> Available Students</h3>
+          </div>
+          <div class="card-body">
+            {% if available_students %}
+            <form action="{{ url_for('add_students_to_class', class_id=class_id) }}" method="POST">
+              <div class="student-att-list">
+                {% for s in available_students %}
+                <label class="student-check-row">
+                  <input type="checkbox" name="student_ids" value="{{ s.id }}">
+                  <div class="avatar-sm">{{ s.name[0]|upper }}</div>
+                  <div>
+                    <div class="student-name">{{ s.name }}</div>
+                    <div class="student-email">{{ s.email }}</div>
+                  </div>
+                </label>
+                {% endfor %}
+              </div>
+              <div class="form-actions" style="margin-top:14px;">
+                <button type="submit" class="btn-primary btn-full">
+                  <i class="fas fa-user-plus"></i> Add Selected Students
+                </button>
+              </div>
+            </form>
+            {% else %}
+              <div class="empty-state">
+                <i class="fas fa-check-circle"></i>
+                <p>All trainees are already enrolled.</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.student-row, .student-check-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+    background: #fff;
+}
+.student-check-row {
+    justify-content: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+.student-check-row:hover {
+    background: #f5f7ff;
+    border-color: var(--accent);
+}
+.student-check-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+.student-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.student-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+.student-email {
+    font-size: 11.5px;
+    color: var(--muted);
+}
+.btn-full { width: 100%; }
+</style>
+{% endblock %}

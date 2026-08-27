@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Submissions – IMS Mentor{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('mentor', 'submissions') }}
+  <div class="main-content">
+    {{ topbar('Submissions') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('assignments')">
+          <i class="fas fa-file-alt"></i> Assignments
+          <span class="tab-count">{{ assignment_subs|length }}</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('tasks')">
+          <i class="fas fa-tasks"></i> Tasks
+          <span class="tab-count">{{ task_subs|length }}</span>
+        </button>
+      </div>
+
+      <!-- Assignment Submissions -->
+      <div id="tab-assignments" class="tab-content">
+        <div class="card">
+          <div class="card-body p0">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Trainee</th>
+                  <th>Assignment</th>
+                  <th>Class</th>
+                  <th>Submitted</th>
+                  <th>Content</th>
+                  <th>Attachment</th>
+                  <th>Marks</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in assignment_subs %}
+                <tr>
+                  <td>{{ s.trainee_name }}</td>
+                  <td>{{ s.assignment_title }}</td>
+                  <td>{{ s.class_name }}</td>
+                  <td>{{ s.submitted_at.strftime('%b %d, %Y') if s.submitted_at else '–' }}</td>
+                  <td>
+                    {% if s.content %}
+                      <button class="btn-sm btn-outline"
+                              onclick="viewContent('{{ s.trainee_name }}', `{{ s.content|replace('`','\\`') }}`)">
+                        <i class="fas fa-eye"></i> View
+                      </button>
+                    {% elif s.link %}
+                      <a href="{{ s.link }}" target="_blank" class="btn-sm btn-outline">
+                        <i class="fas fa-link"></i> Link
+                      </a>
+                    {% else %}
+                      <span class="text-muted">–</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if s.attachment %}
+                      <a href="{{ url_for('static', filename='uploads/submissions/' ~ s.attachment) }}"
+                         target="_blank" class="btn-sm btn-primary">
+                        <i class="fas fa-paperclip"></i> View
+                      </a>
+                    {% else %}
+                      <span class="text-muted">–</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if s.marks is not none %}
+                      <span class="marks-badge">{{ s.marks }}</span>
+                    {% else %}
+                      <span class="text-muted">–</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <button class="btn-sm btn-primary"
+                            onclick="openGrade({{ s.id }}, '{{ s.trainee_name }}')">
+                      <i class="fas fa-pen"></i> Grade
+                    </button>
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="empty-state">No assignment submissions yet</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task Submissions -->
+      <div id="tab-tasks" class="tab-content" style="display:none;">
+        <div class="card">
+          <div class="card-body p0">
+            <table class="data-table">
+                            <thead>
+                <tr>
+                  <th>Trainee</th>
+                  <th>Task</th>
+                  <th>Class</th>
+                  <th>Submitted</th>
+                  <th>Content</th>
+                  <th>Attachment</th>
+                  <th>Marks</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in task_subs %}
+                <tr>
+                  <td>{{ s.trainee_name }}</td>
+                  <td>{{ s.assignment_title }}</td>
+                  <td>{{ s.class_name }}</td>
+                  <td>{{ s.submitted_at.strftime('%b %d, %Y') if s.submitted_at else '–' }}</td>
+                  <td>
+                    {% if s.content %}
+                      <button class="btn-sm btn-outline"
+                              onclick="viewContent('{{ s.trainee_name }}', `{{ s.content|replace('`','\\`') }}`)">
+                        <i class="fas fa-eye"></i> View
+                      </button>
+                    {% else %}
+                      <span class="text-muted">–</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if s.attachment %}
+                      <a href="{{ url_for('static', filename='uploads/submissions/' ~ s.attachment) }}"
+                         target="_blank" class="btn-sm btn-primary">
+                        <i class="fas fa-paperclip"></i> View
+                      </a>
+                    {% else %}
+                      <span class="text-muted">–</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if s.marks is not none %}
+                      <span class="marks-badge">{{ s.marks }}</span>
+                    {% else %}
+                      <span class="text-muted">–</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <button class="btn-sm btn-primary"
+                            onclick="openTaskGrade({{ s.id }}, '{{ s.trainee_name }}')">
+                      <i class="fas fa-pen"></i> Grade
+                    </button>
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="empty-state">No task submissions yet</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Grade Modal -->
+<div class="modal" id="gradeModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Grade – <span id="gradeTrainee"></span></h3>
+      <button onclick="closeModal('gradeModal')">×</button>
+    </div>
+    <form method="POST" id="gradeForm" class="form-vertical">
+      <div class="form-group">
+        <label>Marks (0–100)</label>
+        <input type="number" name="marks" min="0" max="100" required/>
+      </div>
+      <div class="form-group">
+        <label>Feedback</label>
+        <textarea name="feedback" rows="3"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Save</button>
+        <button type="button" class="btn-outline" onclick="closeModal('gradeModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Task Grade Modal -->
+<div class="modal" id="taskGradeModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Grade Task – <span id="taskGradeTrainee"></span></h3>
+      <button onclick="closeModal('taskGradeModal')">×</button>
+    </div>
+    <form method="POST" id="taskGradeForm" class="form-vertical">
+      <div class="form-group">
+        <label>Marks (0–100)</label>
+        <input type="number" name="marks" min="0" max="100" required/>
+      </div>
+      <div class="form-group">
+        <label>Feedback</label>
+        <textarea name="feedback" rows="3"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Save</button>
+        <button type="button" class="btn-outline"
+                onclick="closeModal('taskGradeModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Content Modal -->
+<div class="modal" id="contentModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Submission – <span id="contentTrainee"></span></h3>
+      <button onclick="closeModal('contentModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="contentText" style="white-space:pre-wrap;line-height:1.7;"></p>
+    </div>
+    <div class="form-actions">
+      <button class="btn-outline" onclick="closeModal('contentModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.tab-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.tab-btn {
+    padding: 10px 24px;
+    border: 2px solid #e5e7eb;
+    background: white;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+.tab-btn.active {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    color: white;
+}
+.tab-count {
+    background: rgba(255,255,255,0.3);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+.tab-btn:not(.active) .tab-count {
+    background: #f3f4f6;
+    color: #374151;
+}
+.marks-badge {
+    background: #dcfce7;
+    color: #15803d;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+}
+.modal-body {
+    padding: 20px 24px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+</style>
+
+<script>
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tab).style.display = 'block';
+    event.target.closest('.tab-btn').classList.add('active');
+}
+
+function openGrade(id, name) {
+    document.getElementById('gradeTrainee').textContent = name;
+    document.getElementById('gradeForm').action = '/mentor/submissions/grade/' + id;
+    openModal('gradeModal');
+}
+
+function viewContent(name, content) {
+    document.getElementById('contentTrainee').textContent = name;
+    document.getElementById('contentText').textContent = content;
+    openModal('contentModal');
+}
+
+function openTaskGrade(id, name) {
+    document.getElementById('taskGradeTrainee').textContent = name;
+    document.getElementById('taskGradeForm').action = '/mentor/tasks/grade/' + id;
+    openModal('taskGradeModal');
+}
+</script>
+{% endblock %}

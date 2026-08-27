@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Attendance Submissions - Admin{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('admin', 'send_link') }}
+  <div class="main-content">
+    {{ topbar('Attendance Submissions', 'WhatsApp attendance links filled by mentors') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Submitted Attendance</h3>
+        </div>
+        <div class="card-body">
+          {% if submissions %}
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Class</th>
+                  <th>Date</th>
+                  <th>Section</th>
+                  <th>Period</th>
+                  <th>Present</th>
+                  <th>Absent</th>
+                  <th>Total</th>
+                  <th>Submitted On</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in submissions %}
+                <tr>
+                  <td><strong>{{ s.class_name }}</strong></td>
+                  <td>{{ s.date }}</td>
+                  <td>{{ s.section or '-' }}</td>
+                  <td>{{ s.period or '-' }}</td>
+                  <td>
+                    <span class="badge badge-success">{{ s.total_count - s.absent_count }}</span>
+                  </td>
+                  <td>
+                    <span class="badge badge-danger">{{ s.absent_count }}</span>
+                  </td>
+                  <td>{{ s.total_count }}</td>
+                  <td>{{ s.created_at.strftime('%b %d, %Y %I:%M %p') if s.created_at else '-' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="empty-state">
+            <i class="fas fa-clipboard-check"></i>
+            <h4>No Submissions Yet</h4>
+            <p>Attendance links you send via WhatsApp will appear here once filled out.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

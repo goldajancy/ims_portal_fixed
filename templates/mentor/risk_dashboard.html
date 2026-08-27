@@ -1,0 +1,1316 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block title %}AI Student Prediction Dashboard{% endblock %}
+
+{% block body %}
+
+{{ sidebar('mentor','risk') }}
+
+{{ topbar(
+    '',
+    
+) }}
+
+{{ flash_messages() }}
+
+<style>
+
+:root{
+    --sidebar-width:260px;
+    --primary:#4f46e5;
+    --success:#16a34a;
+    --warning:#f59e0b;
+    --danger:#dc2626;
+    --light:#f5f7fb;
+    --card-radius:14px;
+}
+
+body{
+    background:var(--light);
+    font-family:'Segoe UI',sans-serif;
+    font-size:14px;
+}
+
+/* Sidebar */
+
+.sidebar{
+    position:fixed;
+    top:0;
+    left:0;
+    width:var(--sidebar-width);
+    height:100vh;
+}
+
+/* Main */
+
+.main-content{
+    margin-left:var(--sidebar-width);
+    padding:20px;
+    min-height:100vh;
+}
+
+@media(max-width:768px){
+
+.main-content{
+    margin-left:0;
+    padding:15px;
+}
+
+}
+
+/*************************
+PAGE TITLE
+*************************/
+
+.page-title{
+    font-size:24px;
+    font-weight:700;
+    color:#111827;
+    margin-bottom:4px;
+}
+
+.page-subtitle{
+    font-size:14px;
+    color:#6b7280;
+    margin-bottom:20px;
+}
+
+/*************************
+KPI CARDS
+*************************/
+
+.kpi-card{
+
+    background:#fff;
+    border:none;
+    border-radius:14px;
+    box-shadow:0 2px 10px rgba(0,0,0,.06);
+    transition:.25s;
+
+}
+
+.kpi-card:hover{
+
+    transform:translateY(-3px);
+
+}
+
+.kpi-body{
+
+    padding:16px;
+
+}
+
+.kpi-icon{
+
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    margin-bottom:12px;
+
+}
+
+/* .bg-red{
+    background:#fee2e2;
+}
+
+.bg-yellow{
+    background:#fef3c7;
+}
+
+.bg-green{
+    background:#dcfce7;
+}
+
+.bg-blue{
+    background:#dbeafe;
+} */
+
+.kpi-number{
+
+    font-size:26px;
+    font-weight:700;
+    line-height:1.2;
+
+}
+
+.kpi-text{
+
+    font-size:13px;
+    color:#6b7280;
+    margin-top:3px;
+
+}
+.risk-danger { background-color: #fecaca !important; }
+.risk-warning { background-color: #fde68a !important; }
+.risk-success { background-color: #bbf7d0 !important; }
+/*************************
+TOOLBAR
+*************************/
+
+.toolbar{
+
+    background:#fff;
+    padding:14px 18px;
+    border-radius:14px;
+    margin:20px 0;
+    box-shadow:0 2px 10px rgba(0,0,0,.05);
+
+}
+
+.clean-input{
+
+    height:40px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    font-size:13px;
+
+}
+
+.clean-input:focus{
+
+    border-color:var(--primary);
+    box-shadow:none;
+
+}
+
+.btn{
+
+    font-size:13px;
+    border-radius:10px;
+    padding:8px 16px;
+
+}
+
+.btn-ai{
+
+    background:var(--primary);
+    color:#fff;
+    border:none;
+
+}
+
+.btn-ai:hover{
+
+    background:#4338ca;
+    color:#fff;
+
+}
+
+/*************************
+CARD
+*************************/
+
+.card{
+
+    border:none;
+    border-radius:14px;
+    box-shadow:0 2px 10px rgba(0,0,0,.05);
+
+}
+
+.card-header{
+
+    background:#fff;
+    border-bottom:1px solid #f1f1f1;
+    padding:14px 18px;
+
+}
+
+.card-header h4{
+
+    font-size:18px;
+    font-weight:600;
+    margin:0;
+
+}
+
+/*************************
+TABLE
+*************************/
+
+.table{
+
+    font-size:13px;
+
+}
+
+.table th{
+
+    font-size:13px;
+    font-weight:600;
+    color:#374151;
+    white-space:nowrap;
+    background:#f8fafc;
+
+}
+
+.table td{
+
+    vertical-align:middle;
+
+}
+
+.table tbody tr:hover{
+
+    background:#f9fafb;
+
+}
+
+/*************************
+BADGES
+*************************/
+
+.badge{
+
+    font-size:11px;
+    padding:6px 10px;
+
+}
+
+/*************************
+PROGRESS
+*************************/
+
+.progress{
+
+    height:7px;
+    border-radius:20px;
+
+}
+
+/*************************
+MODAL
+*************************/
+
+.modal-title{
+
+    font-size:18px;
+    font-weight:600;
+
+}
+
+.modal-body{
+
+    font-size:14px;
+
+}
+
+/*************************
+CHART
+*************************/
+
+canvas{
+
+    max-height:280px;
+
+}
+
+/* Remove colours from prediction table badges */
+#riskTable .badge {
+    background-color: #ffffff !important;
+    color: #374151 !important;
+    border: 1px solid #e5e7eb;
+}
+</style>
+
+<div class="main-content">
+
+<div class="mb-4">
+
+<div class="page-title">
+
+
+
+</div>
+
+
+
+</div>
+
+<!-- KPI ROW -->
+
+<div class="row g-4">
+
+<div class="col-lg-3 col-md-6">
+
+<div class="kpi-card">
+
+<div class="kpi-body">
+
+<div class="kpi-icon bg-red">
+🔴
+</div>
+
+<div class="kpi-number">
+
+{{ high_count }}
+
+</div>
+
+<div class="kpi-text">
+
+High Risk Students
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-lg-3 col-md-6">
+
+<div class="kpi-card">
+
+<div class="kpi-body">
+
+<div class="kpi-icon bg-yellow">
+🟡
+</div>
+
+<div class="kpi-number">
+
+{{ medium_count }}
+
+</div>
+
+<div class="kpi-text">
+
+Medium Risk
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-lg-3 col-md-6">
+
+<div class="kpi-card">
+
+<div class="kpi-body">
+
+<div class="kpi-icon bg-green">
+🟢
+</div>
+
+<div class="kpi-number">
+
+{{ low_count }}
+
+</div>
+
+<div class="kpi-text">
+
+Low Risk
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-lg-3 col-md-6">
+
+<div class="kpi-card">
+
+<div class="kpi-body">
+
+<div class="kpi-icon bg-blue">
+🏆
+</div>
+
+<div class="kpi-number">
+
+{{ talented_count|default(0) }}
+
+</div>
+
+<div class="kpi-text">
+
+Top Skilled Students
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- TOOLBAR -->
+
+<div class="toolbar">
+
+<div class="row align-items-center g-3">
+
+<div class="col-lg-5">
+
+<div class="input-group">
+
+<span class="input-group-text bg-white">
+
+🔍
+
+</span>
+
+<input
+
+type="text"
+
+id="searchInput"
+
+class="form-control clean-input"
+
+placeholder="Search student by name..."
+
+>
+
+</div>
+
+</div>
+
+<div class="col-lg-7 text-lg-end">
+
+<button
+
+class="btn btn-ai"
+
+onclick="filterTable()">
+
+Search
+
+</button>
+
+<button
+
+class="btn btn-outline-secondary btn-reset"
+
+onclick="resetSearch()">
+
+Reset
+
+</button>
+
+<button
+
+class="btn btn-outline-primary btn-sort"
+
+onclick="sortTableByRisk()">
+
+Sort Risk ↓
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ===========================================================
+                    STUDENT AI PREDICTION TABLE
+============================================================ -->
+
+<div class="card border-0 shadow-sm rounded-4">
+
+    <div class="card-header bg-white py-3">
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+
+                <h4 class="fw-bold mb-1">
+                    📊 Student Prediction Overview
+                </h4>
+
+                <small class="text-muted">
+                    Academic performance + Extracurricular analysis
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table
+            class="table table-hover align-middle"
+            id="riskTable">
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th width="240">
+                            Student
+                        </th>
+
+                        <th class="text-center">
+                            Attendance
+                        </th>
+
+                        <th class="text-center">
+                            Avg Marks
+                        </th>
+
+                        <th class="text-center">
+                            Pending
+                        </th>
+
+                        <th width="180">
+                            Academic Risk
+                        </th>
+
+                        <th class="text-center">
+                            Skill Score
+                        </th>
+
+                        <th class="text-center">
+                            Top Skill
+                        </th>
+
+                        <th width="330">
+                            AI Recommendation
+                        </th>
+
+                        <th class="text-center">
+                            Status
+                        </th>
+
+                        <th class="text-center">
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for r in risk_list %}
+
+                <tr>
+
+                    <!-- STUDENT -->
+
+                    <td>
+
+                        <div class="fw-bold">
+
+                            {{ r.name }}
+
+                        </div>
+
+                        <small class="text-muted">
+
+                            {{ r.email }}
+
+                        </small>
+
+                    </td>
+
+                    <!-- ATTENDANCE -->
+
+                    <td class="text-center">
+
+                        <span class="badge bg-primary">
+
+                            {{ r.attendance_pct }}%
+
+                        </span>
+
+                    </td>
+
+                    <!-- MARKS -->
+
+                    <td class="text-center">
+
+                        <span class="badge bg-success">
+
+                            {{ r.avg_marks_pct }}%
+
+                        </span>
+
+                    </td>
+
+                    <!-- PENDING -->
+
+                    <td class="text-center">
+
+                        <span class="badge bg-warning text-dark">
+
+                            {{ r.pending_ratio }}%
+
+                        </span>
+
+                    </td>
+
+                    <!-- RISK -->
+
+                    <td>
+
+                        <div class="progress mb-2" style="height:8px;">
+
+                            <div
+
+                                class="progress-bar risk-{{ r.risk_color }}"
+
+                                role="progressbar"
+
+                                style="width:{{ r.risk_score }}%;">
+
+                            </div>
+
+                        </div>
+
+                        <div class="text-center">
+
+                            <small>
+
+                                {{ r.risk_score }}/100
+
+                            </small>
+
+                        </div>
+
+                    </td>
+
+                    <!-- SKILL SCORE -->
+
+                    <td class="text-center">
+
+                        {% if r.skill_score >= 90 %}
+
+                            <span class="badge bg-success">
+
+                                ⭐ {{ r.skill_score }}
+
+                            </span>
+
+                        {% elif r.skill_score >= 70 %}
+
+                            <span class="badge bg-info">
+
+                                {{ r.skill_score }}
+
+                            </span>
+
+                        {% elif r.skill_score >= 50 %}
+
+                            <span class="badge bg-warning text-dark">
+
+                                {{ r.skill_score }}
+
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge bg-danger">
+
+                                {{ r.skill_score }}
+
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <!-- TOP SKILL -->
+
+                    <td class="text-center">
+
+                        <span class="badge bg-secondary">
+
+                            {{ r.top_skill }}
+
+                        </span>
+
+                    </td>
+
+                    <!-- AI -->
+
+                    <td>
+
+                        <small>
+
+                            {{ r.ai_recommendation }}
+
+                        </small>
+
+                    </td>
+
+                    <!-- STATUS -->
+
+                    <td class="text-center">
+
+                        <span class="badge bg-{{ r.risk_color }}">
+
+                            {{ r.risk_label }}
+
+                        </span>
+
+                    </td>
+
+                    <!-- BUTTON -->
+
+                    <td class="text-center">
+
+                        <button
+
+                        class="btn btn-sm btn-outline-primary"
+
+                        onclick='showStudent({
+
+                            attendance:"{{ r.attendance_pct }}",
+
+                            marks:"{{ r.avg_marks_pct }}",
+
+                            pending:"{{ r.pending_ratio }}",
+
+                            risk:"{{ r.risk_score }}",
+
+                            skill:"{{ r.skill_score }}",
+
+                            topSkill:"{{ r.top_skill }}",
+
+                            strength:"{{ r.strengths }}",
+
+                            weakness:"{{ r.weaknesses }}",
+
+                            ai:"{{ r.ai_recommendation }}"
+
+                        })'>
+
+                        View AI
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td colspan="10" class="text-center py-5">
+
+                        <div class="text-muted">
+
+                            No students available.
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ===========================================================
+                    STUDENT AI MODAL
+============================================================ -->
+
+<div
+class="modal fade"
+id="studentModal"
+tabindex="-1">
+
+<div class="modal-dialog modal-lg">
+
+<div class="modal-content">
+
+<div class="modal-header">
+
+<h4>
+
+
+
+</h4>
+
+<button
+class="btn-close"
+data-bs-dismiss="modal">
+</button>
+
+</div>
+
+<div class="modal-body">
+
+<div class="row">
+
+<div class="col-md-6">
+
+<h5 class="fw-bold">
+
+Academic
+
+</h5>
+
+<table class="table">
+
+<tr>
+
+<th>Attendance</th>
+
+<td id="mAttendance"></td>
+
+</tr>
+
+<tr>
+
+<th>Average Marks</th>
+
+<td id="mMarks"></td>
+
+</tr>
+
+<tr>
+
+<th>Pending</th>
+
+<td id="mPending"></td>
+
+</tr>
+
+<tr>
+
+<th>Risk Score</th>
+
+<td id="mRisk"></td>
+
+</tr>
+
+</table>
+
+</div>
+
+<div class="col-md-6">
+
+<h5 class="fw-bold">
+
+Extracurricular
+
+</h5>
+
+<table class="table">
+
+<tr>
+
+<th>Skill Score</th>
+
+<td id="mSkill"></td>
+
+</tr>
+
+<tr>
+
+<th>Top Skill</th>
+
+<td id="mTopSkill"></td>
+
+</tr>
+
+<tr>
+
+<th>Strengths</th>
+
+<td id="mStrength"></td>
+
+</tr>
+
+<tr>
+
+<th>Weaknesses</th>
+
+<td id="mWeakness"></td>
+
+</tr>
+
+</table>
+
+</div>
+
+</div>
+
+<hr>
+
+<h5>
+
+🤖 AI Recommendation
+
+</h5>
+
+<div
+id="mRecommendation"
+class="alert alert-primary">
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ===========================================================
+                    AI ANALYTICS CHARTS
+============================================================ -->
+
+<div class="row mt-4">
+
+    <!-- Risk Distribution -->
+    <div class="col-lg-6 mb-4">
+
+        <div class="card border-0 shadow-sm rounded-4">
+
+            <div class="card-header bg-white">
+
+                <h5 class="mb-0">
+                    📊 Risk Distribution
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <canvas id="riskChart" height="220"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Skill Distribution -->
+
+    <div class="col-lg-6 mb-4">
+
+        <div class="card border-0 shadow-sm rounded-4">
+
+            <div class="card-header bg-white">
+
+                <h5 class="mb-0">
+                    🏆 Skill Distribution
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <canvas id="skillChart" height="220"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ===========================================================
+                    CHART JS
+============================================================ -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+// ----------------------------
+// Risk Chart
+// ----------------------------
+
+new Chart(document.getElementById("riskChart"),{
+
+    type:"doughnut",
+
+    data:{
+
+        labels:[
+            "High",
+            "Medium",
+            "Low"
+        ],
+
+        datasets:[{
+
+            data:[
+
+                {{ high_count }},
+
+                {{ medium_count }},
+
+                {{ low_count }}
+
+            ],
+
+            backgroundColor:[
+                            "#FECACA",   // High – light red
+                            "#FDE68A",   // Medium – light yellow
+                            "#BBF7D0"    // Low – light green
+                             ]
+
+
+        }]
+
+    },
+
+    options:{
+
+        responsive:true,
+
+        plugins:{
+
+            legend:{
+                position:"bottom"
+            }
+
+        }
+
+    }
+
+});
+
+// ----------------------------
+// Skill Chart
+// ----------------------------
+
+new Chart(document.getElementById("skillChart"),{
+
+    type:"bar",
+
+    data:{
+
+        labels:[
+
+            "Sports",
+
+            "Technical",
+
+            "Leadership",
+
+            "Communication",
+
+            "Cultural"
+
+        ],
+
+        datasets:[{
+
+            label:"Students",
+
+            data:[
+
+                {{ sports_count|default(0) }},
+
+                {{ technical_count|default(0) }},
+
+                {{ leadership_count|default(0) }},
+
+                {{ communication_count|default(0) }},
+
+                {{ cultural_count|default(0) }}
+
+            ]
+
+        }]
+
+    },
+
+    options:{
+
+        responsive:true,
+
+        scales:{
+
+            y:{
+
+                beginAtZero:true
+
+            }
+
+        }
+
+    }
+
+});
+
+</script>
+
+
+<!-- ===========================================================
+                    SEARCH
+============================================================ -->
+
+<script>
+
+function filterTable(){
+
+    let input=document.getElementById("searchInput")
+        .value
+        .toLowerCase();
+
+    let rows=document.querySelectorAll("#riskTable tbody tr");
+
+    rows.forEach(function(row){
+
+        let txt=row.innerText.toLowerCase();
+
+        if(txt.indexOf(input)>-1){
+
+            row.style.display="";
+
+        }else{
+
+            row.style.display="none";
+
+        }
+
+    });
+
+}
+
+</script>
+
+<!-- ===========================================================
+                    RESET
+============================================================ -->
+
+<script>
+
+function resetSearch(){
+
+    document.getElementById("searchInput").value="";
+
+    filterTable();
+
+}
+
+</script>
+
+<!-- ===========================================================
+                    SORT
+============================================================ -->
+
+<script>
+
+let desc=true;
+
+function sortTableByRisk(){
+
+    const tbody=document.querySelector("#riskTable tbody");
+
+    const rows=Array.from(tbody.querySelectorAll("tr"));
+
+    rows.sort(function(a,b){
+
+        let x=parseFloat(a.cells[4].innerText)||0;
+
+        let y=parseFloat(b.cells[4].innerText)||0;
+
+        return desc ? y-x : x-y;
+
+    });
+
+    rows.forEach(r=>tbody.appendChild(r));
+
+    desc=!desc;
+
+}
+
+</script>
+
+<!-- ===========================================================
+                    AI MODAL
+============================================================ -->
+
+<script>
+
+function showStudent(student){
+
+    document.getElementById("mAttendance").innerHTML=
+        student.attendance+"%";
+
+    document.getElementById("mMarks").innerHTML=
+        student.marks+"%";
+
+    document.getElementById("mPending").innerHTML=
+        student.pending+"%";
+
+    document.getElementById("mRisk").innerHTML=
+        student.risk+"/100";
+
+    document.getElementById("mSkill").innerHTML=
+        student.skill;
+
+    document.getElementById("mTopSkill").innerHTML=
+        student.topSkill;
+
+    document.getElementById("mStrength").innerHTML=
+        student.strength;
+
+    document.getElementById("mWeakness").innerHTML=
+        student.weakness;
+
+    document.getElementById("mRecommendation").innerHTML=
+        student.ai;
+
+    new bootstrap.Modal(
+        document.getElementById("studentModal")
+    ).show();
+
+}
+
+</script>
+
+<!-- ===========================================================
+                    AUTO SEARCH
+============================================================ -->
+
+<script>
+
+document
+.getElementById("searchInput")
+.addEventListener("keyup",filterTable);
+
+</script>
+
+<!-- ===========================================================
+                    CLOSE MAIN CONTENT
+============================================================ -->
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,1995 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block title %}Mentor - Extracurricular Activities{% endblock %}
+
+{% block body %}
+
+<div class="app-layout">
+
+    {{ sidebar('mentor', 'extracurricular') }}
+
+    <div class="main-content">
+
+        {{ topbar(
+            'Extracurricular Management',
+            'Review, approve and mentor student extracurricular activities'
+        ) }}
+
+        <div class="content-area">
+
+            {{ flash_messages() }}
+
+            <!-- ====================================== -->
+            <!-- Dashboard Cards -->
+            <!-- ====================================== -->
+
+            <div class="dashboard-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+
+                        <i class="fas fa-layer-group"></i>
+
+                    </div>
+
+                    <div class="stat-content">
+
+                        <h3>{{ stats.total }}</h3>
+
+                        <p>Total Activities</p>
+
+                    </div>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <div class="stat-icon warning">
+
+                        <i class="fas fa-clock"></i>
+
+                    </div>
+
+                    <div class="stat-content">
+
+                        <h3>{{ stats.pending }}</h3>
+
+                        <p>Pending Approval</p>
+
+                    </div>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <div class="stat-icon success">
+
+                        <i class="fas fa-check-circle"></i>
+
+                    </div>
+
+                    <div class="stat-content">
+
+                        <h3>{{ stats.approved }}</h3>
+
+                        <p>Approved</p>
+
+                    </div>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <div class="stat-icon danger">
+
+                        <i class="fas fa-times-circle"></i>
+
+                    </div>
+
+                    <div class="stat-content">
+
+                        <h3>{{ stats.rejected }}</h3>
+
+                        <p>Rejected</p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ====================================== -->
+            <!-- Search -->
+            <!-- ====================================== -->
+
+            <div class="page-toolbar">
+
+                <form
+                    method="GET"
+                    class="search-form">
+
+                    <input
+                        type="text"
+                        name="search"
+                        value="{{ search }}"
+                        placeholder="Search student or activity">
+
+                    <select name="category">
+
+                        <option value="">All Categories</option>
+
+                        <option>Sports</option>
+
+                        <option>Paper Presentation</option>
+
+                        <option>Technical Event</option>
+
+                        <option>Hackathon</option>
+
+                        <option>Coding Contest</option>
+
+                        <option>Workshop</option>
+
+                        <option>Seminar</option>
+
+                        <option>Communication Skill</option>
+
+                        <option>Leadership</option>
+
+                        <option>Volunteer</option>
+
+                        <option>Internship</option>
+
+                        <option>Certification</option>
+
+                        <option>Cultural</option>
+
+                        <option>Others</option>
+
+                    </select>
+
+                    <button
+                        class="btn-primary"
+                        type="submit">
+
+                        <i class="fas fa-search"></i>
+
+                        Search
+
+                    </button>
+
+                </form>
+
+            </div>
+
+            <!-- ====================================== -->
+            <!-- Tabs -->
+            <!-- ====================================== -->
+
+            <div class="card">
+
+                <div class="card-body">
+
+                    <ul class="nav nav-tabs">
+
+                        <li class="nav-item">
+
+                            <button
+                                class="nav-link active"
+                                data-bs-toggle="tab"
+                                data-bs-target="#pending">
+
+                                Pending
+
+                            </button>
+
+                        </li>
+
+                        <li class="nav-item">
+
+                            <button
+                                class="nav-link"
+                                data-bs-toggle="tab"
+                                data-bs-target="#approved">
+
+                                Approved
+
+                            </button>
+
+                        </li>
+
+                        <li class="nav-item">
+
+                            <button
+                                class="nav-link"
+                                data-bs-toggle="tab"
+                                data-bs-target="#rejected">
+
+                                Rejected
+
+                            </button>
+
+                        </li>
+
+                        <li class="nav-item">
+
+                            <button
+                                class="nav-link"
+                                data-bs-toggle="tab"
+                                data-bs-target="#history">
+
+                                History
+
+                            </button>
+
+                        </li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+            <!-- ====================================== -->
+            <!-- Pending Table -->
+            <!-- ====================================== -->
+
+            <div class="card">
+
+                <div class="card-body p0">
+
+                    <div class="tab-content">
+
+                        <div
+                            class="tab-pane fade show active"
+                            id="pending">
+
+                            <table class="data-table">
+
+                                <thead>
+
+                                <tr>
+
+                                    <th>#</th>
+
+                                    <th>Student</th>
+
+                                    <th>Category</th>
+
+                                    <th>Title</th>
+
+                                    <th>Level</th>
+
+                                    <th>Certificate</th>
+
+                                    <th>Status</th>
+
+                                    <th>Action</th>
+
+                                </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                {% set ns = namespace(count=0) %}
+
+                                {% for activity in activities %}
+
+                                {% if activity.status=="Pending" %}
+
+                                {% set ns.count = ns.count + 1 %}
+
+                                <tr>
+
+                                    <td>{{ ns.count }}</td>
+
+                                    <td>
+
+                                        <div class="user-cell">
+
+                                            <div class="avatar-sm">
+
+                                                {{ activity.student_name[0]|upper }}
+
+                                            </div>
+
+                                            {{ activity.student_name }}
+
+                                        </div>
+
+                                    </td>
+
+                                    <td>
+
+                                        <span class="badge badge-info">
+
+                                            {{ activity.category }}
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        {{ activity.title }}
+
+                                    </td>
+
+                                    <td>
+
+                                        {{ activity.level }}
+
+                                    </td>
+
+                                    <td>
+                                                                                {% if activity.certificate %}
+
+                                            <a
+                                                href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                target="_blank"
+                                                class="btn-sm btn-primary">
+
+                                                <i class="fas fa-eye"></i>
+
+                                                View
+
+                                            </a>
+
+                                            <a
+                                                href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                download
+                                                class="btn-sm btn-secondary">
+
+                                                <i class="fas fa-download"></i>
+
+                                            </a>
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+
+                                                Not Uploaded
+
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td>
+
+                                        <span class="badge badge-warning">
+
+                                            <i class="fas fa-clock"></i>
+
+                                            Pending
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        <button type="button" class="btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#studentModal{{ activity.id }}" title="Student Profile">
+    <i class="fas fa-user"></i>
+</button>
+<button type="button" class="btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#approveModal{{ activity.id }}" title="Approve">
+    <i class="fas fa-check"></i>
+</button>
+<button type="button" class="btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ activity.id }}" title="Reject">
+    <i class="fas fa-times"></i>
+</button>
+<button type="button" class="btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#feedbackModal{{ activity.id }}" title="AI Feedback">
+    <i class="fas fa-robot"></i>
+</button>
+                                    </td>
+
+                                </tr>
+
+                                {% endif %}
+
+                                {% endfor %}
+
+                                {% if ns.count == 0 %}
+
+                                <tr>
+
+                                    <td colspan="8" class="empty-state">
+
+                                        <div style="padding:40px;text-align:center;">
+
+                                            <i class="fas fa-inbox fa-3x text-warning"></i>
+
+                                            <h4 style="margin-top:15px;">
+
+                                                No Pending Activities
+
+                                            </h4>
+
+                                            <p class="text-muted">
+
+                                                All submitted extracurricular activities have been reviewed.
+
+                                            </p>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                                {% endif %}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                        <!-- ===================================== -->
+                        <!-- Approved Activities -->
+                        <!-- ===================================== -->
+
+                        <div
+                            class="tab-pane fade"
+                            id="approved">
+
+                            <table class="data-table">
+
+                                <thead>
+
+                                <tr>
+
+                                    <th>#</th>
+
+                                    <th>Student</th>
+
+                                    <th>Category</th>
+
+                                    <th>Title</th>
+
+                                    <th>Achievement</th>
+
+                                    <th>Approved On</th>
+
+                                    <th>AI Feedback</th>
+
+                                    <th>Action</th>
+
+                                </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                {% set ns = namespace(count=0) %}
+
+                                {% for activity in activities %}
+
+                                {% if activity.status == "Approved" %}
+
+                                {% set ns.count = ns.count + 1 %}
+
+                                <tr>
+
+                                    <td>{{ ns.count }}</td>
+
+                                    <td>{{ activity.student_name }}</td>
+
+                                    <td>
+
+                                        <span class="badge badge-success">
+
+                                            {{ activity.category }}
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>{{ activity.title }}</td>
+
+                                    <td>{{ activity.achievement or "-" }}</td>
+
+                                    <td>
+                                                                                {{ activity.approved_at.strftime('%d-%m-%Y') if activity.approved_at else "-" }}
+
+                                    </td>
+
+                                    <td>
+
+                                        {% if activity.ai_feedback %}
+
+                                            <button
+                                                type="button"
+                                                class="btn-sm btn-success"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#feedbackModal{{ activity.id }}">
+
+                                                <i class="fas fa-robot"></i>
+
+                                            </button>
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+
+                                                Not Generated
+
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td>
+
+                                        <button
+                                            type="button"
+                                            class="btn-sm btn-info"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#studentModal{{ activity.id }}">
+
+                                            <i class="fas fa-user"></i>
+
+                                            Student
+
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="btn-sm btn-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#detailsModal{{ activity.id }}">
+
+                                            <i class="fas fa-eye"></i>
+
+                                            Details
+
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+
+                                {% endif %}
+
+                                {% endfor %}
+
+                                {% if ns.count == 0 %}
+
+                                <tr>
+
+                                    <td colspan="8" class="empty-state">
+
+                                        <div style="padding:40px;text-align:center;">
+
+                                            <i class="fas fa-check-circle fa-3x text-success"></i>
+
+                                            <h4 style="margin-top:15px;">
+
+                                                No Approved Activities
+
+                                            </h4>
+
+                                            <p class="text-muted">
+
+                                                Approved extracurricular activities will appear here.
+
+                                            </p>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                                {% endif %}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                        <!-- ===================================== -->
+                        <!-- Rejected Activities -->
+                        <!-- ===================================== -->
+
+                        <div
+                            class="tab-pane fade"
+                            id="rejected">
+
+                            <table class="data-table">
+
+                                <thead>
+
+                                <tr>
+
+                                    <th>#</th>
+
+                                    <th>Student</th>
+
+                                    <th>Category</th>
+
+                                    <th>Title</th>
+
+                                    <th>Rejected On</th>
+
+                                    <th>Remarks</th>
+
+                                    <th>Certificate</th>
+
+                                    <th>Action</th>
+
+                                </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                {% set ns = namespace(count=0) %}
+
+                                {% for activity in activities %}
+
+                                {% if activity.status == "Rejected" %}
+
+                                {% set ns.count = ns.count + 1 %}
+
+                                <tr>
+
+                                    <td>{{ ns.count }}</td>
+
+                                    <td>{{ activity.student_name }}</td>
+
+                                    <td>
+
+                                        <span class="badge badge-danger">
+
+                                            {{ activity.category }}
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        {{ activity.title }}
+
+                                    </td>
+
+                                    <td>
+
+                                        {{ activity.approved_at.strftime('%d-%m-%Y') if activity.approved_at else "-" }}
+
+                                    </td>
+
+                                    <td>
+
+                                        {{ activity.remarks or "-" }}
+
+                                    </td>
+
+                                    <td>
+                                                                                {% if activity.certificate %}
+
+                                            <a
+                                                href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                target="_blank"
+                                                class="btn-sm btn-primary">
+
+                                                <i class="fas fa-eye"></i>
+
+                                                View
+
+                                            </a>
+
+                                            <a
+                                                href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                download
+                                                class="btn-sm btn-secondary">
+
+                                                <i class="fas fa-download"></i>
+
+                                            </a>
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+
+                                                -
+
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td>
+
+                                        <button
+                                            type="button"
+                                            class="btn-sm btn-info"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#studentModal{{ activity.id }}">
+
+                                            <i class="fas fa-user"></i>
+
+                                            Student
+
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="btn-sm btn-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#detailsModal{{ activity.id }}">
+
+                                            <i class="fas fa-eye"></i>
+
+                                            Details
+
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+
+                                {% endif %}
+
+                                {% endfor %}
+
+                                {% if ns.count == 0 %}
+
+                                <tr>
+
+                                    <td colspan="8" class="empty-state">
+
+                                        <div style="padding:40px;text-align:center;">
+
+                                            <i class="fas fa-times-circle fa-3x text-danger"></i>
+
+                                            <h4 style="margin-top:15px;">
+
+                                                No Rejected Activities
+
+                                            </h4>
+
+                                            <p class="text-muted">
+
+                                                There are currently no rejected extracurricular activities.
+
+                                            </p>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                                {% endif %}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                        <!-- ====================================== -->
+                        <!-- Activity History -->
+                        <!-- ====================================== -->
+
+                        <div
+                            class="tab-pane fade"
+                            id="history">
+
+                            <table class="data-table">
+
+                                <thead>
+
+                                <tr>
+
+                                    <th>#</th>
+
+                                    <th>Student</th>
+
+                                    <th>Category</th>
+
+                                    <th>Title</th>
+
+                                    <th>Status</th>
+
+                                    <th>Submitted</th>
+
+                                    <th>Reviewed</th>
+
+                                    <th>Action</th>
+
+                                </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                {% for activity in activities %}
+
+                                <tr>
+
+                                    <td>{{ loop.index }}</td>
+
+                                    <td>
+
+                                        {{ activity.student_name }}
+
+                                    </td>
+
+                                    <td>
+
+                                        <span class="badge badge-info">
+
+                                            {{ activity.category }}
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        {{ activity.title }}
+
+                                    </td>
+
+                                    <td>
+
+                                        {% if activity.status == "Approved" %}
+
+                                            <span class="badge badge-success">
+
+                                                Approved
+
+                                            </span>
+
+                                        {% elif activity.status == "Rejected" %}
+
+                                            <span class="badge badge-danger">
+
+                                                Rejected
+
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="badge badge-warning">
+
+                                                Pending
+
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td>
+
+                                        {{ activity.created_at.strftime('%d-%m-%Y') if activity.created_at else "-" }}
+
+                                    </td>
+
+                                    <td>
+
+                                        {{ activity.approved_at.strftime('%d-%m-%Y') if activity.approved_at else "-" }}
+
+                                    </td>
+
+                                    <td>
+
+                                        <button
+                                            type="button"
+                                            class="btn-sm btn-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#detailsModal{{ activity.id }}">
+
+                                            <i class="fas fa-eye"></i>
+
+                                            Details
+
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+
+                                {% else %}
+
+                                <tr>
+
+                                    <td colspan="8" class="empty-state">
+
+                                        No activity history found.
+
+                                    </td>
+
+                                </tr>
+
+                                {% endfor %}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ====================================== -->
+            <!-- Student Profile Modal -->
+            <!-- ====================================== -->
+
+            {% for activity in activities %}
+
+            <div
+                class="modal fade"
+                id="studentModal{{ activity.id }}"
+                tabindex="-1"
+                aria-hidden="true">
+
+                <div class="modal-dialog modal-lg">
+
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+
+                            <h5 class="modal-title">
+
+                                <i class="fas fa-user-graduate"></i>
+
+                                Student Profile
+
+                            </h5>
+
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"></button>
+
+                        </div>
+
+                        <div class="modal-body">
+
+                            <div class="row">
+
+                                <div class="col-md-6">
+
+                                    <table class="table table-bordered">
+
+                                        <tr>
+
+                                            <th>Name</th>
+
+                                            <td>{{ activity.student_name }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Register No.</th>
+
+                                            <td>{{ activity.register_no or "-" }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Department</th>
+
+                                            <td>{{ activity.department or "-" }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Year</th>
+
+                                            <td>{{ activity.year or "-" }}</td>
+
+                                        </tr>
+
+                                    </table>
+
+                                </div>
+
+                                <div class="col-md-6">
+
+                                    <table class="table table-bordered">
+
+                                        <tr>
+
+                                            <th>Activity</th>
+
+                                            <td>{{ activity.title }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Category</th>
+
+                                            <td>{{ activity.category }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Status</th>
+
+                                            <td>{{ activity.status }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Level</th>
+
+                                            <td>{{ activity.level }}</td>
+
+                                        </tr>
+
+                                    </table>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                data-bs-dismiss="modal">
+
+                                Close
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+                        <!-- ====================================== -->
+            <!-- Approve Activity Modal -->
+            <!-- ====================================== -->
+
+            <div
+                class="modal fade"
+                id="approveModal{{ activity.id }}"
+                tabindex="-1"
+                aria-hidden="true">
+
+                <div class="modal-dialog modal-lg">
+
+                    <div class="modal-content">
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('mentor_verify_extracurricular', eid=activity.id, status='Approved') }}">
+                            <div class="modal-header">
+
+                                <h5 class="modal-title">
+
+                                    <i class="fas fa-check-circle text-success"></i>
+
+                                    Approve Extracurricular Activity
+
+                                </h5>
+
+                                <button
+                                    type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"></button>
+
+                            </div>
+
+                            <div class="modal-body">
+
+                                <div class="row">
+
+                                    <div class="col-md-6">
+
+                                        <table class="table table-bordered">
+
+                                            <tr>
+
+                                                <th width="40%">Student</th>
+
+                                                <td>{{ activity.student_name }}</td>
+
+                                            </tr>
+
+                                            <tr>
+
+                                                <th>Category</th>
+
+                                                <td>{{ activity.category }}</td>
+
+                                            </tr>
+
+                                            <tr>
+
+                                                <th>Title</th>
+
+                                                <td>{{ activity.title }}</td>
+
+                                            </tr>
+
+                                            <tr>
+
+                                                <th>Level</th>
+
+                                                <td>{{ activity.level }}</td>
+
+                                            </tr>
+
+                                            <tr>
+
+                                                <th>Achievement</th>
+
+                                                <td>{{ activity.achievement or "-" }}</td>
+
+                                            </tr>
+
+                                        </table>
+
+                                    </div>
+
+                                    <div class="col-md-6">
+
+                                        {% if activity.certificate %}
+
+                                            <label class="form-label">
+
+                                                Uploaded Certificate
+
+                                            </label>
+
+                                            <div style="margin-bottom:15px;">
+
+                                                <a
+                                                    href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                    target="_blank"
+                                                    class="btn-primary">
+
+                                                    <i class="fas fa-eye"></i>
+
+                                                    Preview Certificate
+
+                                                </a>
+
+                                            </div>
+
+                                        {% endif %}
+
+                                        <div class="form-group">
+
+                                            <label>
+
+                                                Mentor Remarks
+
+                                            </label>
+
+                                            <textarea
+                                                class="form-control"
+                                                name="remarks"
+                                                rows="5"
+                                                placeholder="Write remarks for approving this activity..."></textarea>
+
+                                        </div>
+
+                                        <div class="form-check mt-3">
+
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                name="generate_ai"
+                                                value="1"
+                                                checked
+                                                id="generateAI{{ activity.id }}">
+
+                                            <label
+                                                class="form-check-label"
+                                                for="generateAI{{ activity.id }}">
+
+                                                Automatically Generate AI Feedback
+
+                                            </label>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="modal-footer">
+
+                                <button
+                                    type="button"
+                                    class="btn-secondary"
+                                    data-bs-dismiss="modal">
+
+                                    Cancel
+
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn-success">
+
+                                    <i class="fas fa-check-circle"></i>
+
+                                    Approve Activity
+
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+                        <!-- ====================================== -->
+            <!-- Reject Activity Modal -->
+            <!-- ====================================== -->
+
+            <div
+                class="modal fade"
+                id="rejectModal{{ activity.id }}"
+                tabindex="-1"
+                aria-hidden="true">
+
+                <div class="modal-dialog modal-lg">
+
+                    <div class="modal-content">
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('mentor_verify_extracurricular', eid=activity.id, status='Rejected') }}">
+
+                            <div class="modal-header bg-danger text-white">
+
+                                <h5 class="modal-title">
+
+                                    <i class="fas fa-times-circle"></i>
+
+                                    Reject Extracurricular Activity
+
+                                </h5>
+
+                                <button
+                                    type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"></button>
+
+                            </div>
+
+                            <div class="modal-body">
+
+                                <div class="alert alert-warning">
+
+                                    <i class="fas fa-exclamation-triangle"></i>
+
+                                    Please provide a clear reason for rejection.
+                                    These remarks will be visible to the student.
+
+                                </div>
+
+                                <div class="row">
+
+                                    <div class="col-md-6">
+
+                                        <table class="table table-bordered">
+
+                                            <tr>
+
+                                                <th width="40%">Student</th>
+
+                                                <td>{{ activity.student_name }}</td>
+
+                                            </tr>
+
+                                            <tr>
+
+                                                <th>Category</th>
+
+                                                <td>{{ activity.category }}</td>
+
+                                            </tr>
+
+                                            <tr>
+
+                                                <th>Activity</th>
+
+                                                <td>{{ activity.title }}</td>
+
+                                            </tr>
+
+                                            <tr>
+
+                                                <th>Level</th>
+
+                                                <td>{{ activity.level }}</td>
+
+                                            </tr>
+
+                                            <tr>
+
+                                                <th>Achievement</th>
+
+                                                <td>{{ activity.achievement or "-" }}</td>
+
+                                            </tr>
+
+                                        </table>
+
+                                    </div>
+
+                                    <div class="col-md-6">
+
+                                        {% if activity.certificate %}
+
+                                        <label>
+
+                                            Uploaded Certificate
+
+                                        </label>
+
+                                        <div style="margin-bottom:15px;">
+
+                                            <a
+                                                href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                target="_blank"
+                                                class="btn-primary">
+
+                                                <i class="fas fa-eye"></i>
+
+                                                Preview Certificate
+
+                                            </a>
+
+                                        </div>
+
+                                        {% endif %}
+
+                                        <div class="form-group">
+
+                                            <label>
+
+                                                Rejection Reason
+
+                                            </label>
+
+                                            <select
+                                                class="form-control"
+                                                name="reason">
+
+                                                <option value="Incomplete Information">
+
+                                                    Incomplete Information
+
+                                                </option>
+
+                                                <option value="Invalid Certificate">
+
+                                                    Invalid Certificate
+
+                                                </option>
+
+                                                <option value="Duplicate Submission">
+
+                                                    Duplicate Submission
+
+                                                </option>
+
+                                                <option value="Incorrect Category">
+
+                                                    Incorrect Category
+
+                                                </option>
+
+                                                <option value="Not Eligible">
+
+                                                    Not Eligible
+
+                                                </option>
+
+                                                <option value="Other">
+
+                                                    Other
+
+                                                </option>
+
+                                            </select>
+
+                                        </div>
+
+                                        <div class="form-group mt-3">
+
+                                            <label>
+
+                                                Mentor Remarks
+
+                                            </label>
+
+                                            <textarea
+                                                class="form-control"
+                                                name="remarks"
+                                                rows="5"
+                                                required
+                                                placeholder="Explain why this activity is being rejected and guide the student for future submissions..."></textarea>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="modal-footer">
+
+                                <button
+                                    type="button"
+                                    class="btn-secondary"
+                                    data-bs-dismiss="modal">
+
+                                    Cancel
+
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn-danger">
+
+                                    <i class="fas fa-times-circle"></i>
+
+                                    Reject Activity
+
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+                        <!-- ====================================== -->
+            <!-- Activity Details Modal -->
+            <!-- ====================================== -->
+
+            <div
+                class="modal fade"
+                id="detailsModal{{ activity.id }}"
+                tabindex="-1"
+                aria-hidden="true">
+
+                <div class="modal-dialog modal-xl">
+
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+
+                            <h5 class="modal-title">
+
+                                <i class="fas fa-file-alt"></i>
+
+                                Extracurricular Activity Details
+
+                            </h5>
+
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"></button>
+
+                        </div>
+
+                        <div class="modal-body">
+
+                            <div class="row">
+
+                                <!-- Left Side -->
+
+                                <div class="col-lg-6">
+
+                                    <table class="table table-bordered">
+
+                                        <tr>
+
+                                            <th width="35%">Student</th>
+
+                                            <td>{{ activity.student_name }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Category</th>
+
+                                            <td>{{ activity.category }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Activity Title</th>
+
+                                            <td>{{ activity.title }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Participation Level</th>
+
+                                            <td>{{ activity.level }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Participation Date</th>
+
+                                            <td>
+
+                                                {{ activity.participation_date.strftime('%d-%m-%Y') if activity.participation_date else "-" }}
+
+                                            </td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Achievement</th>
+
+                                            <td>
+
+                                                {{ activity.achievement or "-" }}
+
+                                            </td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Status</th>
+
+                                            <td>
+
+                                                {% if activity.status=="Approved" %}
+
+                                                <span class="badge badge-success">
+
+                                                    Approved
+
+                                                </span>
+
+                                                {% elif activity.status=="Rejected" %}
+
+                                                <span class="badge badge-danger">
+
+                                                    Rejected
+
+                                                </span>
+
+                                                {% else %}
+
+                                                <span class="badge badge-warning">
+
+                                                    Pending
+
+                                                </span>
+
+                                                {% endif %}
+
+                                            </td>
+
+                                        </tr>
+
+                                    </table>
+
+                                </div>
+
+                                <!-- Right Side -->
+
+                                <div class="col-lg-6">
+
+                                    <table class="table table-bordered">
+
+                                        <tr>
+
+                                            <th width="35%">Submitted On</th>
+
+                                            <td>
+
+                                                {{ activity.created_at.strftime('%d-%m-%Y %I:%M %p') if activity.created_at else "-" }}
+
+                                            </td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Reviewed On</th>
+
+                                            <td>
+
+                                                {{ activity.approved_at.strftime('%d-%m-%Y %I:%M %p') if activity.approved_at else "-" }}
+
+                                            </td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Mentor Remarks</th>
+
+                                            <td>
+
+                                                {{ activity.remarks or "No remarks yet." }}
+
+                                            </td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Certificate</th>
+
+                                            <td>
+
+                                                {% if activity.certificate %}
+
+                                                <a href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+   target="_blank" class="btn-sm btn-primary" title="View Certificate">
+    <i class="fas fa-eye"></i>
+</a>
+<a href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+   download class="btn-sm btn-secondary" title="Download Certificate">
+    <i class="fas fa-download"></i>
+</a>
+
+                                                {% else %}
+
+                                                <span class="text-muted">
+
+                                                    No Certificate Uploaded
+
+                                                </span>
+
+                                                {% endif %}
+
+                                            </td>
+
+                                        </tr>
+
+                                    </table>
+
+                                </div>
+
+                            </div>
+
+                            <hr>
+
+                            <h6>
+
+                                <i class="fas fa-align-left"></i>
+
+                                Activity Description
+
+                            </h6>
+
+                            <div class="alert alert-light">
+
+                                {{ activity.description or "No description provided." }}
+
+                            </div>
+
+                            <hr>
+
+                            <h6>
+
+                                <i class="fas fa-robot"></i>
+
+                                AI Career Feedback
+
+                            </h6>
+
+                            {% if activity.ai_feedback %}
+
+                            <div class="alert alert-success">
+
+                                {{ activity.ai_feedback }}
+
+                            </div>
+
+                            {% else %}
+
+                            <div class="alert alert-warning">
+
+                                AI feedback has not been generated yet.
+
+                            </div>
+
+                            {% endif %}
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                data-bs-dismiss="modal">
+
+                                Close
+
+                            </button>
+
+                            {% if activity.status=="Pending" %}
+
+                            <button
+                                type="button"
+                                class="btn-success"
+                                data-bs-target="#approveModal{{ activity.id }}"
+                                data-bs-toggle="modal">
+
+                                <i class="fas fa-check"></i>
+
+                                Approve
+
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn-danger"
+                                data-bs-target="#rejectModal{{ activity.id }}"
+                                data-bs-toggle="modal">
+
+                                <i class="fas fa-times"></i>
+
+                                Reject
+
+                            </button>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+                        <!-- ====================================== -->
+            <!-- AI Feedback Modal -->
+            <!-- ====================================== -->
+
+            <div
+                class="modal fade"
+                id="feedbackModal{{ activity.id }}"
+                tabindex="-1"
+                aria-hidden="true">
+
+                <div class="modal-dialog modal-lg">
+
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+
+                            <h5 class="modal-title">
+
+                                <i class="fas fa-robot"></i>
+
+                                AI Career Analysis
+
+                            </h5>
+
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"></button>
+
+                        </div>
+
+                        <div class="modal-body">
+
+                            {% if activity.ai_feedback %}
+
+                            <div class="alert alert-success">
+
+                                <h6>
+
+                                    <i class="fas fa-lightbulb"></i>
+
+                                    AI Evaluation
+
+                                </h6>
+
+                                <p style="margin-bottom:0;">
+
+                                    {{ activity.ai_feedback }}
+
+                                </p>
+
+                            </div>
+
+                            {% else %}
+
+                            <div class="alert alert-warning">
+
+                                AI feedback has not been generated yet.
+
+                            </div>
+
+                            {% endif %}
+
+                            <div class="row mt-3">
+
+                                <div class="col-md-6">
+
+                                    <div class="card">
+
+                                        <div class="card-body">
+
+                                            <h6>
+
+                                                <i class="fas fa-star"></i>
+
+                                                Skills Demonstrated
+
+                                            </h6>
+
+                                            <ul class="mb-0">
+
+                                                <li>Leadership</li>
+
+                                                <li>Teamwork</li>
+
+                                                <li>Communication</li>
+
+                                                <li>Problem Solving</li>
+
+                                                <li>Critical Thinking</li>
+
+                                            </ul>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="col-md-6">
+
+                                    <div class="card">
+
+                                        <div class="card-body">
+
+                                            <h6>
+
+                                                <i class="fas fa-chart-line"></i>
+
+                                                Employability Score
+
+                                            </h6>
+
+                                            <h2 class="text-success">
+
+                                                91%
+
+                                            </h2>
+
+                                            <small class="text-muted">
+
+                                                *(Static value for now. Replace with AI output later.)*
+
+                                            </small>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="card mt-3">
+
+                                <div class="card-body">
+
+                                    <h6>
+
+                                        <i class="fas fa-user-graduate"></i>
+
+                                        Mentor Recommendation
+
+                                    </h6>
+
+                                    <p class="mb-0">
+
+                                        Encourage the student to continue
+                                        participating in higher-level events,
+                                        improve presentation quality,
+                                        and maintain proper documentation
+                                        for future placements.
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                data-bs-dismiss="modal">
+
+                                Close
+
+                            </button>
+
+                            <form
+                                method="POST"
+                                action="{{ url_for('mentor_generate_ai_feedback', activity_id=activity.id) }}"
+                                style="display:inline;">
+
+                                <button
+                                    type="submit"
+                                    class="btn-primary">
+
+                                    <i class="fas fa-robot"></i>
+
+                                    Regenerate Feedback
+
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

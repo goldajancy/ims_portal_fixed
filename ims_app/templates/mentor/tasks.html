@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Tasks – IMS Mentor{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('mentor', 'tasks') }}
+  <div class="main-content">
+    {{ topbar('Tasks') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="page-toolbar">
+  <h4>Tasks</h4>
+  <button class="btn-primary" onclick="openModal('addTaskModal')"><i class="fas fa-plus"></i> Create Task</button>
+</div>
+<div class="card"><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Title</th><th>Class</th><th>Due Date</th><th>Submissions</th></tr></thead>
+<tbody>
+{% for t in tasks %}
+<tr><td>{{ t.title }}</td><td>{{ t.class_name }}</td><td>{{ t.due_date or '–' }}</td><td>{{ t.sub_count }}</td></tr>
+{% else %}<tr><td colspan="4" class="empty-state">No tasks yet</td></tr>{% endfor %}
+</tbody></table></div></div>
+<div class="modal" id="addTaskModal"><div class="modal-box">
+<div class="modal-header"><h3>Create Task</h3><button onclick="closeModal('addTaskModal')">×</button></div>
+<form method="POST" action="/mentor/tasks/add" class="form-vertical">
+<div class="form-group"><label>Title</label><input type="text" name="title" required/></div>
+<div class="form-group"><label>Class</label><select name="class_id" required>{% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+<div class="form-group"><label>Due Date</label><input type="date" name="due_date"/></div>
+<div class="form-group"><label>Description</label><textarea name="description" rows="3"></textarea></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Create</button><button type="button" class="btn-outline" onclick="closeModal('addTaskModal')">Cancel</button></div>
+</form></div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %} {% from "macros.html" import sidebar, topbar, flash_messages %} {% block title %}Extra Activities – Mentor{% endblock %} {% block body %}
+{{ sidebar('mentor', 'extra') }}
+{{ topbar('🏆 Extracurricular Dashboard', 'Manage and verify student activities') }}
+{{ flash_messages() }} {% if pending %}
+⏳ Pending Verifications ({{ pending|length }})
+{% for p in pending %} {% endfor %}
+Student	Category	Activity	Status	Action
+{{ p.student_name }}	{{ p.cat_name or '–' }}	{{ p.activity_name }}	Pending	✓ Verify ✗ Reject
+{% endif %}
+My Trainees – Activity Overview
+{% for t in trainees %} {% else %} {% endfor %}
+Trainee	Email	Action
+{{ t.name[0]|upper }}
+{{ t.name }}
+{{ t.email }}	Full Profile
+No trainees enrolled yet
+{% endblock %}

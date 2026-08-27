@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Send Attendance Link{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('admin', 'send_link') }}
+  <div class="main-content">
+    {{ topbar('Send Attendance Link', 'Generate a WhatsApp link for mentors') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <div class="dash-grid dash-grid-2">
+
+        <div class="card">
+          <div class="card-header"><h3>Generate link</h3></div>
+          <div class="card-body">
+            <form method="POST">
+              <div class="field" style="margin-bottom:14px">
+                <label>Class</label>
+                <select name="class_id" required class="form-control">
+                  <option value="">Select class…</option>
+                  {% for c in classes %}
+                  <option value="{{ c.id }}">{{ c.name }} ({{ c.mentor_name or 'No mentor' }})</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+                <div class="field">
+                  <label>Section</label>
+                  <input type="text" name="section" placeholder="A / B / C" class="form-control">
+                </div>
+                <div class="field">
+                  <label>Period</label>
+                  <select name="period" class="form-control">
+                    {% for p in range(1,9) %}
+                    <option value="{{ p }}">Period {{ p }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="field" style="margin-bottom:16px">
+                <label>Date</label>
+                <input type="date" name="date" value="{{ now.strftime('%Y-%m-%d') }}"
+                       class="form-control" required>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%">
+                <i class="fas fa-link"></i> Generate link
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {% if link %}
+        <div class="card">
+          <div class="card-header"><h3>Share this link</h3></div>
+          <div class="card-body">
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;
+                        padding:14px;margin-bottom:16px;word-break:break-all;font-size:13px">
+              {{ link }}
+            </div>
+            <button onclick="navigator.clipboard.writeText('{{ link }}');this.textContent='✓ Copied!'"
+                    class="btn btn-outline" style="width:100%;margin-bottom:10px">
+              <i class="fas fa-copy"></i> Copy link
+            </button>
+            <a href="https://wa.me/?text={{ 'Please fill attendance: ' + link | urlencode }}"
+               target="_blank" class="btn btn-primary" style="width:100%;display:block;text-align:center">
+              <i class="fab fa-whatsapp"></i> Send via WhatsApp
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+
+      <!-- Submissions table -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-header">
+          <h3>Recent submissions</h3>
+          <a href="/admin/attendance/submissions" class="link-sm">View all</a>
+        </div>
+        <div class="card-body p0">
+          <table class="data-table">
+            <thead><tr>
+              <th>Class</th><th>Date</th><th>Period</th>
+              <th>Section</th><th>Absent</th><th>Total</th><th>Export</th>
+            </tr></thead>
+            <tbody>
+              <tr><td colspan="7" class="empty-state">
+                <a href="/admin/attendance/submissions">View submissions →</a>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,631 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Exams - Admin{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('admin', 'exams') }}
+  <div class="main-content">
+    {{ topbar('Exam Management', 'Schedule and manage exams across all classes') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <div class="page-header">
+        <div></div> <!-- spacer -->
+    <button class="btn btn-primary" onclick="openModal('addExamModal')">
+        <i class="fas fa-plus"></i> Schedule Exam
+    </button>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-file-alt"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ exams|length }}</span>
+            <span class="stat-label">Total Exams</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-info">
+            {% set avg_scores = exams|selectattr('avg_score')|list %}
+            <span class="stat-value">
+                {{ (avg_scores|sum(attribute='avg_score') / avg_scores|length)|round(1) if avg_scores|length > 0 else 'N/A' }}
+            </span>
+            <span class="stat-label">Avg Score</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-orange"><i class="fas fa-calendar-alt"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ exams|selectattr('exam_date')|list|length }}</span>
+            <span class="stat-label">Scheduled</span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-list"></i> All Exams</h3>
+        <div class="header-actions">
+            <select id="classFilter" onchange="filterExams()">
+                <option value="">All Classes</option>
+                {% for cls in classes %}
+                <option value="{{ cls.name }}">{{ cls.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if exams %}
+        <div class="table-responsive">
+            <table class="data-table" id="examsTable">
+                <thead>
+                    <tr>
+                        <th>Exam Title</th>
+                        <th>Class</th>
+                        <th>Date</th>
+                        <th>Max Marks</th>
+                        <th>Avg Score</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exam in exams %}
+                    <tr data-class="{{ exam.class_name }}">
+                        <td>
+                            <div class="exam-title">
+                                <i class="fas fa-clipboard-list text-primary"></i>
+                                <strong>{{ exam.title }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="class-badge">{{ exam.class_name or 'N/A' }}</span>
+                        </td>
+                        <td>
+                            {% if exam.exam_date %}
+                                <span class="date-display">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ exam.exam_date.strftime('%b %d, %Y') }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Not set</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="marks-badge">{{ exam.max_marks }}</span>
+                        </td>
+                        <td>
+                            {% if exam.avg_score %}
+                                <div class="score-display">
+                                    <span class="score-value">{{ exam.avg_score }}</span>
+                                    <div class="score-bar">
+                                        {% set pct = (exam.avg_score / exam.max_marks * 100)|int %}
+                                        <div class="score-fill {% if pct >= 70 %}bg-green{% elif pct >= 50 %}bg-yellow{% else %}bg-red{% endif %}" 
+                                             style="width: {{ pct }}%"></div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">No scores yet</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if exam.exam_date %}
+                                {% set today = now %}
+                                {% if exam.exam_date > today %}
+                                    <span class="status-badge status-upcoming">Upcoming</span>
+                                {% elif exam.exam_date == today %}
+                                    <span class="status-badge status-today">Today</span>
+                                {% else %}
+                                    <span class="status-badge status-completed">Completed</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="status-badge status-draft">Draft</span>
+                            {% endif %}
+                        </td>
+                                               <td>
+                            <div class="action-buttons">
+                                <button class="btn-icon" title="View Scores" onclick="viewScores({{ exam.id }})">
+                                    <i class="fas fa-chart-bar"></i>
+                                </button>
+                                <button class="btn-icon" title="Enter Scores" onclick="enterScores({{ exam.id }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-icon btn-danger" title="Delete" onclick="deleteExam({{ exam.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <!-- {% if not exam.results_published %}
+                                <form method="POST" action="/admin/exams/{{ exam.id }}/publish" style="display:inline;">
+                                    <button type="submit" class="btn-icon" style="background:#dcfce7;color:#16a34a;width:auto;padding:0 10px;"
+                                            onclick="return confirm('Publish results and notify all students?')">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="btn-icon" style="background:#dcfce7;color:#16a34a;cursor:default;" title="Results Published">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                {% endif %} -->
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-file-alt"></i>
+            <h4>No Exams Scheduled</h4>
+            <p>Schedule your first exam to get started</p>
+            <button class="btn btn-primary" onclick="openModal('addExamModal')">
+                <i class="fas fa-plus"></i> Schedule Exam
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Exam Modal -->
+<div class="modal" id="addExamModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-calendar-plus"></i> Schedule New Exam</h3>
+            <button class="modal-close" onclick="closeModal('addExamModal')">&times;</button>
+        </div>
+        <form action="{{ url_for('admin_add_exam') }}" method="POST">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="title">Exam Title <span class="required">*</span></label>
+                    <input type="text" id="title" name="title" required placeholder="e.g., Mid-term Examination">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="class_id">Class</label>
+                        <select id="class_id" name="class_id">
+                            <option value="">-- Select Class --</option>
+                            {% for cls in classes %}
+                            <option value="{{ cls.id }}">{{ cls.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="max_marks">Maximum Marks</label>
+                        <input type="number" id="max_marks" name="max_marks" value="100" min="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="exam_date">Exam Date</label>
+                    <input type="date" id="exam_date" name="exam_date">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addExamModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Schedule Exam</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Scores Modal -->
+<div class="modal" id="scoresModal">
+    <div class="modal-content" style="width:600px;">
+        <div class="modal-header">
+            <h3 id="scoresModalTitle"><i class="fas fa-chart-bar"></i> Exam Scores</h3>
+            <button class="modal-close" onclick="closeModal('scoresModal')">&times;</button>
+        </div>
+        <form id="scoresForm" method="POST">
+            <div class="modal-body" style="max-height:400px;overflow-y:auto;">
+                <table class="data-table">
+                    <thead><tr><th>Student</th><th>Marks</th><th>Grade</th></tr></thead>
+                    <tbody id="scoresTableBody"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('scoresModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="scoresSaveBtn">Save Scores</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentMode = 'view';
+
+function viewScores(examId) { currentMode = 'view'; loadScores(examId); }
+function enterScores(examId) { currentMode = 'edit'; loadScores(examId); }
+
+function loadScores(examId) {
+    fetch(`/admin/exams/${examId}/scores`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) { alert(data.message || 'Could not load scores'); return; }
+
+            document.getElementById('scoresModalTitle').innerHTML =
+                '<i class="fas fa-chart-bar"></i> ' + data.exam.title + ' - Scores';
+
+            const tbody = document.getElementById('scoresTableBody');
+            tbody.innerHTML = '';
+            data.scores.forEach(s => {
+                const tr = document.createElement('tr');
+                if (currentMode === 'edit') {
+                    tr.innerHTML = `<td>${s.name}</td>
+                        <td><input type="number" name="marks_${s.id}" value="${s.marks ?? ''}" min="0" max="${data.exam.max_marks}" style="width:80px;padding:6px;border:1px solid #e5e7eb;border-radius:8px;"></td>
+                        <td>${s.grade ?? '-'}</td>`;
+                } else {
+                    tr.innerHTML = `<td>${s.name}</td><td>${s.marks ?? '-'}</td><td>${s.grade ?? '-'}</td>`;
+                }
+                tbody.appendChild(tr);
+            });
+
+            const form = document.getElementById('scoresForm');
+            document.getElementById('scoresSaveBtn').style.display = currentMode === 'edit' ? '' : 'none';
+            form.action = `/admin/exams/${examId}/scores/save`;
+
+            openModal('scoresModal');
+        })
+        .catch(() => alert('Failed to load scores.'));
+}
+
+function deleteExam(examId) {
+    if (confirm("Are you sure you want to delete this exam? This cannot be undone.")) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "/admin/exams/delete/" + examId;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function filterExams() {
+    const selected = document.getElementById('classFilter').value;
+    document.querySelectorAll('#examsTable tbody tr').forEach(row => {
+        row.style.display = (!selected || row.dataset.class === selected) ? '' : 'none';
+    });
+}
+</script>
+
+
+<style>
+:root{
+    --primary:#4f46e5;
+    --primary-dark:#4338ca;
+    --success:#16a34a;
+    --warning:#f59e0b;
+    --danger:#ef4444;
+    --border:#e5e7eb;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --bg:#f8fafc;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+/* Card Header */
+.card-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.header-actions select{
+    padding:10px 14px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    outline:none;
+    background:white;
+}
+
+/* Table */
+.data-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.data-table th{
+    background:#f8fafc;
+    color:#64748b;
+    padding:16px;
+    font-size:14px;
+    text-align:left;
+    border-bottom:1px solid var(--border);
+}
+
+.data-table td{
+    padding:18px 16px;
+    border-bottom:1px solid #eee;
+}
+
+.data-table tbody tr{
+    transition:.3s;
+}
+
+.data-table tbody tr:hover{
+    background:#fafafa;
+}
+
+/* Exam title */
+.exam-title{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.exam-title i{
+    width:36px;
+    height:36px;
+    background:rgba(79,70,229,.1);
+    color:var(--primary);
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+/* Class Badge */
+.class-badge{
+    background:#eef2ff;
+    color:var(--primary);
+    padding:6px 14px;
+    border-radius:30px;
+    font-size:13px;
+    font-weight:600;
+}
+
+/* Date */
+.date-display{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:#64748b;
+}
+
+/* Marks */
+.marks-badge{
+    background:#f3f4f6;
+    padding:7px 14px;
+    border-radius:10px;
+    font-weight:600;
+}
+
+/* Score */
+.score-display{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.score-value{
+    font-weight:700;
+}
+
+.score-bar{
+    width:90px;
+    height:8px;
+    background:#e5e7eb;
+    border-radius:30px;
+    overflow:hidden;
+}
+
+.score-fill{
+    height:100%;
+}
+
+.bg-green{
+    background:#22c55e;
+}
+
+.bg-yellow{
+    background:#f59e0b;
+}
+
+.bg-red{
+    background:#ef4444;
+}
+
+/* Status */
+.status-badge{
+    padding:7px 14px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.status-upcoming{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+.status-today{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.status-completed{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.status-draft{
+    background:#f3f4f6;
+    color:#6b7280;
+}
+
+/* Buttons */
+.action-buttons{
+    display:flex;
+    gap:8px;
+}
+
+.btn-icon{
+    width:36px;
+    height:36px;
+    border:none;
+    background:#eef2ff;
+    color:var(--primary);
+    border-radius:10px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.btn-icon:hover{
+    background:var(--primary);
+    color:white;
+}
+
+.btn-danger{
+    background:#fee2e2;
+    color:#ef4444;
+}
+
+.btn-danger:hover{
+    background:#ef4444;
+    color:white;
+}
+
+/* Modal */
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.4);
+    justify-content:center;
+    align-items:center;
+    z-index:1000;
+}
+
+.modal.active{
+    display:flex;
+}
+
+.modal-content{
+    width:500px;
+    background:white;
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,.15);
+}
+
+.modal-header{
+    padding:24px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid #eee;
+}
+
+.modal-header h3{
+    margin:0;
+    color:#2f3463;
+}
+
+.modal-close{
+    border:none;
+    background:none;
+    font-size:28px;
+    cursor:pointer;
+}
+
+.modal-body{
+    padding:24px;
+}
+
+.form-group{
+    margin-bottom:18px;
+}
+
+.form-group label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:600;
+}
+
+.form-group input,
+.form-group select{
+    width:100%;
+    padding:14px;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    background:#fafafa;
+}
+
+.form-group input:focus,
+.form-group select:focus{
+    outline:none;
+    border-color:var(--primary);
+    background:white;
+}
+
+.form-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+}
+
+.modal-footer{
+    padding:0 24px 24px;
+    display:flex;
+    gap:12px;
+}
+
+.btn-secondary{
+    background:#3d3a73;
+    border:none;
+    padding:12px 20px;
+    border-radius:12px;
+}
+
+.btn-primary{
+    background:#3d3a73;
+    color:white;
+    border:none;
+    padding:12px 22px;
+    border-radius:12px;
+}
+
+/* Empty state */
+.empty-state{
+    text-align:center;
+    padding:60px;
+}
+
+.empty-state i{
+    font-size:50px;
+    color:#4f46e5;
+    margin-bottom:15px;
+}
+
+@media(max-width:768px){
+    .form-row{
+        grid-template-columns:1fr;
+    }
+
+    .modal-content{
+        width:95%;
+    }
+}
+@media (max-width: 768px) {
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+}
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.page-header .btn-primary {
+    transform: translateY(-12px);
+}
+
+</style>
+
+
+{% endblock %}

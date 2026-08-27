@@ -1,0 +1,1307 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block title %}Extracurricular Management{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/development.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block body %}
+
+{{ sidebar('admin','development') }}
+
+{{ topbar(
+    '🏆 Extracurricular Activities',
+    'Manage student extracurricular activities and achievements'
+) }}
+
+{{ flash_messages() }}
+
+<div class="main-content">
+
+    <!-- ========================= -->
+    <!-- Page Header -->
+    <!-- ========================= -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h2>Extracurricular Activities</h2>
+
+            <p>
+                Track student participation in sports, clubs, hackathons,
+                volunteering, workshops and competitions.
+            </p>
+
+        </div>
+
+        <div class="header-actions">
+
+            <button class="btn btn-success">
+
+                <i class="fas fa-plus-circle"></i>
+
+                Add Activity
+
+            </button>
+
+            <button class="btn btn-primary">
+
+                <i class="fas fa-file-export"></i>
+
+                Export
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- Statistics Cards -->
+    <!-- ========================= -->
+
+    <div class="stats-grid">
+
+        <div class="stat-card blue">
+
+            <div class="stat-icon">
+                <i class="fas fa-trophy"></i>
+            </div>
+
+            <div class="stat-content">
+                <h3>{{ total_activities or 125 }}</h3>
+                <p>Total Activities</p>
+            </div>
+
+        </div>
+
+        <div class="stat-card green">
+
+            <div class="stat-icon">
+                <i class="fas fa-futbol"></i>
+            </div>
+
+            <div class="stat-content">
+                <h3>{{ sports_count or 38 }}</h3>
+                <p>Sports</p>
+            </div>
+
+        </div>
+
+        <div class="stat-card orange">
+
+            <div class="stat-icon">
+                <i class="fas fa-laptop-code"></i>
+            </div>
+
+            <div class="stat-content">
+                <h3>{{ hackathon_count or 21 }}</h3>
+                <p>Hackathons</p>
+            </div>
+
+        </div>
+
+        <div class="stat-card purple">
+
+            <div class="stat-icon">
+                <i class="fas fa-handshake"></i>
+            </div>
+
+            <div class="stat-content">
+                <h3>{{ volunteer_count or 27 }}</h3>
+                <p>Volunteer</p>
+            </div>
+
+        </div>
+
+        <div class="stat-card red">
+
+            <div class="stat-icon">
+                <i class="fas fa-certificate"></i>
+            </div>
+
+            <div class="stat-content">
+                <h3>{{ certificate_count or 44 }}</h3>
+                <p>Certificates</p>
+            </div>
+
+        </div>
+
+        <div class="stat-card cyan">
+
+            <div class="stat-icon">
+                <i class="fas fa-star"></i>
+            </div>
+
+            <div class="stat-content">
+                <h3>86%</h3>
+                <p>Activity Score</p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- Filters -->
+    <!-- ========================= -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-filter"></i>
+
+                Search & Filter Activities
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="filter-grid">
+
+                <div class="form-group">
+
+                    <label>Search</label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Search activity or student">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Category</label>
+
+                    <select class="form-control">
+
+                        <option>All</option>
+
+                        <option>Sports</option>
+
+                        <option>Hackathon</option>
+
+                        <option>Workshop</option>
+
+                        <option>Volunteer</option>
+
+                        <option>Competition</option>
+
+                        <option>Seminar</option>
+
+                        <option>Club</option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Status</label>
+
+                    <select class="form-control">
+
+                        <option>All</option>
+
+                        <option>Approved</option>
+
+                        <option>Pending</option>
+
+                        <option>Rejected</option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Date</label>
+
+                    <input
+                        type="date"
+                        class="form-control">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- Activity Table -->
+    <!-- ========================= -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-list"></i>
+
+                Student Activities
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover">
+
+                    <thead>
+
+                    <tr>
+
+                        <th>Student</th>
+
+                        <th>Activity</th>
+
+                        <th>Category</th>
+
+                        <th>Level</th>
+
+                        <th>Date</th>
+
+                        <th>Hours</th>
+
+                        <th>Certificate</th>
+
+                        <th>Status</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                    </thead>
+
+                    <tbody>
+                    
+                        
+                                        {% for activity in activities %}
+
+                    <tr>
+
+                        <td>
+                            <div class="student-info">
+
+                                <img src="{{ activity.avatar or url_for('static', filename='img/default-avatar.png') }}"
+                                     class="student-avatar">
+
+                                <div>
+
+                                    <strong>{{ activity.student_name }}</strong><br>
+
+                                    <small>ID : {{ activity.student_id }}</small>
+
+                                </div>
+
+                            </div>
+                        </td>
+
+                        <td>
+
+                            <strong>{{ activity.activity_name }}</strong>
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-primary">
+
+                                {{ activity.category }}
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            {{ activity.level }}
+
+                        </td>
+
+                        <td>
+
+                            {{ activity.activity_date }}
+
+                        </td>
+
+                        <td>
+
+                            {{ activity.hours }}
+
+                        </td>
+
+                        <td>
+
+                            {% if activity.certificate %}
+
+                            <a href="{{ activity.certificate }}"
+                               target="_blank"
+                               class="btn btn-sm btn-success">
+
+                                <i class="fas fa-file-pdf"></i>
+
+                            </a>
+
+                            {% else %}
+
+                            <span class="text-muted">
+
+                                No File
+
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {% if activity.status=="Approved" %}
+
+                            <span class="badge bg-success">
+
+                                Approved
+
+                            </span>
+
+                            {% elif activity.status=="Pending" %}
+
+                            <span class="badge bg-warning">
+
+                                Pending
+
+                            </span>
+
+                            {% else %}
+
+                            <span class="badge bg-danger">
+
+                                Rejected
+
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <div class="btn-group">
+
+                                <button class="btn btn-sm btn-info">
+
+                                    <i class="fas fa-eye"></i>
+
+                                </button>
+
+                                <button class="btn btn-sm btn-warning">
+
+                                    <i class="fas fa-edit"></i>
+
+                                </button>
+
+                                <button class="btn btn-sm btn-danger">
+
+                                    <i class="fas fa-trash"></i>
+
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+
+                        <td colspan="9" class="text-center py-5">
+
+                            <i class="fas fa-folder-open fa-3x mb-3 text-muted"></i>
+
+                            <h5>No Activities Found</h5>
+
+                            <p class="text-muted">
+
+                                Click <strong>Add Activity</strong> to create the first record.
+
+                            </p>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- Pagination -->
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+
+                <small>
+
+                    Showing {{ activities|length }} Activities
+
+                </small>
+
+                <nav>
+
+                    <ul class="pagination">
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">Previous</a>
+
+                        </li>
+
+                        <li class="page-item active">
+
+                            <a class="page-link" href="#">1</a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">2</a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">3</a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">Next</a>
+
+                        </li>
+
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================================= -->
+
+    <!-- Activity Timeline -->
+
+    <!-- ================================= -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-stream"></i>
+
+                Recent Activity Timeline
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="timeline">
+
+                <div class="timeline-item">
+
+                    <div class="timeline-icon bg-success">
+
+                        <i class="fas fa-trophy"></i>
+
+                    </div>
+
+                    <div class="timeline-content">
+
+                        <h5>Hackathon Winner</h5>
+
+                        <p>
+
+                            Team Alpha secured 1st place in the National AI Hackathon.
+
+                        </p>
+
+                        <small>2 Hours Ago</small>
+
+                    </div>
+
+                </div>
+
+                <div class="timeline-item">
+
+                    <div class="timeline-icon bg-primary">
+
+                        <i class="fas fa-users"></i>
+
+                    </div>
+
+                    <div class="timeline-content">
+
+                        <h5>Volunteer Camp</h5>
+
+                        <p>
+
+                            25 students participated in a community service programme.
+
+                        </p>
+
+                        <small>Yesterday</small>
+
+                    </div>
+
+                </div>
+
+                <div class="timeline-item">
+
+                    <div class="timeline-icon bg-warning">
+
+                        <i class="fas fa-microphone"></i>
+
+                    </div>
+
+                    <div class="timeline-content">
+
+                        <h5>Presentation Competition</h5>
+
+                        <p>
+
+                            Inter-department presentation contest completed successfully.
+
+                        </p>
+
+                        <small>3 Days Ago</small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ======== Part 3 Starts Here ======== -->
+         <!-- ================================= -->
+    <!-- Certificates & Competition -->
+    <!-- ================================= -->
+
+    <div class="dashboard-row">
+
+        <!-- Latest Certificates -->
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+                    <i class="fas fa-certificate"></i>
+                    Latest Certificates
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <table class="table table-hover">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Student</th>
+
+                            <th>Certificate</th>
+
+                            <th>Issued By</th>
+
+                            <th>Date</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <tr>
+
+                            <td>John David</td>
+
+                            <td>Python Programming</td>
+
+                            <td>Infosys Springboard</td>
+
+                            <td>12 Jul 2026</td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td>Keerthana</td>
+
+                            <td>AI Workshop</td>
+
+                            <td>Google</td>
+
+                            <td>10 Jul 2026</td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td>Rahul</td>
+
+                            <td>Cloud Computing</td>
+
+                            <td>AWS</td>
+
+                            <td>09 Jul 2026</td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Competition Highlights -->
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fas fa-medal"></i>
+
+                    Competition Highlights
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="achievement-card">
+
+                    <h5>
+                        🥇 National Hackathon
+                    </h5>
+
+                    <p>
+
+                        Team Alpha secured First Prize among
+                        250+ teams.
+
+                    </p>
+
+                </div>
+
+                <hr>
+
+                <div class="achievement-card">
+
+                    <h5>
+                        🥈 State Level Coding Contest
+                    </h5>
+
+                    <p>
+
+                        Four students entered Top 20 Rankings.
+
+                    </p>
+
+                </div>
+
+                <hr>
+
+                <div class="achievement-card">
+
+                    <h5>
+                        🥉 Football Tournament
+                    </h5>
+
+                    <p>
+
+                        College Team won District Championship.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================================= -->
+    <!-- Activity Analytics -->
+    <!-- ================================= -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-chart-bar"></i>
+
+                Activity Analytics
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <canvas id="categoryChart"
+                            height="250"></canvas>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <canvas id="monthlyChart"
+                            height="250"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================================= -->
+    <!-- Upcoming Events -->
+    <!-- ================================= -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-calendar-alt"></i>
+
+                Upcoming Events
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <table class="table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Event</th>
+
+                        <th>Date</th>
+
+                        <th>Venue</th>
+
+                        <th>Status</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr>
+
+                        <td>National Hackathon</td>
+
+                        <td>20 Aug 2026</td>
+
+                        <td>Chennai</td>
+
+                        <td>
+
+                            <span class="badge bg-success">
+
+                                Registration Open
+
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td>Technical Symposium</td>
+
+                        <td>25 Aug 2026</td>
+
+                        <td>Anna University</td>
+
+                        <td>
+
+                            <span class="badge bg-primary">
+
+                                Upcoming
+
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td>Blood Donation Camp</td>
+
+                        <td>28 Aug 2026</td>
+
+                        <td>College Campus</td>
+
+                        <td>
+
+                            <span class="badge bg-warning">
+
+                                Volunteer Needed
+
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================================= -->
+    <!-- AI Suggestions -->
+    <!-- ================================= -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-robot"></i>
+
+                AI Recommendations
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="recommendation success">
+
+                <i class="fas fa-lightbulb"></i>
+
+                <div>
+
+                    <strong>
+
+                        Increase Technical Competitions
+
+                    </strong>
+
+                    <p>
+
+                        Students participating in hackathons
+                        have higher placement success.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="recommendation warning">
+
+                <i class="fas fa-users"></i>
+
+                <div>
+
+                    <strong>
+
+                        Encourage Volunteer Work
+
+                    </strong>
+
+                    <p>
+
+                        Community service significantly
+                        improves leadership score.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="recommendation info">
+
+                <i class="fas fa-star"></i>
+
+                <div>
+
+                    <strong>
+
+                        Improve Presentation Activities
+
+                    </strong>
+
+                    <p>
+
+                        Organize monthly seminars and
+                        public speaking events.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================== -->
+    <!-- Part 4 Starts Here -->
+         <!-- ================================= -->
+    <!-- Add Activity Modal -->
+    <!-- ================================= -->
+
+    <div class="modal fade" id="addActivityModal" tabindex="-1">
+
+        <div class="modal-dialog modal-lg">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+
+                        <i class="fas fa-plus-circle"></i>
+
+                        Add New Activity
+
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <form method="POST"
+                      action="/admin/extracurricular/add"
+                      enctype="multipart/form-data">
+
+                    <div class="modal-body">
+
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Student</label>
+
+                                <select class="form-control"
+                                        name="student_id"
+                                        required>
+
+                                    <option value="">Select Student</option>
+
+                                    {% for s in students %}
+
+                                    <option value="{{ s.id }}">
+
+                                        {{ s.name }}
+
+                                    </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Activity Name</label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       name="activity_name"
+                                       required>
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Category</label>
+
+                                <select class="form-control"
+                                        name="category">
+
+                                    <option>Sports</option>
+                                    <option>Hackathon</option>
+                                    <option>Workshop</option>
+                                    <option>Seminar</option>
+                                    <option>Volunteer</option>
+                                    <option>Club</option>
+                                    <option>Competition</option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Level</label>
+
+                                <select class="form-control"
+                                        name="level">
+
+                                    <option>College</option>
+                                    <option>District</option>
+                                    <option>State</option>
+                                    <option>National</option>
+                                    <option>International</option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Date</label>
+
+                                <input type="date"
+                                       class="form-control"
+                                       name="activity_date">
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Hours</label>
+
+                                <input type="number"
+                                       class="form-control"
+                                       name="hours">
+
+                            </div>
+
+                            <div class="col-12 mb-3">
+
+                                <label>Description</label>
+
+                                <textarea class="form-control"
+                                          rows="4"
+                                          name="description"></textarea>
+
+                            </div>
+
+                            <div class="col-12">
+
+                                <label>Certificate</label>
+
+                                <input type="file"
+                                       class="form-control"
+                                       name="certificate">
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+
+                            Cancel
+
+                        </button>
+
+                        <button class="btn btn-success">
+
+                            Save Activity
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+{% endblock %}
+
+
+
+{% block scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const categoryChart=document.getElementById("categoryChart");
+
+if(categoryChart){
+
+new Chart(categoryChart,{
+
+type:"pie",
+
+data:{
+
+labels:[
+"Sports",
+"Hackathon",
+"Workshop",
+"Volunteer",
+"Competition"
+],
+
+datasets:[{
+
+data:[
+32,
+18,
+15,
+20,
+15
+]
+
+}]
+
+},
+
+options:{
+
+responsive:true
+
+}
+
+});
+
+}
+
+
+
+const monthlyChart=document.getElementById("monthlyChart");
+
+if(monthlyChart){
+
+new Chart(monthlyChart,{
+
+type:"bar",
+
+data:{
+
+labels:[
+"Jan",
+"Feb",
+"Mar",
+"Apr",
+"May",
+"Jun"
+],
+
+datasets:[{
+
+label:"Activities",
+
+data:[
+12,
+18,
+25,
+21,
+29,
+35
+]
+
+}]
+
+},
+
+options:{
+
+responsive:true
+
+}
+
+});
+
+}
+
+</script>
+
+{% endblock %}

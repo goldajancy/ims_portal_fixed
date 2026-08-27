@@ -1,0 +1,1454 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block title %}Technical Skills{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/development.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block body %}
+
+{{ sidebar('admin','development') }}
+
+{{ topbar(
+    '💻 Technical Skills',
+    'Monitor student technical skills and placement readiness'
+) }}
+
+{{ flash_messages() }}
+
+<div class="main-content">
+
+    <!-- ========================= -->
+    <!-- Header -->
+    <!-- ========================= -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h2>Technical Skills Dashboard</h2>
+
+            <p>
+                Manage student programming skills, certifications,
+                GitHub projects and AI skill analysis.
+            </p>
+
+        </div>
+
+        <div class="header-actions">
+
+            <button class="btn btn-success"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addSkillModal">
+
+                <i class="fas fa-plus-circle"></i>
+
+                Add Skill
+
+            </button>
+
+            <button class="btn btn-primary">
+
+                <i class="fas fa-download"></i>
+
+                Export
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ========================= -->
+    <!-- Statistics Cards -->
+    <!-- ========================= -->
+
+    <div class="stats-grid">
+
+        <div class="stat-card blue">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-code"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>{{ total_skills or 142 }}</h3>
+
+                <p>Total Skills</p>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card green">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-star"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>8.6</h3>
+
+                <p>Average Rating</p>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card orange">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-certificate"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>{{ total_certificates or 68 }}</h3>
+
+                <p>Certificates</p>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card purple">
+
+            <div class="stat-icon">
+
+                <i class="fab fa-github"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>{{ github_projects or 34 }}</h3>
+
+                <p>GitHub Projects</p>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card red">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-briefcase"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>91%</h3>
+
+                <p>Placement Ready</p>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card cyan">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-robot"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>89%</h3>
+
+                <p>AI Skill Score</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ========================= -->
+    <!-- Search -->
+    <!-- ========================= -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-search"></i>
+
+                Search Technical Skills
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="filter-grid">
+
+                <div class="form-group">
+
+                    <label>Student</label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Search Student">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Technology</label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Python / Java / React">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Category</label>
+
+                    <select class="form-control">
+
+                        <option>All</option>
+
+                        <option>Programming</option>
+
+                        <option>Web Development</option>
+
+                        <option>Database</option>
+
+                        <option>AI / ML</option>
+
+                        <option>Cloud</option>
+
+                        <option>Cyber Security</option>
+
+                        <option>DevOps</option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Skill Level</label>
+
+                    <select class="form-control">
+
+                        <option>All</option>
+
+                        <option>Beginner</option>
+
+                        <option>Intermediate</option>
+
+                        <option>Advanced</option>
+
+                        <option>Expert</option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ========================= -->
+    <!-- Skill Table -->
+    <!-- ========================= -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-laptop-code"></i>
+
+                Student Technical Skills
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover">
+
+                    <thead>
+
+                    <tr>
+
+                        <th>Student</th>
+
+                        <th>Technology</th>
+
+                        <th>Category</th>
+
+                        <th>Level</th>
+
+                        <th>Experience</th>
+
+                        <th>Rating</th>
+
+                        <th>Certificate</th>
+
+                        <th>GitHub</th>
+
+                        <th>Status</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                    </thead>
+
+                    <tbody>
+                                            {% for skill in skills %}
+
+                    <tr>
+
+                        <td>
+
+                            <div class="student-info">
+
+                                <img src="{{ skill.avatar or url_for('static', filename='img/default-avatar.png') }}"
+                                     class="student-avatar">
+
+                                <div>
+
+                                    <strong>{{ skill.student_name }}</strong><br>
+
+                                    <small>{{ skill.email }}</small>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <strong>{{ skill.skill_name }}</strong>
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-primary">
+
+                                {{ skill.category }}
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            {% if skill.level=="Expert" %}
+
+                                <span class="badge bg-success">Expert</span>
+
+                            {% elif skill.level=="Advanced" %}
+
+                                <span class="badge bg-info">Advanced</span>
+
+                            {% elif skill.level=="Intermediate" %}
+
+                                <span class="badge bg-warning">Intermediate</span>
+
+                            {% else %}
+
+                                <span class="badge bg-secondary">Beginner</span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {{ skill.experience }} Months
+
+                        </td>
+
+                        <td>
+
+                            <div class="d-flex align-items-center">
+
+                                <div class="progress flex-grow-1 me-2"
+                                     style="height:8px;">
+
+                                    <div class="progress-bar bg-success"
+                                         style="width:{{ skill.rating*10 }}%">
+
+                                    </div>
+
+                                </div>
+
+                                <strong>
+
+                                    {{ skill.rating }}/10
+
+                                </strong>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            {% if skill.certificate %}
+
+                            <a href="{{ skill.certificate }}"
+                               target="_blank"
+                               class="btn btn-sm btn-success">
+
+                                <i class="fas fa-file-pdf"></i>
+
+                            </a>
+
+                            {% else %}
+
+                                <span class="text-muted">
+
+                                    -
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {% if skill.github_link %}
+
+                            <a href="{{ skill.github_link }}"
+                               target="_blank"
+                               class="btn btn-dark btn-sm">
+
+                                <i class="fab fa-github"></i>
+
+                            </a>
+
+                            {% else %}
+
+                                -
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {% if skill.status=="Verified" %}
+
+                                <span class="badge bg-success">
+
+                                    Verified
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-warning">
+
+                                    Pending
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <div class="btn-group">
+
+                                <button class="btn btn-info btn-sm">
+
+                                    <i class="fas fa-eye"></i>
+
+                                </button>
+
+                                <button class="btn btn-warning btn-sm">
+
+                                    <i class="fas fa-edit"></i>
+
+                                </button>
+
+                                <button class="btn btn-danger btn-sm">
+
+                                    <i class="fas fa-trash"></i>
+
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+
+                        <td colspan="10" class="text-center py-5">
+
+                            <i class="fas fa-laptop-code fa-3x text-muted mb-3"></i>
+
+                            <h5>No Technical Skills Found</h5>
+
+                            <p class="text-muted">
+
+                                Click <strong>Add Skill</strong> to create the first record.
+
+                            </p>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- Pagination -->
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+
+                <small>
+
+                    Showing {{ skills|length }} Records
+
+                </small>
+
+                <nav>
+
+                    <ul class="pagination">
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">
+
+                                Previous
+
+                            </a>
+
+                        </li>
+
+                        <li class="page-item active">
+
+                            <a class="page-link" href="#">
+
+                                1
+
+                            </a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">
+
+                                2
+
+                            </a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">
+
+                                3
+
+                            </a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">
+
+                                Next
+
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+
+    <!-- Skill Matrix -->
+
+    <!-- ===================================== -->
+
+    <div class="dashboard-row">
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fas fa-chart-bar"></i>
+
+                    Skill Matrix
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Python</span>
+
+                        <span>92%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-primary"
+                             style="width:92%">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Flask</span>
+
+                        <span>88%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-success"
+                             style="width:88%">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>HTML/CSS</span>
+
+                        <span>96%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-info"
+                             style="width:96%">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>JavaScript</span>
+
+                        <span>84%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-warning"
+                             style="width:84%">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>MySQL</span>
+
+                        <span>90%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-danger"
+                             style="width:90%">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===== Part 3 Starts Here ===== -->
+
+        <!-- ===================================== -->
+    <!-- Analytics Section -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-row">
+
+        <!-- Skill Analytics -->
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fas fa-chart-line"></i>
+
+                    Skill Analytics
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <canvas id="skillAnalyticsChart"
+                        height="250"></canvas>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Technology Distribution -->
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fas fa-chart-pie"></i>
+
+                    Technology Distribution
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <canvas id="technologyChart"
+                        height="250"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+    <!-- Placement Readiness -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-briefcase"></i>
+
+                Placement Readiness
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="progress-item">
+
+                <span>Technical Knowledge</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-success"
+                         style="width:92%"></div>
+
+                </div>
+
+                <strong>92%</strong>
+
+            </div>
+
+            <div class="progress-item">
+
+                <span>Programming</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-primary"
+                         style="width:89%"></div>
+
+                </div>
+
+                <strong>89%</strong>
+
+            </div>
+
+            <div class="progress-item">
+
+                <span>Database Skills</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-warning"
+                         style="width:84%"></div>
+
+                </div>
+
+                <strong>84%</strong>
+
+            </div>
+
+            <div class="progress-item">
+
+                <span>Problem Solving</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-info"
+                         style="width:86%"></div>
+
+                </div>
+
+                <strong>86%</strong>
+
+            </div>
+
+            <div class="progress-item">
+
+                <span>Overall Placement Score</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-danger"
+                         style="width:91%"></div>
+
+                </div>
+
+                <strong>91%</strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+    <!-- AI Skill Gap -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-robot"></i>
+
+                AI Skill Gap Analysis
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="recommendation success">
+
+                <i class="fas fa-check-circle"></i>
+
+                <div>
+
+                    <strong>Strong Areas</strong>
+
+                    <p>
+
+                        Python, Flask, HTML/CSS and MySQL are
+                        above placement expectations.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="recommendation warning">
+
+                <i class="fas fa-lightbulb"></i>
+
+                <div>
+
+                    <strong>Improve Next</strong>
+
+                    <p>
+
+                        Learn React, REST APIs, Docker and
+                        Cloud deployment.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="recommendation info">
+
+                <i class="fas fa-graduation-cap"></i>
+
+                <div>
+
+                    <strong>Recommended Certifications</strong>
+
+                    <p>
+
+                        AWS Cloud Practitioner,
+                        Microsoft Azure Fundamentals,
+                        Google Cloud Associate.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="recommendation primary">
+
+                <i class="fas fa-bullseye"></i>
+
+                <div>
+
+                    <strong>Career Prediction</strong>
+
+                    <p>
+
+                        AI predicts high suitability for
+                        Full Stack Developer,
+                        Python Developer,
+                        Backend Developer,
+                        Data Analyst.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+    <!-- Top Technologies -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-fire"></i>
+
+                Most Popular Technologies
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <table class="table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Technology</th>
+
+                        <th>Students</th>
+
+                        <th>Average Rating</th>
+
+                        <th>Trend</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr>
+
+                        <td>Python</td>
+
+                        <td>86</td>
+
+                        <td>9.1/10</td>
+
+                        <td><span class="badge bg-success">↑ Growing</span></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td>Java</td>
+
+                        <td>64</td>
+
+                        <td>8.5/10</td>
+
+                        <td><span class="badge bg-primary">Stable</span></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td>React</td>
+
+                        <td>52</td>
+
+                        <td>8.2/10</td>
+
+                        <td><span class="badge bg-success">↑ Growing</span></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td>MySQL</td>
+
+                        <td>74</td>
+
+                        <td>8.9/10</td>
+
+                        <td><span class="badge bg-info">Popular</span></td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td>Flask</td>
+
+                        <td>47</td>
+
+                        <td>8.8/10</td>
+
+                        <td><span class="badge bg-warning">Emerging</span></td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <!-- ==================== -->
+    <!-- Part 4 Starts Here -->
+
+        <!-- ===================================== -->
+    <!-- Add Skill Modal -->
+    <!-- ===================================== -->
+
+    <div class="modal fade" id="addSkillModal" tabindex="-1">
+
+        <div class="modal-dialog modal-lg">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+
+                        <i class="fas fa-plus-circle"></i>
+
+                        Add Technical Skill
+
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <form method="POST"
+                      action="/admin/technical-skills/add"
+                      enctype="multipart/form-data">
+
+                    <div class="modal-body">
+
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Student</label>
+
+                                <select class="form-control"
+                                        name="student_id"
+                                        required>
+
+                                    {% for s in students %}
+
+                                    <option value="{{ s.id }}">
+
+                                        {{ s.name }}
+
+                                    </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Technology</label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       name="skill_name"
+                                       placeholder="Python">
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Category</label>
+
+                                <select class="form-control"
+                                        name="category">
+
+                                    <option>Programming</option>
+                                    <option>Web Development</option>
+                                    <option>Database</option>
+                                    <option>AI / ML</option>
+                                    <option>Cloud</option>
+                                    <option>Cyber Security</option>
+                                    <option>DevOps</option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Skill Level</label>
+
+                                <select class="form-control"
+                                        name="level">
+
+                                    <option>Beginner</option>
+                                    <option>Intermediate</option>
+                                    <option>Advanced</option>
+                                    <option>Expert</option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Experience (Months)</label>
+
+                                <input type="number"
+                                       class="form-control"
+                                       name="experience">
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Rating (1-10)</label>
+
+                                <input type="number"
+                                       class="form-control"
+                                       min="1"
+                                       max="10"
+                                       name="rating">
+
+                            </div>
+
+                            <div class="col-12 mb-3">
+
+                                <label>GitHub Repository</label>
+
+                                <input type="url"
+                                       class="form-control"
+                                       name="github_link">
+
+                            </div>
+
+                            <div class="col-12 mb-3">
+
+                                <label>Certificate</label>
+
+                                <input type="file"
+                                       class="form-control"
+                                       name="certificate">
+
+                            </div>
+
+                            <div class="col-12">
+
+                                <label>Remarks</label>
+
+                                <textarea class="form-control"
+                                          rows="4"
+                                          name="remarks"></textarea>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+
+                            Cancel
+
+                        </button>
+
+                        <button class="btn btn-success">
+
+                            Save Skill
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const skillChart =
+document.getElementById("skillAnalyticsChart");
+
+if(skillChart){
+
+new Chart(skillChart,{
+
+type:"radar",
+
+data:{
+
+labels:[
+"Programming",
+"Database",
+"Cloud",
+"AI",
+"Web",
+"Problem Solving"
+],
+
+datasets:[{
+
+label:"Average Skill",
+
+data:[
+90,
+88,
+72,
+76,
+92,
+89
+],
+
+fill:true
+
+}]
+
+},
+
+options:{
+
+responsive:true
+
+}
+
+});
+
+}
+
+
+
+const techChart =
+document.getElementById("technologyChart");
+
+if(techChart){
+
+new Chart(techChart,{
+
+type:"doughnut",
+
+data:{
+
+labels:[
+"Python",
+"Java",
+"JavaScript",
+"MySQL",
+"React",
+"Flask"
+],
+
+datasets:[{
+
+data:[
+28,
+18,
+20,
+14,
+10,
+10
+]
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{
+
+position:"bottom"
+
+}
+
+}
+
+}
+
+});
+
+}
+
+</script>
+
+{% endblock %}

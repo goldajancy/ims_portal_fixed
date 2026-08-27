@@ -1,0 +1,564 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Announcements - Admin{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('admin', 'announcements') }}
+  <div class="main-content">
+    {{ topbar('Announcements', 'Broadcast important updates to users') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <div class="page-header">
+        <div></div> <!-- spacer -->
+    <button class="btn btn-primary" onclick="openModal('addAnnouncementModal')">
+        <i class="fas fa-bullhorn"></i> New Announcement
+    </button>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-bullhorn"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ announcements|length }}</span>
+            <span class="stat-label">Total Announcements</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ announcements|selectattr('target_role', 'equalto', 'all')|list|length }}</span>
+            <span class="stat-label">For Everyone</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-purple"><i class="fas fa-calendar-week"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ announcements[:7]|length }}</span>
+            <span class="stat-label">This Week</span>
+        </div>
+    </div>
+</div>
+
+<div class="announcements-container">
+    {% if announcements %}
+        {% for ann in announcements %}
+        <div class="announcement-card">
+            <div class="announcement-left">
+                <div class="announcement-icon">
+                    {% if ann.target_role == 'all' %}
+                        <i class="fas fa-globe"></i>
+                    {% elif ann.target_role == 'trainee' %}
+                        <i class="fas fa-user-graduate"></i>
+                    {% elif ann.target_role == 'mentor' %}
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    {% else %}
+                        <i class="fas fa-bullhorn"></i>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="announcement-content">
+                <div class="announcement-header">
+                    <h4>{{ ann.title }}</h4>
+                    <span class="target-badge target-{{ ann.target_role }}">
+                        {{ ann.target_role|capitalize }}
+                    </span>
+                </div>
+                <p class="announcement-body">{{ ann.content }}</p>
+                <div class="announcement-meta">
+                    <span class="author">
+                        <i class="fas fa-user"></i> {{ ann.author }}
+                    </span>
+                    <span class="date">
+                        <i class="fas fa-clock"></i> 
+                        {{ ann.created_at.strftime('%b %d, %Y at %I:%M %p') if ann.created_at else '-' }}
+                    </span>
+                </div>
+            </div>
+            <div class="announcement-actions">
+                <button class="btn-icon" title="Edit" onclick="editAnnouncement({{ ann.id }})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon btn-danger" title="Delete" onclick="deleteAnnouncement({{ ann.id }})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fas fa-bullhorn"></i>
+            <h4>No Announcements Yet</h4>
+            <p>Create your first announcement to reach your users</p>
+            <button class="btn btn-primary" onclick="openModal('addAnnouncementModal')">
+                <i class="fas fa-plus"></i> Create Announcement
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Announcement Modal -->
+<div class="modal" id="addAnnouncementModal">
+    <div class="modal-box" style="max-width:650px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-bullhorn"></i> New Announcement</h3>
+            <button class="modal-close" onclick="closeModal('addAnnouncementModal')">&times;</button>
+        </div>
+        <form action="{{ url_for('admin_add_announcement') }}" method="POST">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="title">Title <span class="required">*</span></label>
+                    <input type="text" id="title" name="title" required placeholder="Announcement title">
+                </div>
+                <div class="form-group">
+                    <label for="target_role">Target Audience <span class="required">*</span></label>
+                    <div class="target-options">
+                        <label class="target-option">
+                            <input type="radio" name="target_role" value="all" checked>
+                            <span class="option-box">
+                                <i class="fas fa-globe"></i>
+                                <span>Everyone</span>
+                            </span>
+                        </label>
+                        <label class="target-option">
+                            <input type="radio" name="target_role" value="trainee">
+                            <span class="option-box">
+                                <i class="fas fa-user-graduate"></i>
+                                <span>Trainees</span>
+                            </span>
+                        </label>
+                        <label class="target-option">
+                            <input type="radio" name="target_role" value="mentor">
+                            <span class="option-box">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <span>Mentors</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="content">Content <span class="required">*</span></label>
+                    <textarea id="content" name="content" rows="6" required placeholder="Write your announcement here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addAnnouncementModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Publish Announcement
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Edit Announcement Modal -->
+<div class="modal" id="editAnnouncementModal">
+    <div class="modal-box" style="max-width:650px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-edit"></i> Edit Announcement</h3>
+            <button class="modal-close" onclick="closeModal('editAnnouncementModal')">&times;</button>
+        </div>
+        <form id="editAnnouncementForm" method="POST">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="edit_title">Title <span class="required">*</span></label>
+                    <input type="text" id="edit_title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label>Target Audience <span class="required">*</span></label>
+                    <div class="target-options">
+                        <label class="target-option">
+                            <input type="radio" name="target_role" value="all" id="edit_target_all">
+                            <span class="option-box">
+                                <i class="fas fa-globe"></i>
+                                <span>Everyone</span>
+                            </span>
+                        </label>
+                        <label class="target-option">
+                            <input type="radio" name="target_role" value="trainee" id="edit_target_trainee">
+                            <span class="option-box">
+                                <i class="fas fa-user-graduate"></i>
+                                <span>Trainees</span>
+                            </span>
+                        </label>
+                        <label class="target-option">
+                            <input type="radio" name="target_role" value="mentor" id="edit_target_mentor">
+                            <span class="option-box">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <span>Mentors</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit_content">Content <span class="required">*</span></label>
+                    <textarea id="edit_content" name="content" rows="6" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('editAnnouncementModal')">Cancel</button>
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Announcement Modal -->
+<div class="modal" id="deleteAnnouncementModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3><i class="fas fa-trash"></i> Delete Announcement</h3>
+            <button class="modal-close" onclick="closeModal('deleteAnnouncementModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete this announcement?</p>
+            <p style="color:#dc2626;font-size:14px;">This action cannot be undone.</p>
+        </div>
+        <form id="deleteAnnouncementForm" method="POST">
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('deleteAnnouncementModal')">Cancel</button>
+                <button type="submit" class="btn-primary" style="background:#dc2626;">Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+:root{
+    --primary:#4f46e5;
+    --primary-dark:#4338ca;
+    --border:#e5e7eb;
+    --text:#1f2937;
+    --muted:#6b7280;
+}
+
+/* Announcement List */
+.announcements-container{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+.announcement-card{
+    display:flex;
+    align-items:flex-start;
+    background:white;
+    border-radius:18px;
+    padding:24px;
+    border:1px solid var(--border);
+    box-shadow:0 4px 15px rgba(0,0,0,.05);
+    transition:.3s;
+}
+
+.announcement-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+.announcement-left{
+    margin-right:20px;
+}
+
+.announcement-icon{
+    width:60px;
+    height:60px;
+    border-radius:16px;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+}
+
+.announcement-content{
+    flex:1;
+}
+
+.announcement-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+}
+
+.announcement-header h4{
+    margin:0;
+    color:#111827;
+    font-size:20px;
+}
+
+.announcement-body{
+    color:#6b7280;
+    line-height:1.7;
+    margin-bottom:18px;
+}
+
+/* Badges */
+.target-badge{
+    padding:8px 16px;
+    border-radius:30px;
+    font-size:13px;
+    font-weight:600;
+}
+
+.target-all{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.target-trainee{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.target-mentor{
+    background:#fce7f3;
+    color:#be185d;
+}
+
+/* Footer */
+.announcement-meta{
+    display:flex;
+    gap:20px;
+    color:#6b7280;
+    font-size:14px;
+}
+
+.announcement-meta span{
+    display:flex;
+    align-items:center;
+    gap:7px;
+}
+
+/* Actions */
+.announcement-actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.btn-icon{
+    width:40px;
+    height:40px;
+    border:none;
+    border-radius:12px;
+    background:#eef2ff;
+    color:var(--primary);
+    cursor:pointer;
+    transition:.3s;
+}
+
+.btn-icon:hover{
+    background:var(--primary);
+    color:white;
+}
+
+.btn-danger{
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.btn-danger:hover{
+    background:#dc2626;
+    color:white;
+}
+
+/* Modal */
+
+    
+
+
+.modal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:25px 30px;
+    border-bottom:1px solid #eee;
+}
+
+.modal-header h3{
+    margin:0;
+    color:#2f3463;
+}
+
+.modal-close{
+    background:none;
+    border:none;
+    font-size:30px;
+    cursor:pointer;
+}
+
+.modal-body{
+    padding:30px;
+} 
+
+.form-group{
+    margin-bottom:20px;
+}
+
+.form-group label{
+    display:block;
+    margin-bottom:10px;
+    font-weight:600;
+}
+
+.form-group input,
+.form-group textarea{
+    width:100%;
+    padding:15px;
+    border:1px solid #e5e7eb;
+    border-radius:15px;
+    background:#fafafa;
+}
+
+.form-group input:focus,
+.form-group textarea:focus{
+    outline:none;
+    border-color:var(--primary);
+    background:white;
+}
+
+/* Audience cards */
+.target-options{
+    display:flex;
+    gap:18px;
+}
+
+.target-option{
+    flex:1;
+}
+
+.target-option input{
+    display:none;
+}
+
+.option-box{
+    padding:20px;
+    border:2px solid #e5e7eb;
+    border-radius:18px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.option-box i{
+    font-size:28px;
+    color:var(--primary);
+}
+
+.target-option input:checked + .option-box{
+    border-color:var(--primary);
+    background:#eef2ff;
+}
+
+.modal-footer{
+    padding:0 30px 30px;
+    display:flex;
+    gap:15px;
+}
+
+.btn-secondary{
+    background:#3d3a73;
+    color:white;
+    border:none;
+    padding:14px 22px;
+    border-radius:14px;
+    cursor:pointer;
+}
+
+.btn-primary{
+    background:#3d3a73;
+    color:white;
+    border:none;
+    padding:14px 24px;
+    border-radius:14px;
+    cursor:pointer;
+}
+
+.btn-primary:hover{
+    background:#2d2b5d;
+}
+
+.empty-state{
+    text-align:center;
+    padding:70px 20px;
+}
+
+.empty-state i{
+    font-size:60px;
+    color:#4f46e5;
+    margin-bottom:20px;
+}
+
+.modal-lg{
+    max-width:650px;
+}
+
+/* Mobile */
+@media(max-width:768px){
+
+    .announcement-card{
+        flex-direction:column;
+    }
+
+    .announcement-actions{
+        flex-direction:row;
+        margin-top:20px;
+    }
+
+    .target-options{
+        flex-direction:column;
+    }
+
+    .modal-content{
+        width:95%;
+    }
+
+}
+</style>
+<script>
+function editAnnouncement(id) {
+    fetch("/admin/announcements/" + id)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                alert("Announcement not found.");
+                return;
+            }
+
+            document.getElementById("edit_title").value = data.title || "";
+            document.getElementById("edit_content").value = data.content || "";
+
+            document.getElementById("edit_target_all").checked = data.target_role === "all";
+            document.getElementById("edit_target_trainee").checked = data.target_role === "trainee";
+            document.getElementById("edit_target_mentor").checked = data.target_role === "mentor";
+
+            document.getElementById("editAnnouncementForm").action =
+                "/admin/announcements/update/" + id;
+
+            openModal("editAnnouncementModal");
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Unable to load announcement.");
+        });
+}
+
+function deleteAnnouncement(id) {
+    if (!confirm("Are you sure you want to delete this announcement?")) {
+        return;
+    }
+    document.getElementById("deleteAnnouncementForm").action =
+        "/admin/announcements/delete/" + id;
+    document.getElementById("deleteAnnouncementForm").submit();
+}
+</script>
+{% endblock %}

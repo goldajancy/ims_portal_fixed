@@ -1,0 +1,726 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block title %}
+
+Admin - Extracurricular Management
+
+{% endblock %}
+
+{% block body %}
+
+<div class="app-layout">
+
+    {{ sidebar('admin','extracurricular') }}
+
+    <div class="main-content">
+
+        {{ topbar(
+            'Extracurricular Management',
+            'Monitor and manage all extracurricular activities'
+        ) }}
+
+        <div class="content-area">
+
+            {{ flash_messages() }}
+
+            <!-- ====================================== -->
+            <!-- Dashboard Cards -->
+            <!-- ====================================== -->
+
+            <div class="dashboard-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+
+                        <i class="fas fa-layer-group"></i>
+
+                    </div>
+
+                    <div class="stat-content">
+
+                        <h3>{{ stats.total }}</h3>
+
+                        <p>Total Activities</p>
+
+                    </div>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <div class="stat-icon warning">
+
+                        <i class="fas fa-clock"></i>
+
+                    </div>
+
+                    <div class="stat-content">
+
+                        <h3>{{ stats.pending }}</h3>
+
+                        <p>Pending</p>
+
+                    </div>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <div class="stat-icon success">
+
+                        <i class="fas fa-check-circle"></i>
+
+                    </div>
+
+                    <div class="stat-content">
+
+                        <h3>{{ stats.approved }}</h3>
+
+                        <p>Approved</p>
+
+                    </div>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <div class="stat-icon danger">
+
+                        <i class="fas fa-times-circle"></i>
+
+                    </div>
+
+                    <div class="stat-content">
+
+                        <h3>{{ stats.rejected }}</h3>
+
+                        <p>Rejected</p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ====================================== -->
+            <!-- Search Toolbar -->
+            <!-- ====================================== -->
+
+            <div class="page-toolbar">
+
+                <form
+                    method="GET"
+                    class="search-form">
+
+                    <input
+                        type="text"
+                        name="search"
+                        value="{{ search }}"
+                        placeholder="Search student, mentor or activity">
+
+                    <select name="category">
+
+                        <option value="">All Categories</option>
+
+                        <option>Sports</option>
+
+                        <option>Paper Presentation</option>
+
+                        <option>Technical Event</option>
+
+                        <option>Hackathon</option>
+
+                        <option>Coding Contest</option>
+
+                        <option>Workshop</option>
+
+                        <option>Seminar</option>
+
+                        <option>Communication Skill</option>
+
+                        <option>Leadership</option>
+
+                        <option>Volunteer</option>
+
+                        <option>Internship</option>
+
+                        <option>Certification</option>
+
+                        <option>Cultural</option>
+
+                        <option>Others</option>
+
+                    </select>
+
+                    <select name="status">
+
+                        <option value="">All Status</option>
+
+                        <option value="Pending">Pending</option>
+
+                        <option value="Approved">Approved</option>
+
+                        <option value="Rejected">Rejected</option>
+
+                    </select>
+
+                    <button
+                        class="btn-primary"
+                        type="submit">
+
+                        <i class="fas fa-search"></i>
+
+                        Search
+
+                    </button>
+
+                </form>
+
+                
+                <!-- <a
+                 href="{{ url_for('admin_export_extracurricular') }}"
+                    class="btn-success">
+
+                    <i class="fas fa-file-csv"></i>
+
+                    Export CSV
+
+                </a> -->
+
+
+            </div>
+
+            <!-- ====================================== -->
+            <!-- Activities Table -->
+            <!-- ====================================== -->
+
+            <div class="card">
+
+                <div class="card-body p0">
+
+                    <table class="data-table">
+
+                        <thead>
+
+                        <tr>
+
+                            <th>#</th>
+
+                            <th>Student</th>
+
+                            <th>Mentor</th>
+
+                            <th>Category</th>
+
+                            <th>Activity</th>
+
+                            <th>Status</th>
+
+                            <th>Submitted</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                        {% for activity in activities %}
+
+                        <tr>
+
+                            <td>{{ loop.index }}</td>
+
+                            <td>
+
+                                <div class="user-cell">
+
+                                    <div class="avatar-sm">
+
+                                        {{ activity.student_name[0]|upper }}
+
+                                    </div>
+
+                                    {{ activity.student_name }}
+
+                                </div>
+
+                            </td>
+
+                            <td>
+
+                                {{ activity.mentor_name or "-" }}
+
+                            </td>
+
+                            <td>
+
+                                <span class="badge badge-info">
+
+                                    {{ activity.category }}
+
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                {{ activity.title }}
+
+                            </td>
+
+                            <td>
+                                                                {% if activity.status == "Approved" %}
+
+                                    <span class="badge badge-success">
+
+                                        <i class="fas fa-check-circle"></i>
+
+                                        Approved
+
+                                    </span>
+
+                                {% elif activity.status == "Rejected" %}
+
+                                    <span class="badge badge-danger">
+
+                                        <i class="fas fa-times-circle"></i>
+
+                                        Rejected
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge badge-warning">
+
+                                        <i class="fas fa-clock"></i>
+
+                                        Pending
+
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {{ activity.created_at.strftime('%d-%m-%Y') if activity.created_at else "-" }}
+
+                            </td>
+
+                            <td>
+
+                                <button
+                                    type="button"
+                                    class="btn-sm btn-primary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#detailsModal{{ activity.id }}">
+
+                                    <i class="fas fa-eye"></i>
+
+                                    View
+
+                                </button>
+
+                                <form
+                                    method="POST"
+                                    action="{{ url_for('admin_delete_extracurricular', activity_id=activity.id) }}"
+                                    style="display:inline;"
+                                    onsubmit="return confirm('Delete this extracurricular activity?');">
+
+                                    <button
+                                        type="submit"
+                                        class="btn-sm btn-danger">
+
+                                        <i class="fas fa-trash"></i>
+
+                                        Delete
+
+                                    </button>
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+
+                            <td colspan="8" class="empty-state">
+
+                                <div style="padding:40px;text-align:center;">
+
+                                    <i class="fas fa-folder-open fa-3x text-muted"></i>
+
+                                    <h4 style="margin-top:15px;">
+
+                                        No Activities Found
+
+                                    </h4>
+
+                                    <p class="text-muted">
+
+                                        No extracurricular activities match your current search or filter.
+
+                                    </p>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+            <!-- ====================================== -->
+            <!-- Activity Details Modal -->
+            <!-- ====================================== -->
+
+            {% for activity in activities %}
+
+            <div
+                class="modal fade"
+                id="detailsModal{{ activity.id }}"
+                tabindex="-1"
+                aria-hidden="true">
+
+                <div class="modal-dialog modal-xl">
+
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+
+                            <h5 class="modal-title">
+
+                                <i class="fas fa-file-alt"></i>
+
+                                Extracurricular Activity Details
+
+                            </h5>
+
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"></button>
+
+                        </div>
+
+                        <div class="modal-body">
+
+                            <div class="row">
+
+                                <div class="col-lg-6">
+
+                                    <table class="table table-bordered">
+
+                                        <tr>
+
+                                            <th width="35%">Student</th>
+
+                                            <td>{{ activity.student_name }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Mentor</th>
+
+                                            <td>{{ activity.mentor_name or "-" }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Category</th>
+
+                                            <td>{{ activity.category }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Activity</th>
+
+                                            <td>{{ activity.title }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Level</th>
+
+                                            <td>{{ activity.level }}</td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Achievement</th>
+
+                                            <td>{{ activity.achievement or "-" }}</td>
+
+                                        </tr>
+
+                                    </table>
+
+                                </div>
+
+                                <div class="col-lg-6">
+
+                                    <table class="table table-bordered">
+
+                                        <tr>
+
+                                            <th width="35%">Status</th>
+
+                                            <td>
+                                                                                                {% if activity.status == "Approved" %}
+
+                                                    <span class="badge badge-success">
+
+                                                        <i class="fas fa-check-circle"></i>
+
+                                                        Approved
+
+                                                    </span>
+
+                                                {% elif activity.status == "Rejected" %}
+
+                                                    <span class="badge badge-danger">
+
+                                                        <i class="fas fa-times-circle"></i>
+
+                                                        Rejected
+
+                                                    </span>
+
+                                                {% else %}
+
+                                                    <span class="badge badge-warning">
+
+                                                        <i class="fas fa-clock"></i>
+
+                                                        Pending
+
+                                                    </span>
+
+                                                {% endif %}
+
+                                            </td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Participation Date</th>
+
+                                            <td>
+
+                                                {{ activity.participation_date.strftime('%d-%m-%Y') if activity.participation_date else "-" }}
+
+                                            </td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Submitted On</th>
+
+                                            <td>
+
+                                                {{ activity.created_at.strftime('%d-%m-%Y %I:%M %p') if activity.created_at else "-" }}
+
+                                            </td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Reviewed On</th>
+
+                                            <td>
+
+                                                {{ activity.approved_at.strftime('%d-%m-%Y %I:%M %p') if activity.approved_at else "-" }}
+
+                                            </td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <th>Certificate</th>
+
+                                            <td>
+
+                                                {% if activity.certificate %}
+
+                                                    <a
+                                                        href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                        target="_blank"
+                                                        class="btn-primary">
+
+                                                        <i class="fas fa-eye"></i>
+
+                                                        View Certificate
+
+                                                    </a>
+
+                                                    <a
+                                                        href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                        download
+                                                        class="btn-secondary">
+
+                                                        <i class="fas fa-download"></i>
+
+                                                        Download
+
+                                                    </a>
+
+                                                {% else %}
+
+                                                    <span class="text-muted">
+
+                                                        Certificate Not Uploaded
+
+                                                    </span>
+
+                                                {% endif %}
+
+                                            </td>
+
+                                        </tr>
+
+                                    </table>
+
+                                </div>
+
+                            </div>
+
+                            <hr>
+
+                            <h6>
+
+                                <i class="fas fa-align-left"></i>
+
+                                Activity Description
+
+                            </h6>
+
+                            <div class="alert alert-light">
+
+                                {{ activity.description or "No description available." }}
+
+                            </div>
+
+                            <hr>
+
+                            <h6>
+
+                                <i class="fas fa-robot"></i>
+
+                                AI Feedback
+
+                            </h6>
+
+                            {% if activity.ai_feedback %}
+
+                            <div class="alert alert-success">
+
+                                {{ activity.ai_feedback }}
+
+                            </div>
+
+                            {% else %}
+
+                            <div class="alert alert-warning">
+
+                                AI feedback has not been generated yet.
+
+                            </div>
+
+                            {% endif %}
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button
+                                type="button"
+                                class="btn-secondary btn-sm"
+                                data-bs-dismiss="modal">
+
+                                Close
+
+                            </button>
+
+                            <form
+                                method="POST"
+                                action="{{ url_for('admin_delete_extracurricular', activity_id=activity.id) }}"
+                                onsubmit="return confirm('Delete this activity permanently?');">
+
+                                <button
+                                    type="submit"
+                                    class="btn-danger btn-sm"
+
+                                    <i class="fas fa-trash"></i>
+
+                                    Delete Activity
+
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+                        {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+<style>
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.page-toolbar {
+    margin-bottom: 25px;
+}
+</style>
+{% endblock %}

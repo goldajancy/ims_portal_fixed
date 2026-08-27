@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Attendance – IMS Mentor{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('mentor', 'attendance') }}
+  <div class="main-content">
+    {{ topbar('Attendance') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="dash-grid dash-grid-2">
+<div class="card"><div class="card-header"><h3>Mark Attendance</h3></div>
+<div class="card-body">
+<form method="POST" action="/mentor/attendance" class="form-vertical">
+<div class="form-group"><label>Class</label>
+<select name="class_id" id="classSelect" required onchange="loadStudents()">
+<option value="">-- Select Class --</option>
+{% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+</select></div>
+<div class="form-group"><label>Date</label><input type="date" name="date" required/></div>
+<div id="studentList"></div>
+<div class="form-actions"><button type="submit" class="btn-primary">Save Attendance</button></div>
+</form></div></div>
+<div class="card"><div class="card-header"><h3>Recent Records</h3></div>
+<div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Student</th><th>Class</th><th>Date</th><th>Status</th></tr></thead>
+<tbody>
+{% for r in records %}
+<tr><td>{{ r.student_name }}</td><td>{{ r.class_name }}</td><td>{{ r.date }}</td>
+<td><span class="badge {{ 'badge-success' if r.present else 'badge-danger' }}">{{ 'Present' if r.present else 'Absent' }}</span></td>
+</tr>
+{% else %}<tr><td colspan="4" class="empty-state">No records yet</td></tr>{% endfor %}
+</tbody></table></div></div></div>
+<script>
+function loadStudents(){
+  var cid=document.getElementById('classSelect').value;
+  if(!cid)return;
+  fetch('/api/class-students/'+cid).then(r=>r.json()).then(data=>{
+    var html='<div class="form-group"><label>Students</label><div class="student-att-list">';
+    data.forEach(s=>{
+      html+='<div class="student-att-row"><span class="student-name">'+s.name+'</span>';
+      html+='<label><input type="radio" name="att_'+s.id+'" value="1" checked> Present</label>';
+      html+='<label><input type="radio" name="att_'+s.id+'" value="0"> Absent</label></div>';
+    });
+    html+='</div></div>';
+    document.getElementById('studentList').innerHTML=html;
+  }).catch(()=>document.getElementById('studentList').innerHTML='<p class="empty-state">No students found</p>');
+}
+</script>
+    </div>
+  </div>
+</div>
+{% endblock %}

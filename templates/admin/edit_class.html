@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block title %}Edit Class{% endblock %}
+
+{% block body %}
+
+<div class="app-layout">
+
+    {{ sidebar('admin','classes') }}
+
+    <div class="main-content">
+
+        {{ topbar('Edit Class','Update class details') }}
+
+        <div class="content-area">
+
+            {{ flash_messages() }}
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <h3>Edit {{ cls.name }}</h3>
+
+                </div>
+
+                <div class="card-body">
+
+                    <form method="POST">
+
+                        <div class="mb-3">
+
+                            <label>Class Name</label>
+
+                            <input
+                                type="text"
+                                name="name"
+                                class="form-control"
+                                value="{{ cls.name }}"
+                                required>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label>Mentor</label>
+
+                            <select
+                                name="mentor_id"
+                                class="form-select">
+
+                                <option value="">Select Mentor</option>
+
+                                {% for mentor in mentors %}
+
+                                <option
+                                    value="{{ mentor.id }}"
+                                    {% if mentor.id == cls.mentor_id %}
+                                    selected
+                                    {% endif %}>
+
+                                    {{ mentor.name }}
+
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label>Description</label>
+
+                            <textarea
+                                class="form-control"
+                                rows="5"
+                                name="description">{{ cls.description }}</textarea>
+
+                        </div>
+                        
+                        <div class="mb-3">
+
+                            <label>Assign Trainees</label>
+
+                            <div class="student-att-list" style="max-height:260px;overflow-y:auto;">
+
+                                {% for t in trainees %}
+                                <label class="student-check-row">
+                                    <input
+                                        type="checkbox"
+                                        name="trainee_ids"
+                                        value="{{ t.id }}"
+                                        {% if t.enrolled %}checked{% endif %}>
+                                    <span>{{ t.name }}</span>
+                                </label>
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+                        <button
+                            class="btn-primary">
+
+                            <i class="fas fa-save"></i>
+
+                            Save Changes
+
+                        </button>
+
+                        <a href="{{ url_for('admin_view_class',
+                                            class_id=cls.id) }}"
+                           class="btn-secondary">
+
+                            Cancel
+
+                        </a>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<style>
+    <style>
+.student-check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    margin-bottom: 6px;
+}
+.student-check-row:hover { background: #f5f7ff; }
+.student-check-row input[type="checkbox"] {
+    width: 16px; height: 16px; cursor: pointer;
+}
+</style>
+</style>
+{% endblock %}

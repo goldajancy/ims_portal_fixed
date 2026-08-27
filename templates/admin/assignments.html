@@ -1,0 +1,778 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Assignments - Admin{% endblock %}
+
+
+{% block body %}
+<div class="app-layout">
+    {{ sidebar('admin', 'assignments') }}
+  <div class="main-content">
+    {{ topbar('Assignments', 'Create and manage assignments across all classes') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+
+      <div class="page-header">
+        <div></div> <!-- spacer -->
+    <button class="btn btn-primary" onclick="openModal('addAssignmentModal')">
+        <i class="fas fa-plus"></i> Create Assignment
+    </button>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-tasks"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ assignments|length }}</span>
+            <span class="stat-label">Total Assignments</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-file-alt"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ assignments|sum(attribute='submission_count') }}</span>
+            <span class="stat-label">Total Submissions</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-orange"><i class="fas fa-clock"></i></div>
+        <div class="stat-info">
+            {% set upcoming = assignments|selectattr('due_date')|list %}
+            <span class="stat-value">{{ upcoming|length }}</span>
+            <span class="stat-label">With Deadlines</span>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card filter-card">
+    <div class="filter-bar">
+        <div class="filter-group">
+            <select id="classFilter" onchange="filterAssignments()">
+                <option value="">All Classes</option>
+                {% for cls in classes %}
+                <option value="{{ cls.id }}">{{ cls.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <select id="statusFilter" onchange="filterAssignments()">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="past">Past Due</option>
+            </select>
+        </div>
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search assignments..." onkeyup="searchAssignments()">
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if assignments %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Class</th>
+                        <th>Due Date</th>
+                        <th>Submissions</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in assignments %}
+                    <tr data-class="{{ a.class_id }}" data-title="{{ a.title|lower }}">
+                        <td>
+                            <div class="class-name">
+                                <i class="fas fa-file-alt text-primary"></i>
+                                <strong>{{ a.title }}</strong>
+                            </div>
+                        </td>
+                        <td>{{ a.class_name or 'No Class' }}</td>
+                        <td>
+                            {% if a.due_date %}
+                                {% set is_past = a.due_date < now %}
+                                <span class="due-badge {% if is_past %}past{% else %}upcoming{% endif %}">
+                                    <i class="fas fa-calendar"></i>
+                                    {{ a.due_date.strftime('%b %d, %Y') }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-info">{{ a.submission_count }} submitted</span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-icon" onclick="viewAssignment({{ a.id }})" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn-icon" onclick="editAssignment({{ a.id }})" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-icon btn-danger" onclick="deleteAssignment({{ a.id }})" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h4>No Assignments Created</h4>
+            <p>Start by creating your first assignment</p>
+            <button class="btn btn-primary" onclick="openModal('addAssignmentModal')">
+                <i class="fas fa-plus"></i> Create Assignment
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Assignment Modal -->
+<div class="modal" id="addAssignmentModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>
+                <i class="fas fa-plus-circle"></i>
+                Create Assignment
+            </h3>
+
+            <button type="button"
+                    onclick="closeModal('addAssignmentModal')">
+                &times;
+            </button>
+        </div>
+
+        <form class="form-vertical"
+              action="{{ url_for('admin_add_assignment') }}"
+              method="POST">
+
+            <div class="form-group">
+                <label>Assignment Title</label>
+                <input
+                    type="text"
+                    name="title"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label>Assign to Class</label>
+
+                <select name="class_id">
+                    <option value="">Select Class</option>
+
+                    {% for cls in classes %}
+                    <option value="{{ cls.id }}">
+                        {{ cls.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Due Date</label>
+
+                <input
+                    type="date"
+                    name="due_date">
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+
+                <textarea
+                    name="description"
+                    rows="4"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button
+                    type="button"
+                    class="btn-outline"
+                    onclick="closeModal('addAssignmentModal')">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-primary">
+                    Create Assignment
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+<div class="modal" id="viewAssignmentModal">
+    <div class="modal-box modal-lg">
+
+        <div class="modal-header">
+            <h3>
+                <i class="fas fa-eye"></i>
+                Assignment Details
+            </h3>
+
+            <button class="modal-close"
+                    onclick="closeModal('viewAssignmentModal')">
+                &times;
+            </button>
+        </div>
+
+        <div class="modal-body">
+
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="view_title" readonly>
+            </div>
+
+            <div class="form-group">
+                <label>Class</label>
+                <input type="text" id="view_class" readonly>
+            </div>
+
+            <div class="form-group">
+                <label>Due Date</label>
+                <input type="text" id="view_due_date" readonly>
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="view_description"
+                          rows="5"
+                          readonly></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Created By</label>
+                <input type="text" id="view_created_by" readonly>
+            </div>
+
+            <div class="form-group">
+                <label>Created At</label>
+                <input type="text" id="view_created_at" readonly>
+            </div>
+
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary"
+                    onclick="closeModal('viewAssignmentModal')">
+                Close
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal" id="editAssignmentModal">
+    <div class="modal-box">
+
+        <div class="modal-header">
+            <h3>
+                <i class="fas fa-edit"></i>
+                Edit Assignment
+            </h3>
+
+            <button type="button"
+                    onclick="closeModal('editAssignmentModal')">
+                &times;
+            </button>
+        </div>
+
+        <form id="editAssignmentForm"
+              method="POST">
+
+            <div class="form-vertical">
+
+                <div class="form-group">
+                    <label>Assignment Title</label>
+                    <input
+                        type="text"
+                        id="edit_title"
+                        name="title"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label>Assign to Class</label>
+
+                    <select
+                        id="edit_class"
+                        name="class_id">
+
+                        <option value="">Select Class</option>
+
+                        {% for cls in classes %}
+                        <option value="{{ cls.id }}">
+                            {{ cls.name }}
+                        </option>
+                        {% endfor %}
+
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Due Date</label>
+
+                    <input
+                        type="date"
+                        id="edit_due_date"
+                        name="due_date">
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+
+                    <textarea
+                        id="edit_description"
+                        name="description"
+                        rows="4"></textarea>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="closeModal('editAssignmentModal')">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary">
+                    Save Changes
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<div class="modal" id="deleteAssignmentModal">
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <h3>
+                <i class="fas fa-trash"></i>
+                Delete Assignment
+            </h3>
+
+            <button
+                type="button"
+                onclick="closeModal('deleteAssignmentModal')">
+                &times;
+            </button>
+
+        </div>
+
+        <div class="modal-body">
+
+            <p>
+                Are you sure you want to delete this assignment?
+            </p>
+
+            <p style="color:#ef4444;font-size:14px;">
+                This action cannot be undone.
+            </p>
+
+        </div>
+
+        <form id="deleteAssignmentForm"
+              method="POST">
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="closeModal('deleteAssignmentModal')">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-danger">
+                    Delete
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<style>
+
+:root {
+    --primary: #40416f;
+    --primary-dark: #302e76;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --bg: #f3f4f6;
+}
+
+/* Action buttons - matches exams page */
+.action-buttons{
+    display:flex;
+    gap:8px;
+}
+
+.btn-icon{
+    width:36px;
+    height:36px;
+    border:none;
+    background:#eef2ff;
+    color:#4f46e5;
+    border-radius:10px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    transition:.3s;
+}
+
+.btn-icon:hover{
+    background:#4f46e5;
+    color:white;
+}
+
+.btn-danger{
+    background:#fee2e2;
+    color:#ef4444;
+}
+
+.btn-danger:hover{
+    background:#ef4444;
+    color:white;
+}
+
+/* PAGE */
+.content-area {
+    padding: 22px;
+    background: var(--bg);
+}
+
+/* HEADER */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+/* BUTTONS */
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+/* STATS */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.bg-blue { background: var(--primary); }
+.bg-green { background: var(--success); }
+.bg-orange { background: var(--warning); }
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* FILTER BAR */
+.filter-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 18px;
+}
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.filter-group select {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    min-width: 150px;
+    outline: none;
+}
+
+.filter-group select:focus {
+    border-color: var(--primary);
+}
+
+/* SEARCH */
+.search-box {
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+}
+
+.search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+}
+
+.search-box input {
+    width: 100%;
+    padding: 10px 12px 10px 38px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+}
+
+.search-box input:focus {
+    border-color: var(--primary);
+}
+
+/* GRID */
+
+/* BADGE */
+.due-badge {
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+.due-badge.upcoming {
+    background: #ecfeff;
+    color: #52bed8;
+}
+
+.due-badge.past {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* BODY */
+/* ACTION BUTTONS */
+
+
+/* EMPTY STATE */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+}
+
+.empty-state i {
+    font-size: 40px;
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+/* MODAL */
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .assignment-footer {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+}
+
+</style>
+
+<script>
+
+function filterAssignments(){
+    let classVal = document.getElementById("classFilter").value;
+    let statusVal = document.getElementById("statusFilter").value;
+    let today = new Date().toISOString().split('T')[0];
+
+    document.querySelectorAll("table.data-table tbody tr").forEach(row=>{
+        let matchClass = !classVal || row.dataset.class === classVal;
+        let dueBadge = row.querySelector(".due-badge");
+        let matchStatus = true;
+        if (statusVal === "active") {
+            matchStatus = dueBadge && dueBadge.classList.contains("upcoming");
+        } else if (statusVal === "past") {
+            matchStatus = dueBadge && dueBadge.classList.contains("past");
+        }
+        row.style.display = (matchClass && matchStatus) ? "" : "none";
+    });
+}
+
+function searchAssignments(){
+    let q = document.getElementById("searchInput").value.toLowerCase();
+    document.querySelectorAll("table.data-table tbody tr").forEach(row=>{
+        row.style.display = row.dataset.title.includes(q) ? "" : "none";
+    });
+}
+
+function viewAssignment(id) {
+
+    fetch("/admin/assignments/view/" + id)
+        .then(response => response.json())
+        .then(data => {
+
+            if(!data.success){
+                alert("Assignment not found");
+                return;
+            }
+
+            const a = data;
+
+            document.getElementById("view_title").value =
+                a.title || "";
+
+            document.getElementById("view_class").value =
+                a.class_name || "No Class";
+
+            document.getElementById("view_due_date").value =
+                a.due_date || "-";
+
+            document.getElementById("view_description").value =
+                a.description || "";
+
+            document.getElementById("view_created_by").value =
+                a.created_by_name || "";
+
+            document.getElementById("view_created_at").value =
+                a.created_at || "";
+
+            openModal("viewAssignmentModal");
+
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Unable to load assignment details.");
+        });
+
+}
+
+function editAssignment(id) {
+
+    fetch("/admin/assignments/view/" + id)
+        .then(response => response.json())
+        .then(data => {
+
+            if (!data.success) {
+                alert("Assignment not found.");
+                return;
+            }
+
+            // Fill the edit form
+            document.getElementById("edit_title").value =
+                data.title || "";
+
+            document.getElementById("edit_class").value =
+                data.class_id || "";
+
+            document.getElementById("edit_due_date").value =
+                data.due_date || "";
+
+            document.getElementById("edit_description").value =
+                data.description || "";
+
+            // Set form action
+            document.getElementById("editAssignmentForm").action =
+                "/admin/assignments/update/" + id;
+            openModal("editAssignmentModal");
+
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Unable to load assignment.");
+        });
+
+}
+
+function deleteAssignment(id) {
+
+    if (!confirm("Are you sure you want to delete this assignment?")) {
+        return;
+    }
+
+    document.getElementById("deleteAssignmentForm").action =
+        "/admin/assignments/delete/" + id;
+
+    document.getElementById("deleteAssignmentForm").submit();
+
+}
+</script>
+
+{% endblock %}

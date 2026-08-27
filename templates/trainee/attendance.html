@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+{% block title %}Attendance – IMS Trainee{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {{ sidebar('trainee', 'attendance') }}
+  <div class="main-content">
+    {{ topbar('Attendance') }}
+    <div class="content-area">
+      {{ flash_messages() }}
+      
+<div class="dash-grid dash-grid-2">
+<div class="card"><div class="card-header"><h3>Summary</h3></div><div class="card-body" style="text-align:center">
+{% if summary and summary.total %}
+<div style="font-size:52px;font-weight:700;color:#0891b2">{{ ((summary.present_count/summary.total*100)|int) }}%</div>
+<div style="color:#6b7280;margin-bottom:16px">Overall Attendance</div>
+<div style="display:flex;justify-content:center;gap:24px">
+  <div><div style="font-size:28px;font-weight:700;color:#22c55e">{{ summary.present_count }}</div><div style="font-size:12px;color:#6b7280">Present</div></div>
+  <div><div style="font-size:28px;font-weight:700;color:#ef4444">{{ summary.total - summary.present_count }}</div><div style="font-size:12px;color:#6b7280">Absent</div></div>
+  <div><div style="font-size:28px;font-weight:700">{{ summary.total }}</div><div style="font-size:12px;color:#6b7280">Total Days</div></div>
+</div>
+{% else %}<p class="empty-state">No attendance records yet</p>{% endif %}
+</div></div>
+<div class="card"><div class="card-header"><h3>Records</h3></div><div class="card-body p0">
+<table class="data-table">
+<thead><tr><th>Class</th><th>Date</th><th>Status</th></tr></thead>
+<tbody>
+{% for r in records %}
+<tr><td>{{ r.class_name }}</td><td>{{ r.date }}</td>
+<td><span class="badge {{ 'badge-success' if r.present else 'badge-danger' }}">{{ 'Present' if r.present else 'Absent' }}</span></td></tr>
+{% else %}<tr><td colspan="3" class="empty-state">No records yet</td></tr>{% endfor %}
+</tbody></table></div></div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

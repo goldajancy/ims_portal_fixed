@@ -1,0 +1,1489 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block title %}Leadership Skills{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/development.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block body %}
+
+{{ sidebar('admin','development') }}
+
+{{ topbar(
+'👑 Leadership Skills',
+'Monitor leadership qualities, team management and decision making'
+) }}
+
+{{ flash_messages() }}
+
+<div class="main-content">
+
+    <!-- =============================== -->
+    <!-- Header -->
+    <!-- =============================== -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h2>Leadership Dashboard</h2>
+
+            <p>
+
+                Evaluate leadership ability,
+                initiative,
+                teamwork,
+                responsibility and AI leadership prediction.
+
+            </p>
+
+        </div>
+
+        <div class="header-actions">
+
+            <button class="btn btn-success"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addLeadershipModal">
+
+                <i class="fas fa-plus-circle"></i>
+
+                Add Leadership Record
+
+            </button>
+
+            <button class="btn btn-primary">
+
+                <i class="fas fa-download"></i>
+
+                Export
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =============================== -->
+    <!-- Statistics -->
+    <!-- =============================== -->
+
+    <div class="stats-grid">
+
+        <div class="stat-card blue">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-users"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>{{ total_records or 96 }}</h3>
+
+                <p>Leadership Records</p>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card green">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-user-tie"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>87%</h3>
+
+                <p>Leadership Score</p>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card orange">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-handshake"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>91%</h3>
+
+                <p>Teamwork</p>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card purple">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-lightbulb"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>84%</h3>
+
+                <p>Initiative</p>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card red">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-bullseye"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>86%</h3>
+
+                <p>Decision Making</p>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card cyan">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-robot"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>90%</h3>
+
+                <p>AI Leadership Score</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =============================== -->
+    <!-- Search -->
+    <!-- =============================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-search"></i>
+
+                Search Leadership Records
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="filter-grid">
+
+                <div class="form-group">
+
+                    <label>Student</label>
+
+                    <input class="form-control"
+                           placeholder="Search Student">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Role</label>
+
+                    <select class="form-control">
+
+                        <option>All</option>
+                        <option>Team Leader</option>
+                        <option>Club Secretary</option>
+                        <option>President</option>
+                        <option>Coordinator</option>
+                        <option>Volunteer Leader</option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Performance</label>
+
+                    <select class="form-control">
+
+                        <option>All</option>
+                        <option>Excellent</option>
+                        <option>Good</option>
+                        <option>Average</option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Date</label>
+
+                    <input type="date"
+                           class="form-control">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =============================== -->
+    <!-- Leadership Table -->
+    <!-- =============================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-table"></i>
+
+                Leadership Records
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover">
+
+                    <thead>
+
+                    <tr>
+
+                        <th>Student</th>
+
+                        <th>Leadership Role</th>
+
+                        <th>Teamwork</th>
+
+                        <th>Decision</th>
+
+                        <th>Initiative</th>
+
+                        <th>Overall</th>
+
+                        <th>Status</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                                            {% for leader in leadership_records %}
+
+                    <tr>
+
+                        <td>
+
+                            <div class="student-info">
+
+                                <img src="{{ leader.avatar or url_for('static', filename='img/default-avatar.png') }}"
+                                     class="student-avatar">
+
+                                <div>
+
+                                    <strong>{{ leader.student_name }}</strong><br>
+
+                                    <small>{{ leader.email }}</small>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <strong>{{ leader.role }}</strong><br>
+
+                            <small class="text-muted">
+
+                                {{ leader.organization }}
+
+                            </small>
+
+                        </td>
+
+                        <td>
+
+                            <div class="d-flex align-items-center">
+
+                                <div class="progress flex-grow-1 me-2"
+                                     style="height:8px;">
+
+                                    <div class="progress-bar bg-success"
+                                         style="width:{{ leader.teamwork*10 }}%">
+                                    </div>
+
+                                </div>
+
+                                <strong>{{ leader.teamwork }}/10</strong>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <div class="d-flex align-items-center">
+
+                                <div class="progress flex-grow-1 me-2"
+                                     style="height:8px;">
+
+                                    <div class="progress-bar bg-primary"
+                                         style="width:{{ leader.decision*10 }}%">
+                                    </div>
+
+                                </div>
+
+                                <strong>{{ leader.decision }}/10</strong>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <div class="d-flex align-items-center">
+
+                                <div class="progress flex-grow-1 me-2"
+                                     style="height:8px;">
+
+                                    <div class="progress-bar bg-warning"
+                                         style="width:{{ leader.initiative*10 }}%">
+                                    </div>
+
+                                </div>
+
+                                <strong>{{ leader.initiative }}/10</strong>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-success">
+
+                                {{ leader.overall }}/10
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            {% if leader.overall >= 8 %}
+
+                            <span class="badge bg-success">
+
+                                Excellent
+
+                            </span>
+
+                            {% elif leader.overall >= 6 %}
+
+                            <span class="badge bg-warning">
+
+                                Good
+
+                            </span>
+
+                            {% else %}
+
+                            <span class="badge bg-danger">
+
+                                Needs Improvement
+
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <div class="btn-group">
+
+                                <button class="btn btn-info btn-sm">
+
+                                    <i class="fas fa-eye"></i>
+
+                                </button>
+
+                                <button class="btn btn-warning btn-sm">
+
+                                    <i class="fas fa-edit"></i>
+
+                                </button>
+
+                                <button class="btn btn-danger btn-sm">
+
+                                    <i class="fas fa-trash"></i>
+
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+
+                        <td colspan="8"
+                            class="text-center py-5">
+
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+
+                            <h5>No Leadership Records Found</h5>
+
+                            <p class="text-muted">
+
+                                Click <strong>Add Leadership Record</strong>
+                                to create the first leadership record.
+
+                            </p>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+
+            <!-- Pagination -->
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+
+                <small>
+
+                    Showing {{ leadership_records|length }} Records
+
+                </small>
+
+                <nav>
+
+                    <ul class="pagination">
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">
+
+                                Previous
+
+                            </a>
+
+                        </li>
+
+                        <li class="page-item active">
+
+                            <a class="page-link" href="#">
+
+                                1
+
+                            </a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">
+
+                                2
+
+                            </a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">
+
+                                3
+
+                            </a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">
+
+                                Next
+
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ======================================== -->
+    <!-- Leadership Skill Summary -->
+    <!-- ======================================== -->
+
+    <div class="dashboard-row">
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fas fa-chart-bar"></i>
+
+                    Leadership Skill Summary
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Team Management</span>
+
+                        <span>91%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-success"
+                             style="width:91%">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Decision Making</span>
+
+                        <span>86%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-primary"
+                             style="width:86%">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Initiative</span>
+
+                        <span>84%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-warning"
+                             style="width:84%">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Responsibility</span>
+
+                        <span>89%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-info"
+                             style="width:89%">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Conflict Resolution</span>
+
+                        <span>82%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-danger"
+                             style="width:82%">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ============================= -->
+    <!-- Part 3 Starts Here -->
+
+        <!-- ===================================== -->
+    <!-- Leadership Analytics -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-row">
+
+        <!-- Leadership Performance -->
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fas fa-chart-line"></i>
+
+                    Leadership Analytics
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <canvas id="leadershipChart"
+                        height="250"></canvas>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Leadership Growth -->
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fas fa-chart-area"></i>
+
+                    Leadership Growth
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <canvas id="growthChart"
+                        height="250"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+    <!-- Leadership Performance -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-users"></i>
+
+                Leadership Performance Overview
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="progress-item">
+
+                <span>Team Management</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-success"
+                         style="width:91%"></div>
+
+                </div>
+
+                <strong>91%</strong>
+
+            </div>
+
+            <div class="progress-item">
+
+                <span>Decision Making</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-primary"
+                         style="width:86%"></div>
+
+                </div>
+
+                <strong>86%</strong>
+
+            </div>
+
+            <div class="progress-item">
+
+                <span>Problem Solving</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-warning"
+                         style="width:89%"></div>
+
+                </div>
+
+                <strong>89%</strong>
+
+            </div>
+
+            <div class="progress-item">
+
+                <span>Communication</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-info"
+                         style="width:87%"></div>
+
+                </div>
+
+                <strong>87%</strong>
+
+            </div>
+
+            <div class="progress-item">
+
+                <span>Responsibility</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-danger"
+                         style="width:90%"></div>
+
+                </div>
+
+                <strong>90%</strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+    <!-- AI Leadership Analysis -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-robot"></i>
+
+                AI Leadership Analysis
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="recommendation success">
+
+                <i class="fas fa-check-circle"></i>
+
+                <div>
+
+                    <strong>Leadership Strengths</strong>
+
+                    <p>
+
+                        Excellent team coordination,
+                        takes initiative,
+                        motivates team members,
+                        handles responsibilities effectively.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="recommendation warning">
+
+                <i class="fas fa-lightbulb"></i>
+
+                <div>
+
+                    <strong>Areas to Improve</strong>
+
+                    <p>
+
+                        Improve conflict resolution,
+                        strategic planning,
+                        delegation skills,
+                        and time management.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="recommendation info">
+
+                <i class="fas fa-graduation-cap"></i>
+
+                <div>
+
+                    <strong>Recommended Activities</strong>
+
+                    <p>
+
+                        Become event coordinator,
+                        mentor junior students,
+                        organize hackathons,
+                        lead technical workshops.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="recommendation primary">
+
+                <i class="fas fa-brain"></i>
+
+                <div>
+
+                    <strong>AI Career Prediction</strong>
+
+                    <p>
+
+                        High leadership potential for
+                        Team Lead,
+                        Project Manager,
+                        Scrum Master,
+                        Product Manager,
+                        Entrepreneur,
+                        Engineering Manager.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+    <!-- Top Student Leaders -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-trophy"></i>
+
+                Top Student Leaders
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <table class="table table-hover">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Student</th>
+
+                        <th>Leadership Role</th>
+
+                        <th>Projects Led</th>
+
+                        <th>Leadership Score</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr>
+
+                        <td>Gold</td>
+
+                        <td>Project Leader</td>
+
+                        <td>8</td>
+
+                        <td>
+
+                            <span class="badge bg-success">
+
+                                9.7 / 10
+
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td>Keerthana</td>
+
+                        <td>Club President</td>
+
+                        <td>6</td>
+
+                        <td>
+
+                            <span class="badge bg-primary">
+
+                                9.4 / 10
+
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td>Rahul</td>
+
+                        <td>Event Coordinator</td>
+
+                        <td>5</td>
+
+                        <td>
+
+                            <span class="badge bg-warning">
+
+                                9.1 / 10
+
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+    <!-- AI Recommendations -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-lightbulb"></i>
+
+                AI Leadership Recommendations
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <ul class="list-group">
+
+                <li class="list-group-item">
+                    ✅ Lead one technical project every semester.
+                </li>
+
+                <li class="list-group-item">
+                    ✅ Organize at least one college event annually.
+                </li>
+
+                <li class="list-group-item">
+                    ✅ Mentor junior students.
+                </li>
+
+                <li class="list-group-item">
+                    ✅ Participate in leadership development workshops.
+                </li>
+
+                <li class="list-group-item">
+                    ✅ Practice agile team management and sprint planning.
+                </li>
+
+            </ul>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- Part 4 Starts Here -->
+
+        <!-- ===================================== -->
+    <!-- Add Leadership Record Modal -->
+    <!-- ===================================== -->
+
+    <div class="modal fade"
+         id="addLeadershipModal"
+         tabindex="-1">
+
+        <div class="modal-dialog modal-lg">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+
+                        <i class="fas fa-user-plus"></i>
+
+                        Add Leadership Record
+
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <form method="POST"
+                      action="/admin/leadership/add"
+                      enctype="multipart/form-data">
+
+                    <div class="modal-body">
+
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Student</label>
+
+                                <select class="form-control"
+                                        name="student_id"
+                                        required>
+
+                                    {% for s in students %}
+
+                                    <option value="{{ s.id }}">
+
+                                        {{ s.name }}
+
+                                    </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Leadership Role</label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       name="role"
+                                       placeholder="Team Leader"
+                                       required>
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Organization / Club</label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       name="organization">
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Date</label>
+
+                                <input type="date"
+                                       class="form-control"
+                                       name="activity_date">
+
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+
+                                <label>Teamwork</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="teamwork">
+
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+
+                                <label>Decision Making</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="decision">
+
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+
+                                <label>Initiative</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="initiative">
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Responsibility</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="responsibility">
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Conflict Resolution</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="conflict_resolution">
+
+                            </div>
+
+                            <div class="col-12 mb-3">
+
+                                <label>Supporting Document</label>
+
+                                <input type="file"
+                                       class="form-control"
+                                       name="certificate">
+
+                            </div>
+
+                            <div class="col-12">
+
+                                <label>Mentor Remarks</label>
+
+                                <textarea class="form-control"
+                                          rows="4"
+                                          name="remarks"></textarea>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+
+                            Cancel
+
+                        </button>
+
+                        <button class="btn btn-success">
+
+                            <i class="fas fa-save"></i>
+
+                            Save Record
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+// Leadership Analytics
+
+const leadershipChart =
+document.getElementById("leadershipChart");
+
+if(leadershipChart){
+
+new Chart(leadershipChart,{
+
+type:"bar",
+
+data:{
+
+labels:[
+"Teamwork",
+"Decision",
+"Initiative",
+"Responsibility",
+"Communication"
+],
+
+datasets:[{
+
+label:"Average Score",
+
+data:[
+91,
+86,
+84,
+90,
+87
+]
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{
+
+display:true
+
+}
+
+}
+
+}
+
+});
+
+}
+
+
+
+// Growth Chart
+
+const growthChart =
+document.getElementById("growthChart");
+
+if(growthChart){
+
+new Chart(growthChart,{
+
+type:"radar",
+
+data:{
+
+labels:[
+"Leadership",
+"Confidence",
+"Planning",
+"Teamwork",
+"Problem Solving",
+"Innovation"
+],
+
+datasets:[{
+
+label:"Leadership Growth",
+
+data:[
+90,
+88,
+85,
+91,
+87,
+84
+],
+
+fill:true
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{
+
+position:"bottom"
+
+}
+
+}
+
+}
+
+});
+
+}
+
+</script>
+
+{% endblock %}

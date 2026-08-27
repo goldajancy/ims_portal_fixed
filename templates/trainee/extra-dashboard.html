@@ -1,0 +1,120 @@
+{% extends "base.html" %} {% from "macros.html" import sidebar, topbar, flash_messages %} {% block title %}My Activities – IMS{% endblock %} {% block head %} {% endblock %} {% block body %}
+{{ sidebar('trainee', 'extra') }}
+{{ topbar('🏆 My Extracurricular Profile', 'Track your activities, achievements and growth') }}
+{{ flash_messages() }}
+🤖 AI Development Scores
+Overall: {{ scores.overall }}%
+{% for label, key, color in [ ('Academic','academic','#5c6bc0'), ('Attendance','attendance','#0891b2'), ('Technical','technical','#7c3aed'), ('Leadership','leadership','#d97706'), ('Communication','communication','#16a34a'), ('Innovation','innovation','#ea580c'), ('Volunteer','volunteer','#ec4899'), ('Professionalism','professionalism','#64748b'), ('Placement Ready','placement_readiness','#059669'), ('Higher Studies','higher_studies','#0284c7'), ] %}
+{{ scores[key] }}
+{{ label }}
+{% endfor %}
+💡 AI Recommendations
+{% for r in recommendations %}
+{{ r.text }}
+{% endfor %}
+Activities
+Certifications
+Competitions
+Leadership
+Technical
+Sports
+Volunteer
+Profile Links
+Activities ({{ activities|length }})
+Add Activity
+{% for a in activities %} {% else %}{% endfor %}
+Category	Activity	Duration	Status	Verified	Action
+{{ a.cat_name or '–' }}	{{ a.activity_name }}
+{{ a.description[:60] if a.description else '' }}	{{ a.start_date or '' }} {% if a.end_date %}→ {{ a.end_date }}{% endif %}	{{ a.status|capitalize }}	{{ a.verification_status|capitalize }}	Delete
+No activities added yet. Click "Add Activity" to start!
+Add Activity
+×
+Category 
+-- Select --
+Activity Name
+Description
+Start Date
+dd/mm/yyyy
+End Date
+dd/mm/yyyy
+Status 
+Completed
+AddCancel
+Add Certification
+×
+Certificate Name
+Provider
+e.g. Google, Coursera, AWS
+Hours
+0
+Completion Date
+dd/mm/yyyy
+Credential ID
+Upload Certificate (PDF/Image)No file chosen
+AddCancel
+Add Competition
+×
+Event Name
+Category
+e.g. Hackathon, Quiz
+Level 
+College
+Position / Rank
+e.g. 1st, Runner-up
+Prize
+e.g. ₹5000
+Event Date
+dd/mm/yyyy
+Upload CertificateNo file chosen
+AddCancel
+Add Leadership Role
+×
+Role / Designation
+e.g. President, Secretary
+Club / Event
+e.g. Coding Club
+Start Date
+dd/mm/yyyy
+End Date
+dd/mm/yyyy
+Responsibilities
+AddCancel
+Add Technical Achievement
+×
+Type 
+Hackathon
+Title
+Description
+Platform
+e.g. LeetCode, GitHub
+Date
+dd/mm/yyyy
+Link (optional)
+https://...
+AddCancel
+Add Sports Record
+×
+Sport
+e.g. Cricket, Chess
+Tournament
+Position / Result
+e.g. Winner
+Achievement
+Date
+dd/mm/yyyy
+Team Captain? 
+No
+AddCancel
+Add Volunteer Activity
+×
+Organization / NGO
+e.g. NSS, Red Cross
+Activity
+e.g. Blood Donation Drive
+Hours
+0
+Date
+dd/mm/yyyy
+Impact / Description
+AddCancel
+{% endblock %}

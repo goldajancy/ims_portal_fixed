@@ -1,0 +1,1462 @@
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
+
+{% block title %}Presentation Skills{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/development.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block body %}
+
+{{ sidebar('admin','development') }}
+
+{{ topbar(
+'🎤 Presentation Skills',
+'Track seminar performance, confidence and presentation quality'
+) }}
+
+{{ flash_messages() }}
+
+<div class="main-content">
+
+    <!-- =============================== -->
+    <!-- Header -->
+    <!-- =============================== -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h2>Presentation Skills Dashboard</h2>
+
+            <p>
+
+                Monitor presentation quality, confidence,
+                stage performance and AI feedback.
+
+            </p>
+
+        </div>
+
+        <div class="header-actions">
+
+            <button class="btn btn-success"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addPresentationModal">
+
+                <i class="fas fa-plus-circle"></i>
+
+                Add Presentation
+
+            </button>
+
+            <button class="btn btn-primary">
+
+                <i class="fas fa-download"></i>
+
+                Export Report
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =============================== -->
+    <!-- Statistics -->
+    <!-- =============================== -->
+
+    <div class="stats-grid">
+
+        <div class="stat-card blue">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-chalkboard-teacher"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>{{ total_presentations or 85 }}</h3>
+
+                <p>Total Presentations</p>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card green">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-star"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>87%</h3>
+
+                <p>Average Score</p>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card orange">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-microphone"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>90%</h3>
+
+                <p>Confidence</p>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card purple">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-users"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>81%</h3>
+
+                <p>Audience Engagement</p>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card red">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-question-circle"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>84%</h3>
+
+                <p>Q&A Performance</p>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card cyan">
+
+            <div class="stat-icon">
+
+                <i class="fas fa-robot"></i>
+
+            </div>
+
+            <div class="stat-content">
+
+                <h3>88%</h3>
+
+                <p>AI Presentation Score</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =============================== -->
+    <!-- Search -->
+    <!-- =============================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-search"></i>
+
+                Search Presentations
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="filter-grid">
+
+                <div class="form-group">
+
+                    <label>Student</label>
+
+                    <input class="form-control"
+                           placeholder="Search Student">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Topic</label>
+
+                    <input class="form-control"
+                           placeholder="Presentation Topic">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Performance</label>
+
+                    <select class="form-control">
+
+                        <option>All</option>
+                        <option>Excellent</option>
+                        <option>Good</option>
+                        <option>Average</option>
+                        <option>Needs Improvement</option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Date</label>
+
+                    <input type="date"
+                           class="form-control">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =============================== -->
+    <!-- Presentation Table -->
+    <!-- =============================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-table"></i>
+
+                Presentation Records
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover">
+
+                    <thead>
+
+                    <tr>
+
+                        <th>Student</th>
+
+                        <th>Topic</th>
+
+                        <th>Confidence</th>
+
+                        <th>Delivery</th>
+
+                        <th>Q&A</th>
+
+                        <th>Overall</th>
+
+                        <th>Status</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                                            {% for presentation in presentations %}
+
+                    <tr>
+
+                        <td>
+
+                            <div class="student-info">
+
+                                <img src="{{ presentation.avatar or url_for('static', filename='img/default-avatar.png') }}"
+                                     class="student-avatar">
+
+                                <div>
+
+                                    <strong>{{ presentation.student_name }}</strong><br>
+
+                                    <small>{{ presentation.email }}</small>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <strong>{{ presentation.topic }}</strong><br>
+
+                            <small class="text-muted">
+
+                                {{ presentation.presentation_date }}
+
+                            </small>
+
+                        </td>
+
+                        <td>
+
+                            <div class="d-flex align-items-center">
+
+                                <div class="progress flex-grow-1 me-2"
+                                     style="height:8px;">
+
+                                    <div class="progress-bar bg-success"
+                                         style="width:{{ presentation.confidence*10 }}%">
+                                    </div>
+
+                                </div>
+
+                                <strong>{{ presentation.confidence }}/10</strong>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <div class="d-flex align-items-center">
+
+                                <div class="progress flex-grow-1 me-2"
+                                     style="height:8px;">
+
+                                    <div class="progress-bar bg-primary"
+                                         style="width:{{ presentation.delivery*10 }}%">
+                                    </div>
+
+                                </div>
+
+                                <strong>{{ presentation.delivery }}/10</strong>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <div class="d-flex align-items-center">
+
+                                <div class="progress flex-grow-1 me-2"
+                                     style="height:8px;">
+
+                                    <div class="progress-bar bg-warning"
+                                         style="width:{{ presentation.qa*10 }}%">
+                                    </div>
+
+                                </div>
+
+                                <strong>{{ presentation.qa }}/10</strong>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-success">
+
+                                {{ presentation.overall }}/10
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            {% if presentation.overall >= 8 %}
+
+                            <span class="badge bg-success">
+
+                                Excellent
+
+                            </span>
+
+                            {% elif presentation.overall >= 6 %}
+
+                            <span class="badge bg-warning">
+
+                                Good
+
+                            </span>
+
+                            {% else %}
+
+                            <span class="badge bg-danger">
+
+                                Needs Improvement
+
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <div class="btn-group">
+
+                                <button class="btn btn-info btn-sm">
+
+                                    <i class="fas fa-eye"></i>
+
+                                </button>
+
+                                <button class="btn btn-warning btn-sm">
+
+                                    <i class="fas fa-edit"></i>
+
+                                </button>
+
+                                <button class="btn btn-danger btn-sm">
+
+                                    <i class="fas fa-trash"></i>
+
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+
+                        <td colspan="8"
+                            class="text-center py-5">
+
+                            <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
+
+                            <h5>No Presentations Found</h5>
+
+                            <p class="text-muted">
+
+                                Click <strong>Add Presentation</strong>
+                                to create the first presentation record.
+
+                            </p>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- Pagination -->
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+
+                <small>
+
+                    Showing {{ presentations|length }} Records
+
+                </small>
+
+                <nav>
+
+                    <ul class="pagination">
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">
+
+                                Previous
+
+                            </a>
+
+                        </li>
+
+                        <li class="page-item active">
+
+                            <a class="page-link" href="#">
+
+                                1
+
+                            </a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">
+
+                                2
+
+                            </a>
+
+                        </li>
+
+                        <li class="page-item">
+
+                            <a class="page-link" href="#">
+
+                                Next
+
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ======================================== -->
+    <!-- Presentation Skill Summary -->
+    <!-- ======================================== -->
+
+    <div class="dashboard-row">
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fas fa-chart-bar"></i>
+
+                    Presentation Skill Summary
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Confidence</span>
+
+                        <span>90%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-success"
+                             style="width:90%">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Content Quality</span>
+
+                        <span>88%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-primary"
+                             style="width:88%">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Slide Design</span>
+
+                        <span>82%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-info"
+                             style="width:82%">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Body Language</span>
+
+                        <span>85%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-warning"
+                             style="width:85%">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="skill-item">
+
+                    <div class="skill-title">
+
+                        <span>Audience Interaction</span>
+
+                        <span>80%</span>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div class="progress-bar bg-danger"
+                             style="width:80%">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =========================== -->
+    <!-- Part 3 Starts Here -->
+
+        <!-- ===================================== -->
+    <!-- Presentation Analytics -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-row">
+
+        <!-- Presentation Performance -->
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fas fa-chart-line"></i>
+
+                    Presentation Analytics
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <canvas id="presentationChart"
+                        height="250"></canvas>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Audience Engagement -->
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+
+                    <i class="fas fa-users"></i>
+
+                    Audience Engagement
+
+                </h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <canvas id="audienceChart"
+                        height="250"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+    <!-- Presentation Performance -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-chart-bar"></i>
+
+                Overall Presentation Performance
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="progress-item">
+
+                <span>Confidence</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-success"
+                         style="width:90%"></div>
+
+                </div>
+
+                <strong>90%</strong>
+
+            </div>
+
+            <div class="progress-item">
+
+                <span>Content Knowledge</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-primary"
+                         style="width:88%"></div>
+
+                </div>
+
+                <strong>88%</strong>
+
+            </div>
+
+            <div class="progress-item">
+
+                <span>Body Language</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-warning"
+                         style="width:84%"></div>
+
+                </div>
+
+                <strong>84%</strong>
+
+            </div>
+
+            <div class="progress-item">
+
+                <span>Voice Clarity</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-info"
+                         style="width:87%"></div>
+
+                </div>
+
+                <strong>87%</strong>
+
+            </div>
+
+            <div class="progress-item">
+
+                <span>Overall Score</span>
+
+                <div class="progress">
+
+                    <div class="progress-bar bg-danger"
+                         style="width:88%"></div>
+
+                </div>
+
+                <strong>88%</strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+    <!-- AI Presentation Analysis -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-robot"></i>
+
+                AI Presentation Analysis
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="recommendation success">
+
+                <i class="fas fa-check-circle"></i>
+
+                <div>
+
+                    <strong>Strengths</strong>
+
+                    <p>
+
+                        Excellent confidence, clear voice,
+                        good slide explanation and audience interaction.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="recommendation warning">
+
+                <i class="fas fa-lightbulb"></i>
+
+                <div>
+
+                    <strong>Improve</strong>
+
+                    <p>
+
+                        Maintain eye contact,
+                        reduce filler words,
+                        improve time management,
+                        answer difficult questions confidently.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="recommendation info">
+
+                <i class="fas fa-graduation-cap"></i>
+
+                <div>
+
+                    <strong>Recommended Activities</strong>
+
+                    <p>
+
+                        Weekly seminars,
+                        technical workshops,
+                        group discussions,
+                        TED-style presentations.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="recommendation primary">
+
+                <i class="fas fa-brain"></i>
+
+                <div>
+
+                    <strong>AI Prediction</strong>
+
+                    <p>
+
+                        Excellent presentation ability increases
+                        leadership, communication and placement success.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+    <!-- Top Presenters -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-trophy"></i>
+
+                Top Presentation Performers
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <table class="table table-hover">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Student</th>
+
+                        <th>Topic</th>
+
+                        <th>Confidence</th>
+
+                        <th>Overall Score</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr>
+
+                        <td>Gold</td>
+
+                        <td>Artificial Intelligence</td>
+
+                        <td>9.8</td>
+
+                        <td>
+
+                            <span class="badge bg-success">
+
+                                9.6 / 10
+
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td>Keerthana</td>
+
+                        <td>Cloud Computing</td>
+
+                        <td>9.3</td>
+
+                        <td>
+
+                            <span class="badge bg-primary">
+
+                                9.1 / 10
+
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td>Rahul</td>
+
+                        <td>Cyber Security</td>
+
+                        <td>9.0</td>
+
+                        <td>
+
+                            <span class="badge bg-warning">
+
+                                8.9 / 10
+
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================== -->
+    <!-- AI Recommendations -->
+    <!-- ===================================== -->
+
+    <div class="dashboard-card">
+
+        <div class="card-header">
+
+            <h3>
+
+                <i class="fas fa-lightbulb"></i>
+
+                AI Recommendations
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <ul class="list-group">
+
+                <li class="list-group-item">
+
+                    ✅ Conduct one seminar every month.
+
+                </li>
+
+                <li class="list-group-item">
+
+                    ✅ Practice mock technical presentations.
+
+                </li>
+
+                <li class="list-group-item">
+
+                    ✅ Improve slide storytelling.
+
+                </li>
+
+                <li class="list-group-item">
+
+                    ✅ Record presentations for self-review.
+
+                </li>
+
+                <li class="list-group-item">
+
+                    ✅ Participate in symposiums and paper presentations.
+
+                </li>
+
+            </ul>
+
+        </div>
+
+    </div>
+
+    <!-- ============================= -->
+    <!-- Part 4 Starts Here -->
+
+        <!-- ===================================== -->
+    <!-- Add Presentation Modal -->
+    <!-- ===================================== -->
+
+    <div class="modal fade"
+         id="addPresentationModal"
+         tabindex="-1">
+
+        <div class="modal-dialog modal-lg">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+
+                        <i class="fas fa-plus-circle"></i>
+
+                        Add Presentation
+
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <form method="POST"
+                      action="/admin/presentation/add"
+                      enctype="multipart/form-data">
+
+                    <div class="modal-body">
+
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Student</label>
+
+                                <select class="form-control"
+                                        name="student_id">
+
+                                    {% for s in students %}
+
+                                    <option value="{{ s.id }}">
+
+                                        {{ s.name }}
+
+                                    </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label>Presentation Date</label>
+
+                                <input type="date"
+                                       class="form-control"
+                                       name="presentation_date">
+
+                            </div>
+
+                            <div class="col-12 mb-3">
+
+                                <label>Presentation Topic</label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       name="topic">
+
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+
+                                <label>Confidence</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="confidence">
+
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+
+                                <label>Content Quality</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="content">
+
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+
+                                <label>Delivery</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="delivery">
+
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+
+                                <label>Body Language</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="body_language">
+
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+
+                                <label>Q & A</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="qa">
+
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+
+                                <label>Audience Engagement</label>
+
+                                <input type="number"
+                                       min="1"
+                                       max="10"
+                                       class="form-control"
+                                       name="engagement">
+
+                            </div>
+
+                            <div class="col-12 mb-3">
+
+                                <label>Presentation File</label>
+
+                                <input type="file"
+                                       class="form-control"
+                                       name="ppt_file">
+
+                            </div>
+
+                            <div class="col-12">
+
+                                <label>Mentor Feedback</label>
+
+                                <textarea class="form-control"
+                                          rows="4"
+                                          name="feedback"></textarea>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+
+                            Cancel
+
+                        </button>
+
+                        <button class="btn btn-success">
+
+                            Save Presentation
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const presentationChart =
+document.getElementById("presentationChart");
+
+if(presentationChart){
+
+new Chart(presentationChart,{
+
+type:"bar",
+
+data:{
+
+labels:[
+"Confidence",
+"Content",
+"Delivery",
+"Body Language",
+"Q&A"
+],
+
+datasets:[{
+
+label:"Average Score",
+
+data:[
+90,
+88,
+87,
+84,
+82
+]
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{
+
+display:true
+
+}
+
+}
+
+}
+
+});
+
+}
+
+
+
+const audienceChart =
+document.getElementById("audienceChart");
+
+if(audienceChart){
+
+new Chart(audienceChart,{
+
+type:"radar",
+
+data:{
+
+labels:[
+"Interaction",
+"Confidence",
+"Eye Contact",
+"Voice",
+"Knowledge"
+],
+
+datasets:[{
+
+label:"Presentation Skills",
+
+data:[
+88,
+90,
+84,
+87,
+91
+],
+
+fill:true
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+
+plugins:{
+
+legend:{
+
+position:"bottom"
+
+}
+
+}
+
+}
+
+});
+
+}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %} {% from "macros.html" import sidebar, topbar, flash_messages %} {% block title %}{{ student.name }} – Profile{% endblock %} {% block body %}
+{{ sidebar('mentor', 'extra') }}
+{{ topbar('👤 ' ~ student.name ~ ' – Full Profile', student.email) }}
+{{ flash_messages() }} Back
+🤖 AI Development Scores
+Overall: {{ scores.overall }}%
+{% for label, key, color in [('Academic','academic','#5c6bc0'),('Attendance','attendance','#0891b2'),('Technical','technical','#7c3aed'),('Leadership','leadership','#d97706'),('Communication','communication','#16a34a'),('Innovation','innovation','#ea580c'),('Volunteer','volunteer','#ec4899'),('Placement Ready','placement_readiness','#059669')] %}
+{{ scores[key] }}
+{{ label }}
+{% endfor %}
+⭐ Rate Soft Skills
+{% for skill in ['communication','teamwork','leadership','creativity','problem_solving','time_management','adaptability','professionalism'] %}
+{{ skill|replace('_',' ')|capitalize }} 
+{{ i }} {% if i==0 %}(Not Rated){% elif i==5 %}⭐ Excellent{% else %}– {{ ['','Poor','Below Avg','Average','Good',''][i] }}{% endif %}
+{% endfor %}
+Remarks 
+{{ skills_rating.remarks if skills_rating else '' }}
+Save Ratings
+Activities ({{ activities|length }})
+{% for a in activities %} {% else %}{% endfor %}
+Category	Activity	Status	Verified	Action
+{{ a.cat_name or '–' }}	{{ a.activity_name }}	{{ a.status }}	{{ a.verification_status }}	{% if a.verification_status == 'pending' %} Verify Reject {% endif %}
+No activities
+Certifications ({{ certifications|length }})
+{% for c in certifications %} {% else %}{% endfor %}
+Name	Provider	Hours
+{{ c.cert_name }}	{{ c.provider or '–' }}	{{ c.hours }}h
+None
+Competitions ({{ competitions|length }})
+{% for c in competitions %} {% else %}{% endfor %}
+Event	Level	Position
+{{ c.event_name }}	{{ c.level }}	{{ c.position or '–' }}
+None
+💡 AI Recommendations for this student
+{% for r in recommendations %}
+{{ r.text }}
+{% endfor %}
+{% endblock %}

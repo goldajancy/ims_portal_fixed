@@ -1,29 +1,349 @@
-{% extends "base.html" %} {% from "macros.html" import sidebar, topbar, flash_messages %} {% block title %}AI Report – {{ student.name }}{% endblock %} {% block body %}
-{{ sidebar('mentor', 'risk') }}
-{{ topbar('🤖 AI Report: ' ~ student.name, student.email) }}
-{{ flash_messages() }} Back to Risk Dashboard
-Attendance
-{{ risk_data.attendance_pct }}%
-Avg Marks
-{{ risk_data.avg_marks_pct }}%
-Risk Score
-{{ risk_data.risk_score }} / 100
-Risk Classification
-{{ risk_data.risk_emoji }} {{ risk_data.risk_label }}
-Assignments: {{ risk_data.submitted }} / {{ risk_data.total_assignments }} submitted ({{ risk_data.pending_ratio }}% pending)
+{% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
 
-🤖 AI-Generated Feedback
-{{ ai_feedback }}
+{% block title %}AI Student Diagnostic Report – {{ student.name }}{% endblock %}
 
-🎯 Career Growth Suggestion
-{{ suggestion }}
+{% block body %}
+{{ sidebar('mentor' if session.get('role') == 'mentor' else 'admin', 'risk') }}
+{{ topbar(' AI Diagnostic Report: ' ~ student.name, 'Comprehensive academic health evaluation and AI-guided intervention strategy') }}
+{{ flash_messages() }}
 
-{% if subject_strengths %}
-Performance by Subject
-{% for s in subject_strengths %} {% endfor %}
-Class / Subject	Average Marks
-{{ s.class_name }}	{{ s.avg_marks }}%
-{% endif %}
-Quick Actions
-Message Trainee Add Note Book Office Hour
+<div class="content-wrapper">
+  <div class="container-fluid px-4 py-4" style="max-width: 1400px; margin: 0 auto;">
+    
+    <!-- Navigation & Print bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <a href="{{ url_for('mentor_risk_dashboard' if session.get('role') == 'mentor' else 'admin_risk_dashboard') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="fas fa-arrow-left me-1"></i> Back to Risk Dashboard
+      </a>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="window.print()">
+          <i class="fas fa-print me-1"></i> Print / Save PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Student Profile Header Card -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: #ffffff;">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm"
+               style="width: 64px; height: 64px; font-size: 26px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+            {{ student.name[0]|upper }}
+          </div>
+          <div>
+            <h3 class="fw-bold mb-1 text-dark">{{ student.name }}</h3>
+            <div class="d-flex align-items-center gap-3 text-muted small flex-wrap">
+              <span><i class="fas fa-envelope text-primary me-1"></i>{{ student.email }}</span>
+              {% if student.phone %}<span><i class="fas fa-phone text-success me-1"></i>{{ student.phone }}</span>{% endif %}
+              <span><i class="fas fa-user-graduate text-secondary me-1"></i>Trainee</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge fs-6 px-3 py-2 rounded-pill bg-{{ risk_data.risk_color }}-subtle text-{{ risk_data.risk_color }} border border-{{ risk_data.risk_color }}-subtle">
+            {{ risk_data.risk_emoji }} {{ risk_data.risk_label }} (Risk Score: {{ risk_data.risk_score }}/100)
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 Key Diagnostic KPI Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-primary" style="background: #eef2ff; font-size: 22px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Attendance</span>
+              <h4 class="fw-bold mb-0 text-dark">{{ risk_data.attendance_pct }}%</h4>
+              <small class="{% if risk_data.attendance_pct >= 75 %}text-success{% else %}text-danger{% endif %} fw-semibold">
+                {% if risk_data.attendance_pct >= 75 %}Regular{% else %}Low Attendance{% endif %}
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-info" style="background: #ecfeff; font-size: 22px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-chart-bar"></i>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Avg Assignment Marks</span>
+              <h4 class="fw-bold mb-0 text-dark">{{ risk_data.avg_marks_pct }}%</h4>
+              <small class="text-muted">{{ risk_data.submitted }} of {{ risk_data.total_assignments }} done</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-danger" style="background: #fef2f2; font-size: 22px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Pending Ratio</span>
+              <h4 class="fw-bold mb-0 text-dark">{{ risk_data.pending_ratio }}%</h4>
+              <small class="text-muted">Unsubmitted tasks</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-success" style="background: #ecfdf5; font-size: 22px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Wellness Index</span>
+              <h4 class="fw-bold mb-0 text-dark">{{ (100 - risk_data.risk_score)|round(0)|int }}/100</h4>
+              <small class="text-success fw-semibold">Academic safety</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Report Body -->
+    <div class="row g-4 mb-4">
+      
+      <!-- Left Column: AI Diagnostics & Action Steps -->
+      <div class="col-12 col-lg-8">
+        
+        <!-- Gemini AI Pedagogical Analysis Card -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style="background: #ffffff;">
+          <div class="p-4" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #ffffff;">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-3 p-2 bg-white bg-opacity-25" style="font-size: 22px;">
+                <i class="fas fa-robot text-white"></i>
+              </div>
+              <div>
+                <h4 class="fw-bold mb-0">Gemini AI Diagnostic Assessment</h4>
+                <small class="text-white text-opacity-75">Automated student performance insights & mentorship advice</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body p-4">
+            {% if feedback_data and feedback_data.summary %}
+            <div class="alert alert-light border border-primary-subtle rounded-3 p-3 mb-3" style="background: #f8faff;">
+              <div class="d-flex gap-2">
+                <i class="fas fa-info-circle text-primary mt-1"></i>
+                <div class="fw-medium text-dark">{{ feedback_data.summary }}</div>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="fs-6 lh-lg text-secondary mb-4">
+              {{ ai_feedback }}
+            </div>
+
+            <!-- Strengths & Mentorship Priorities -->
+            <div class="row g-3 pt-2 border-top">
+              <div class="col-12 col-md-6">
+                <div class="p-3 rounded-3 h-100" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+                  <h6 class="fw-bold text-success mb-2"><i class="fas fa-check-circle me-2"></i>Observed Strengths</h6>
+                  <ul class="mb-0 ps-3 small text-dark">
+                    {% if feedback_data and feedback_data.strengths %}
+                      {% for s in feedback_data.strengths %}
+                        <li class="mb-1">{{ s }}</li>
+                      {% endfor %}
+                    {% else %}
+                      <li>Active involvement in class sessions.</li>
+                      <li>Completes primary course milestones.</li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6">
+                <div class="p-3 rounded-3 h-100" style="background: #fff7ed; border: 1px solid #fed7aa;">
+                  <h6 class="fw-bold text-warning-emphasis mb-2"><i class="fas fa-exclamation-triangle me-2"></i>Intervention Focus</h6>
+                  <ul class="mb-0 ps-3 small text-dark">
+                    {% if feedback_data and feedback_data.improvements %}
+                      {% for imp in feedback_data.improvements %}
+                        <li class="mb-1">{{ imp }}</li>
+                      {% endfor %}
+                    {% else %}
+                      <li>Review pending assignment backlog with student.</li>
+                      <li>Address recurring difficulties in lowest-scoring subjects.</li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 3-Step Mentorship Plan -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="rounded-3 p-2" style="background: #eef2ff; color: #4f46e5; font-size: 20px;">
+              <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold mb-0 text-dark">Recommended 1-on-1 Intervention Roadmap</h5>
+              <small class="text-muted">Key talking points and milestones to discuss during mentor check-in</small>
+            </div>
+          </div>
+
+          <div class="d-flex flex-column gap-3 mt-2">
+            {% if feedback_data and feedback_data.study_plan %}
+              {% for step in feedback_data.study_plan %}
+              <div class="d-flex align-items-start gap-3 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <span class="badge rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 13px;">{{ loop.index }}</span>
+                <div class="text-dark fw-medium">{{ step }}</div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="d-flex align-items-start gap-3 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <span class="badge rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">1</span>
+                <div class="text-dark fw-medium">Discuss current time management challenges and create a structured submission timetable.</div>
+              </div>
+              <div class="d-flex align-items-start gap-3 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <span class="badge rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">2</span>
+                <div class="text-dark fw-medium">Guide trainee on modular assignment structure and provide hints on pending tasks.</div>
+              </div>
+              <div class="d-flex align-items-start gap-3 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <span class="badge rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">3</span>
+                <div class="text-dark fw-medium">Set a 14-day milestone review to re-evaluate risk score progress.</div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Recent Assignment Submissions Table -->
+        {% if recent_submissions %}
+        <div class="card border-0 shadow-sm rounded-4 p-4" style="background: #ffffff;">
+          <h5 class="fw-bold mb-3 text-dark"><i class="fas fa-file-alt text-primary me-2"></i>Recent Submissions & Feedback</h5>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small text-muted text-uppercase">
+                  <th>Assignment</th>
+                  <th>Submitted On</th>
+                  <th>Score</th>
+                  <th>Feedback Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for sub in recent_submissions %}
+                <tr>
+                  <td class="fw-semibold text-dark">{{ sub.title }}</td>
+                  <td class="small text-muted">{{ sub.submitted_at.strftime('%b %d, %Y') if sub.submitted_at else '—' }}</td>
+                  <td>
+                    {% if sub.marks is not none %}
+                      <span class="badge {% if sub.marks >= 70 %}bg-success{% elif sub.marks >= 50 %}bg-warning{% else %}bg-danger{% endif %}">
+                        {{ sub.marks }}
+                      </span>
+                    {% else %}
+                      <span class="badge bg-secondary">Ungraded</span>
+                    {% endif %}
+                  </td>
+                  <td class="small text-muted">{{ sub.feedback or 'No notes provided' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+
+      <!-- Right Column: Subject Breakdown & Extracurriculars -->
+      <div class="col-12 col-lg-4">
+        
+        <!-- Career & Skill Trajectory -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="rounded-3 p-2" style="background: #ecfeff; color: #0891b2; font-size: 20px;">
+              <i class="fas fa-compass"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold mb-0 text-dark">Career Guidance Nudge</h5>
+              <small class="text-muted">AI trajectory analysis</small>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-3 mb-3" style="background: #f0fdfa; border: 1px solid #99f6e4;">
+            <p class="mb-0 text-dark small lh-base">
+              {{ suggestion }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Subject Performance Breakdown -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="rounded-3 p-2" style="background: #fdf2f8; color: #db2777; font-size: 20px;">
+              <i class="fas fa-book-open"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold mb-0 text-dark">Subject Breakdown</h5>
+              <small class="text-muted">Average score per class</small>
+            </div>
+          </div>
+
+          {% if subject_strengths %}
+            <div class="d-flex flex-column gap-3">
+              {% for s in subject_strengths %}
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-1 small fw-semibold">
+                  <span class="text-dark">{{ s.class_name }}</span>
+                  <span class="{% if s.avg_marks >= 75 %}text-success{% elif s.avg_marks >= 50 %}text-warning{% else %}text-danger{% endif %}">{{ s.avg_marks }}%</span>
+                </div>
+                <div class="progress" style="height: 8px; border-radius: 4px; background: #e2e8f0;">
+                  <div class="progress-bar {% if s.avg_marks >= 75 %}bg-success{% elif s.avg_marks >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                       role="progressbar" style="width: {{ s.avg_marks }}%;"></div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-3 text-muted">
+              <i class="fas fa-inbox fa-2x mb-2 opacity-50"></i>
+              <p class="small mb-0">No subject marks recorded yet.</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Extracurricular Activities -->
+        {% if extra_activities %}
+        <div class="card border-0 shadow-sm rounded-4 p-4" style="background: #ffffff;">
+          <h5 class="fw-bold mb-3 text-dark"><i class="fas fa-trophy text-warning me-2"></i>Extracurricular & Talents</h5>
+          <div class="d-flex flex-column gap-2">
+            {% for a in extra_activities %}
+            <div class="p-2 rounded-3 border bg-light">
+              <div class="d-flex justify-content-between align-items-center">
+                <strong class="small text-dark">{{ a.title }}</strong>
+                <span class="badge bg-primary-subtle text-primary rounded-pill small">{{ a.category }}</span>
+              </div>
+              <div class="small text-muted mt-1">{{ a.level }} &bull; {{ a.achievement or 'Participant' }}</div>
+              {% if a.ai_feedback %}
+              <div class="small text-secondary mt-1 fst-italic border-top pt-1">{{ a.ai_feedback }}</div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
 {% endblock %}

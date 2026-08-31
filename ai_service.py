@@ -351,3 +351,302 @@ Format your output strictly as a JSON array of objects:
     except Exception as e:
         logger.warning(f"Error generating practice questions: {e}")
         return []
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. COMPREHENSIVE AI FEEDBACK (TRAINEE, MENTOR, ADMIN)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def generate_student_comprehensive_feedback(
+    student_name: str,
+    risk_data: dict,
+    subject_strengths: list = None,
+    extra_activities: list = None,
+    exam_scores: list = None
+) -> dict:
+    """
+    Generates rich, personalized AI evaluation, feedback, career pathway advice, and 
+    targeted action steps using Gemini.
+    """
+    subjects_str = ", ".join([f"{s.get('class_name', 'Subject')}: {s.get('avg_marks', 0)}%" for s in (subject_strengths or [])]) or "No subject marks recorded yet"
+    extras_str = ", ".join([f"{e.get('title', 'Activity')} ({e.get('category', 'General')})" for e in (extra_activities or [])]) or "No extracurricular recorded"
+    exams_str = ", ".join([f"{ex.get('title', 'Exam')}: {ex.get('marks', 0)}/{ex.get('max_marks', 100)}" for ex in (exam_scores or [])]) or "No exams recorded"
+
+    prompt = f"""You are a senior academic advisor and career mentor in an Integrated Management System.
+Analyze the following complete student profile and generate a constructive, highly motivating, and personalized AI evaluation.
+
+Student Name: {student_name}
+Attendance: {risk_data.get('attendance_pct', 0)}%
+Average Assignment Marks: {risk_data.get('avg_marks_pct', 0)}%
+Pending Assignments Ratio: {risk_data.get('pending_ratio', 0)}% (Submitted: {risk_data.get('submitted', 0)} of {risk_data.get('total_assignments', 0)})
+Risk Classification: {risk_data.get('risk_label', 'Unknown')}
+Subject Scores: {subjects_str}
+Exams Performance: {exams_str}
+Extracurricular Activities: {extras_str}
+
+Output STRICTLY a JSON object matching this schema:
+{{
+  "summary": "<1-2 sentence executive summary of student status>",
+  "feedback": "<2-4 sentences of warm, encouraging, specific pedagogical feedback>",
+  "career_suggestion": "<1-2 sentences of concrete career & technical path advice based on their best subjects and talents>",
+  "strengths": ["<strength 1>", "<strength 2>"],
+  "improvements": ["<actionable improvement area 1>", "<actionable improvement area 2>"],
+  "study_plan": [
+    "<Step 1: Immediate focus for this week>",
+    "<Step 2: Practical skill reinforcement>",
+    "<Step 3: Milestone goal for the month>"
+  ]
+}}"""
+
+    res = _call_gemini(prompt, system_instruction="You are an expert student advisor giving compassionate, data-driven academic advice.")
+    try:
+        clean_res = res.strip()
+        if clean_res.startswith("```json"):
+            clean_res = clean_res[7:]
+        if clean_res.startswith("```"):
+            clean_res = clean_res[3:]
+        if clean_res.endswith("```"):
+            clean_res = clean_res[:-3]
+        data = json.loads(clean_res.strip())
+        if isinstance(data, dict) and "feedback" in data:
+            return data
+    except Exception as e:
+        logger.warning(f"Failed to parse student feedback JSON from Gemini: {e}")
+
+    # Fallback structure
+    att = float(risk_data.get('attendance_pct', 0))
+    avg_m = float(risk_data.get('avg_marks_pct', 0))
+    return {
+        "summary": f"{student_name} holds {att}% attendance with an average score of {avg_m}%.",
+        "feedback": f"{student_name} is showing steady progress across assignments. Focus on consistent attendance and clearing pending submissions to maintain strong academic momentum.",
+        "career_suggestion": f"Based on academic performance, developing practical portfolio projects and strengthening foundational concepts will open competitive career opportunities.",
+        "strengths": [
+            f"Active participation in assignments ({risk_data.get('submitted', 0)} submitted)",
+            "Consistent subject engagement"
+        ],
+        "improvements": [
+            "Maintain attendance above 85% for optimal retention",
+            "Submit upcoming tasks before deadlines"
+        ],
+        "study_plan": [
+            "Review challenging class modules with your mentor",
+            "Complete all pending assignment submissions",
+            "Take mock quizzes to test core concepts"
+        ]
+    }
+
+
+def generate_mentor_class_insights(
+    mentor_name: str,
+    class_names: list,
+    risk_list: list
+) -> dict:
+    """
+    Generates class-wide diagnostic insights, at-risk triage, and actionable mentoring tips for a Mentor.
+    """
+    total_students = len(risk_list)
+    high_risk = sum(1 for r in risk_list if r.get('risk_label') == 'High Risk')
+    med_risk = sum(1 for r in risk_list if r.get('risk_label') == 'Medium Risk')
+    low_risk = sum(1 for r in risk_list if r.get('risk_label') == 'Low Risk')
+    avg_att = round(sum(float(r.get('attendance_pct', 0)) for r in risk_list) / max(1, total_students), 1) if risk_list else 0
+    avg_marks = round(sum(float(r.get('avg_marks_pct', 0)) for r in risk_list) / max(1, total_students), 1) if risk_list else 0
+
+    at_risk_names = [r.get('name') for r in risk_list if r.get('risk_label') == 'High Risk'][:4]
+
+    prompt = f"""You are an educational analytics consultant assisting a course mentor.
+Mentor: {mentor_name}
+Classes: {', '.join(class_names) if class_names else 'General Batches'}
+Total Enrolled Trainees: {total_students}
+High Risk Trainees: {high_risk} (Notable: {', '.join(at_risk_names) or 'None'})
+Medium Risk Trainees: {med_risk}
+Low Risk / High Performers: {low_risk}
+Batch Average Attendance: {avg_att}%
+Batch Average Marks: {avg_marks}%
+
+Generate actionable mentor insights in strictly JSON format:
+{{
+  "overview": "<2 sentences summarizing class health and trends>",
+  "priority_actions": [
+    "<Action 1: specific guidance for high-risk students>",
+    "<Action 2: teaching or assignment recommendation>"
+  ],
+  "positive_highlights": "<1-2 sentences on what the batch is doing well>",
+  "mentor_tip": "<1 pedagogical advice for next week's sessions>"
+}}"""
+
+    res = _call_gemini(prompt, system_instruction="You are an expert teaching mentor providing strategic class improvement guidance.")
+    try:
+        clean_res = res.strip()
+        if clean_res.startswith("```json"):
+            clean_res = clean_res[7:]
+        if clean_res.startswith("```"):
+            clean_res = clean_res[3:]
+        if clean_res.endswith("```"):
+            clean_res = clean_res[:-3]
+        data = json.loads(clean_res.strip())
+        if isinstance(data, dict) and "overview" in data:
+            return data
+    except Exception as e:
+        logger.warning(f"Error parsing mentor insights JSON: {e}")
+
+    return {
+        "overview": f"Your batch of {total_students} trainees is maintaining an average attendance of {avg_att}% and marks average of {avg_marks}%. {high_risk} students require academic intervention.",
+        "priority_actions": [
+            f"Conduct 1-on-1 check-ins with high-risk trainees to address backlogs.",
+            "Schedule an interactive doubt-clearing session on core topics before next assessments."
+        ],
+        "positive_highlights": f"{low_risk} trainees are performing consistently in the low-risk band.",
+        "mentor_tip": "Provide bite-sized weekly task milestones to keep trainees engaged and submitting on time."
+    }
+
+
+def generate_admin_institutional_insights(
+    stats: dict,
+    risk_list: list,
+    extra_summary: dict = None
+) -> dict:
+    """
+    Generates strategic institutional AI insights for the Admin dashboard.
+    """
+    total_trainees = len(risk_list)
+    high_risk = sum(1 for r in risk_list if r.get('risk_label') == 'High Risk')
+    med_risk = sum(1 for r in risk_list if r.get('risk_label') == 'Medium Risk')
+    low_risk = sum(1 for r in risk_list if r.get('risk_label') == 'Low Risk')
+    
+    prompt = f"""You are an executive institutional advisor for an academy management system.
+Provide an executive AI analysis for administrators.
+
+Platform Stats:
+- Total Trainees: {total_trainees}
+- Total Mentors: {stats.get('total_mentors', 0)}
+- Active Classes: {stats.get('total_classes', 0)}
+- Risk Distribution: High Risk: {high_risk}, Medium Risk: {med_risk}, Low Risk: {low_risk}
+- Extracurricular Summary: {extra_summary or 'General activities registered'}
+
+Output strictly JSON:
+{{
+  "executive_summary": "<2-3 sentences assessing overall institutional performance, retention health, and engagement>",
+  "key_risks": [
+    "<Risk point 1>",
+    "<Risk point 2>"
+  ],
+  "growth_opportunities": [
+    "<Opportunity 1>",
+    "<Opportunity 2>"
+  ],
+  "strategic_recommendation": "<1 overarching administrative recommendation>"
+}}"""
+
+    res = _call_gemini(prompt, system_instruction="You are a senior academic director providing high-level operational intelligence.")
+    try:
+        clean_res = res.strip()
+        if clean_res.startswith("```json"):
+            clean_res = clean_res[7:]
+        if clean_res.startswith("```"):
+            clean_res = clean_res[3:]
+        if clean_res.endswith("```"):
+            clean_res = clean_res[:-3]
+        data = json.loads(clean_res.strip())
+        if isinstance(data, dict) and "executive_summary" in data:
+            return data
+    except Exception as e:
+        logger.warning(f"Error parsing admin insights JSON: {e}")
+
+    return {
+        "executive_summary": f"Institution operates across {stats.get('total_classes', 0)} classes with {total_trainees} enrolled trainees. {low_risk} students are thriving, while {high_risk} require targeted academic retention programs.",
+        "key_risks": [
+            f"{high_risk} trainees currently flagged in high-risk zone requiring mentor follow-up",
+            "Assignment completion lag observed in certain classes"
+        ],
+        "growth_opportunities": [
+            "Expand cross-functional extracurricular competitions and workshops",
+            "Incentivize early assignment completions and peer-assisted study sessions"
+        ],
+        "strategic_recommendation": "Coordinate with mentors of high-risk batches to implement structured recovery plans."
+    }
+
+
+def evaluate_extracurricular_activity_ai(
+    title: str,
+    category: str,
+    level: str,
+    achievement: str = "",
+    description: str = "",
+    student_name: str = "Trainee"
+) -> str:
+    """
+    Evaluates student extracurricular achievement and generates authentic AI feedback for career portfolios.
+    """
+    prompt = f"""You are a student development and holistic career coach.
+Generate a professional, encouraging 2-3 sentence AI evaluation and career impact review for this student's extracurricular activity:
+
+Student: {student_name}
+Activity Title: {title}
+Category: {category}
+Level: {level}
+Achievement / Role: {achievement or 'Active Participant'}
+Description / Details: {description or 'Participated actively'}
+
+The feedback should recognize the effort, highlight transferable soft/hard skills demonstrated (e.g., leadership, teamwork, technical prowess, discipline), and explain how this enhances their professional placement profile."""
+
+    res = _call_gemini(prompt, system_instruction="You are an encouraging student career and talent development mentor.")
+    if not res:
+        res = f"{student_name}'s participation in '{title}' under the {category} category ({level} level) demonstrates commendable initiative and commitment. This achievement showcases strong dedication and teamwork, enriching their holistic portfolio for future career placements."
+    return res
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. UNIVERSAL FLOATING AI CHATBOT
+# ─────────────────────────────────────────────────────────────────────────────
+
+def chat_with_ims_assistant(
+    message: str,
+    role: str,
+    user_name: str,
+    user_context: dict = None,
+    history: list = None
+) -> str:
+    """
+    Universal conversational AI assistant for all pages across Admin, Mentor, and Trainee roles.
+    """
+    context_str = ""
+    if user_context:
+        context_str = "\n".join([f"- {k}: {v}" for k, v in user_context.items()])
+
+    history_str = ""
+    if history:
+        for turn in history[-6:]: # Keep last 6 turns for context
+            u = turn.get('user', '')
+            b = turn.get('bot', '')
+            if u:
+                history_str += f"User: {u}\n"
+            if b:
+                history_str += f"Assistant: {b}\n"
+
+    system_instruction = f"""You are 'IMS AI Smart Assistant', an intelligent, warm, and highly capable pair-assistant embedded inside the Integrated Management System (IMS) portal.
+
+User Information:
+- Name: {user_name}
+- Role: {role.upper()}
+{'- Live User Context / Metrics:' + chr(10) + context_str if context_str else ''}
+
+Your capabilities:
+1. Academic Assistance: Explain complex technical concepts, answer questions, provide study tips, write code examples, and suggest problem-solving approaches.
+2. Portal Navigation & Help: Guide the user on how to use IMS features based on their role:
+   - Trainees: viewing assignments, submitting tasks, checking exam scores, attendance, extracurriculars, AI feedback.
+   - Mentors: creating tasks/assignments, grading submissions, posting lectures, taking attendance, student AI risk reports.
+   - Admins: managing users, classes, attendance links, system logs, announcements, institutional analytics.
+3. Performance Guidance: Interpret their risk level, scores, and give tailored next steps.
+4. Professional Tone: Be concise, clear, encouraging, and helpful. Use clean Markdown formatting (bullet points, bold text, code snippets when relevant). Keep answers direct without unnecessary filler."""
+
+    full_prompt = ""
+    if history_str:
+        full_prompt += f"Conversation History:\n{history_str}\n"
+    full_prompt += f"User ({user_name}): {message}"
+
+    reply = _call_gemini(full_prompt, system_instruction=system_instruction)
+    if not reply:
+        reply = f"Hello {user_name}! I am your IMS AI Assistant. I am here to help you navigate your {role} dashboard, answer questions about your coursework, assignments, and provide personalized guidance. How can I help you today?"
+
+    return reply
+

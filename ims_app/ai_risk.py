@@ -103,107 +103,94 @@ def get_student_risk_data(query_fn, user_id):
     }
 
 
-# ── AI-Powered Personalized Feedback (Claude API) ───────────────────────────
+# ── AI-Powered Personalized Feedback (Gemini API via ai_service) ────────────
 
-def generate_ai_feedback(student_name, risk_data):
+def generate_ai_feedback(student_name, risk_data, subject_strengths=None, extra_activities=None, exam_scores=None):
     """
-    Calls Claude API to generate personalized feedback.
-    Falls back to rule-based feedback if ANTHROPIC_API_KEY is not set
-    or the API call fails for any reason.
+    Generates AI personalized feedback using Gemini.
     """
-    api_key = os.getenv("ANTHROPIC_API_KEY", "")
-
-    if not api_key:
-        return _rule_based_feedback(student_name, risk_data)
-
-    prompt = f"""You are an academic mentor AI. Analyze this student's data and give a SHORT (3-4 sentences),
-encouraging, actionable piece of feedback plus ONE concrete career growth tip.
-
-Student: {student_name}
-Attendance: {risk_data['attendance_pct']}%
-Average Marks: {risk_data['avg_marks_pct']}%
-Pending Assignments: {risk_data['pending_ratio']}% not submitted
-Risk Level: {risk_data['risk_label']}
-
-Keep it warm, specific, and motivating. Do not repeat the raw numbers back verbatim — interpret them."""
-
     try:
-        body = json.dumps({
-            "model": "claude-sonnet-4-6",
-            "max_tokens": 300,
-            "messages": [{"role": "user", "content": prompt}]
-        }).encode("utf-8")
-
-        req = urllib.request.Request(
-            "https://api.anthropic.com/v1/messages",
-            data=body,
-            headers={
-                "Content-Type": "application/json",
-                "x-api-key": api_key,
-                "anthropic-version": "2023-06-01",
-            },
-            method="POST"
+        import ai_service
+        feedback_data = ai_service.generate_student_comprehensive_feedback(
+            student_name=student_name,
+            risk_data=risk_data,
+            subject_strengths=subject_strengths,
+            extra_activities=extra_activities,
+            exam_scores=exam_scores
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
-            return "".join(text_blocks).strip() or _rule_based_feedback(student_name, risk_data)
-    except Exception:
-        return _rule_based_feedback(student_name, risk_data)
+        if isinstance(feedback_data, dict) and feedback_data.get("feedback"):
+            return feedback_data.get("feedback")
+        elif isinstance(feedback_data, str) and feedback_data.strip():
+            return feedback_data.strip()
+    except Exception as e:
+        pass
+
+    return _rule_based_feedback(student_name, risk_data)
 
 
 def _rule_based_feedback(student_name, risk_data):
-    """Fallback feedback generator — no API needed, always works."""
-    att = risk_data['attendance_pct']
-    marks = risk_data['avg_marks_pct']
-    pending = risk_data['pending_ratio']
-    level = risk_data['risk_label']
+    """Fallback feedback generator — works without network/API."""
+    att = risk_data.get('attendance_pct', 0)
+    marks = risk_data.get('avg_marks_pct', 0)
+    pending = risk_data.get('pending_ratio', 0)
+    level = risk_data.get('risk_label', 'Medium Risk')
 
     parts = []
-
     if level == "Low Risk":
-        parts.append(f"{student_name} is performing well overall with solid attendance ({att}%) and good marks ({marks}%).")
-        parts.append("Keep up the consistency — consider taking on a mentorship role for peers or exploring advanced projects to build a stronger portfolio.")
+        parts.append(f"{student_name} is performing consistently well with solid attendance ({att}%) and strong marks ({marks}%). ")
+        parts.append("Keep up the momentum and consider taking on advanced portfolio projects to stand out for top career opportunities.")
     elif level == "Medium Risk":
-        parts.append(f"{student_name} shows moderate performance. ")
+        parts.append(f"{student_name} shows steady performance. ")
         if att < 75:
-            parts.append(f"Attendance ({att}%) needs attention — try to attend sessions more regularly. ")
+            parts.append(f"Attendance ({att}%) needs attention — attending sessions regularly will improve concept retention. ")
         if marks < 60:
-            parts.append(f"Marks ({marks}%) could improve with focused revision on weaker topics. ")
+            parts.append(f"Marks ({marks}%) could improve with focused practice on difficult concepts. ")
         if pending > 20:
-            parts.append(f"There are pending assignments ({pending}% not submitted) — clearing the backlog will help. ")
-        parts.append("A short check-in with the mentor this week is recommended.")
+            parts.append(f"Clearing pending assignments ({pending}% not submitted) will immediately boost your standing. ")
+        parts.append("Scheduling a short 1-on-1 with your mentor is recommended this week.")
     else:
-        parts.append(f"{student_name} needs immediate support. ")
+        parts.append(f"{student_name} needs urgent academic support. ")
         if att < 60:
             parts.append(f"Attendance is critically low ({att}%). ")
         if marks < 50:
             parts.append(f"Marks are below passing threshold ({marks}%). ")
         if pending > 40:
-            parts.append(f"A large number of assignments are pending ({pending}%). ")
-        parts.append("Recommend an urgent one-on-one with the mentor and a personalized recovery plan to get back on track. Early intervention now can prevent falling further behind.")
+            parts.append(f"A significant number of assignments are pending ({pending}%). ")
+        parts.append("Immediate intervention with your mentor is strongly advised to structure a fast-track recovery plan.")
 
     return "".join(parts)
 
 
-def career_suggestion(risk_data, subject_strengths=None):
+def career_suggestion(risk_data, subject_strengths=None, student_name=""):
     """
-    Very simple career-path nudge based on performance band.
-    subject_strengths: optional list of {class_name, avg_marks} to personalize further.
+    Generates intelligent career path advice.
     """
-    marks = risk_data['avg_marks_pct']
+    try:
+        import ai_service
+        feedback_data = ai_service.generate_student_comprehensive_feedback(
+            student_name=student_name or "Trainee",
+            risk_data=risk_data,
+            subject_strengths=subject_strengths
+        )
+        if isinstance(feedback_data, dict) and feedback_data.get("career_suggestion"):
+            return feedback_data.get("career_suggestion")
+    except Exception:
+        pass
+
+    marks = risk_data.get('avg_marks_pct', 0)
     if subject_strengths:
         best = max(subject_strengths, key=lambda s: s.get('avg_marks') or 0, default=None)
-        if best and best.get('avg_marks', 0) >= 70:
-            return f"Strong performance in {best['class_name']} ({best['avg_marks']}%) — consider exploring advanced or specialized tracks in this area."
+        if best and (best.get('avg_marks') or 0) >= 70:
+            return f"Demonstrating strong talent in {best['class_name']} ({best['avg_marks']}%) — consider building specialized capstone projects and certifications in this domain."
 
     if marks >= 80:
-        return "Excellent overall performance — ready for advanced certifications, open-source contributions, or internship applications."
+        return "Outstanding academic consistency — well positioned for competitive internships, advanced open-source contributions, and technical leadership roles."
     elif marks >= 60:
-        return "Good foundation — focus on building 1-2 portfolio projects to strengthen your profile for placements."
+        return "Solid foundational competence — focus on building 1-2 end-to-end portfolio projects and mock technical interviews to boost placement readiness."
     elif marks >= 40:
-        return "Focus on core fundamentals first. Regular practice and doubt-clearing sessions will build the foundation needed for placements."
+        return "Focus on reinforcing core domain fundamentals and solving practical problem sets. Regular mentor reviews will rapidly accelerate progress."
     else:
-        return "Prioritize attendance and assignment completion first — these are the foundation for everything else. Reach out to your mentor for a personalized study plan."
+        return "Prioritize attendance recovery and clearing pending assignments first. Consistent fundamentals form the bedrock for all career opportunities."
+
 if __name__ == '__main__':
     pass

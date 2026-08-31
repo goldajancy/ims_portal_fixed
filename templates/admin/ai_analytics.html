@@ -1,193 +1,213 @@
 {% extends "base.html" %}
+{% from "macros.html" import sidebar, topbar, flash_messages %}
 
-{% block title %}
-AI Analytics
-{% endblock %}
-
-
+{% block title %}AI Extracurricular & Talent Intelligence – IMS Admin{% endblock %}
 
 {% block body %}
+{{ sidebar('admin', 'extracurricular') }}
+{{ topbar(' AI Extracurricular & Talent Intelligence', 'Real-time AI talent profiling, extracurricular development metrics, and institutional recommendations') }}
+{{ flash_messages() }}
 
+<div class="content-wrapper">
+  <div class="container-fluid px-4 py-4" style="max-width: 1400px; margin: 0 auto;">
 
-<div class="container">
+    <!-- Top Action Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div>
+        <h2 class="fw-bold mb-1" style="color: #1e1b4b; font-size: 26px;">
+          <i class="fas fa-trophy text-warning me-2"></i>Institutional Talent & Development Intelligence
+        </h2>
+        <p class="text-muted mb-0">Holistic analysis of non-academic achievements and career-readiness portfolios.</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="/admin/extracurricular" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2">
+          <i class="fas fa-list me-1"></i> Manage Activities
+        </a>
+        <a href="/admin/risk-dashboard" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-2">
+          <i class="fas fa-chart-line me-1"></i> Academic Risk Dashboard
+        </a>
+      </div>
+    </div>
 
+    <!-- 4 Key Extracurricular Metric Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-primary" style="background: #eef2ff; font-size: 24px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-medal"></i>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Total Submissions</span>
+              <h3 class="fw-bold mb-0 text-dark">{{ total_activities|default(0) }}</h3>
+              <small class="text-muted">Registered activities</small>
+            </div>
+          </div>
+        </div>
+      </div>
 
-<h1>🤖 AI Extracurricular Analytics</h1>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-success" style="background: #ecfdf5; font-size: 24px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Approved Portfolios</span>
+              <h3 class="fw-bold mb-0 text-dark">{{ approved_count|default(0) }}</h3>
+              <small class="text-success fw-semibold">Verified achievements</small>
+            </div>
+          </div>
+        </div>
+      </div>
 
-<p>AI-based student talent analysis and recommendations</p>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-warning" style="background: #fffbeb; font-size: 24px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-shapes"></i>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Active Categories</span>
+              <h3 class="fw-bold mb-0 text-dark">{{ category_stats|length if category_stats else 5 }}</h3>
+              <small class="text-muted">Diversity domains</small>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-info" style="background: #ecfeff; font-size: 24px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-user-astronaut"></i>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Top Talented Leads</span>
+              <h3 class="fw-bold mb-0 text-dark">{{ top_talented|length if top_talented else 0 }}</h3>
+              <small class="text-info fw-semibold">Multi-domain performers</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <!-- Gemini AI Talent & Strategic Recommendations Banner -->
+    {% if institutional_insights %}
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style="background: #ffffff;">
+      <div class="p-4" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #ffffff;">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-3 p-2 bg-white bg-opacity-25" style="font-size: 22px;">
+            <i class="fas fa-brain text-white"></i>
+          </div>
+          <div>
+            <h4 class="fw-bold mb-0">Gemini AI Holistic Talent Assessment</h4>
+            <small class="text-white text-opacity-75">AI synthesized institutional evaluation and development roadmap</small>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <div class="p-3 rounded-3 mb-3" style="background: #f8faff; border-left: 4px solid #4f46e5;">
+          <p class="mb-0 text-dark fw-medium">{{ institutional_insights.executive_summary }}</p>
+        </div>
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <div class="p-3 rounded-3 h-100" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+              <h6 class="fw-bold text-success mb-2"><i class="fas fa-seedling me-2"></i>Key Development Strengths</h6>
+              <ul class="mb-0 ps-3 small text-dark">
+                {% for opp in institutional_insights.growth_opportunities %}
+                <li class="mb-1">{{ opp }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="p-3 rounded-3 h-100" style="background: #eef2ff; border: 1px solid #c7d2fe;">
+              <h6 class="fw-bold text-primary mb-2"><i class="fas fa-lightbulb me-2"></i>Strategic Institutional Direction</h6>
+              <p class="small text-dark mb-0">{{ institutional_insights.strategic_recommendation }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
+    <!-- Lower Section: Category Distribution & Top Talents Table -->
+    <div class="row g-4 mb-4">
+      
+      <!-- Category Distribution -->
+      <div class="col-12 col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100" style="background: #ffffff;">
+          <h5 class="fw-bold mb-3 text-dark"><i class="fas fa-chart-pie text-primary me-2"></i>Participation by Category</h5>
+          {% if category_stats %}
+            <div class="d-flex flex-column gap-3">
+              {% for cat in category_stats %}
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-1 small fw-semibold">
+                  <span class="text-dark">{{ cat.category|capitalize }}</span>
+                  <span class="badge bg-primary-subtle text-primary rounded-pill">{{ cat.count }} activities</span>
+                </div>
+                <div class="progress" style="height: 8px; border-radius: 4px; background: #e2e8f0;">
+                  <div class="progress-bar bg-primary" role="progressbar" style="width: {{ (cat.count / (total_activities or 1) * 100)|round(0) }}%;"></div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="fas fa-inbox fa-2x mb-2 opacity-50"></i>
+              <p class="small mb-0">No categorized activities logged yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
 
-<div class="stats-grid">
+      <!-- Top Talented Trainees Table -->
+      <div class="col-12 col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100" style="background: #ffffff;">
+          <h5 class="fw-bold mb-3 text-dark"><i class="fas fa-star text-warning me-2"></i>Top Multi-Talented Trainees</h5>
+          {% if top_talented %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small text-muted text-uppercase">
+                  <th>Student</th>
+                  <th>Activities</th>
+                  <th>Domains</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for t in top_talented %}
+                <tr>
+                  <td class="fw-semibold text-dark">{{ t.name }}</td>
+                  <td>
+                    <span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1">
+                      {{ t.act_count }} Approved
+                    </span>
+                  </td>
+                  <td class="small text-muted">{{ t.categories }}</td>
+                  <td class="text-end">
+                    <a href="{{ url_for('admin_student_ai_report', student_id=t.id) }}" class="btn btn-sm btn-primary rounded-pill px-3 py-1" style="font-size: 12px;">
+                      <i class="fas fa-robot me-1"></i> AI Report
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="fas fa-users-slash fa-2x mb-2 opacity-50"></i>
+            <p class="small mb-0">No approved student extracurricular records found.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
 
+    </div>
 
-<div class="stat-card">
-
-<h3>Overall Score</h3>
-
-<h2>
-87%
-</h2>
-
+  </div>
 </div>
-
-
-
-<div class="stat-card">
-
-<h3>Talent Level</h3>
-
-<h2>
-Advanced
-</h2>
-
-</div>
-
-
-
-<div class="stat-card">
-
-<h3>Growth Prediction</h3>
-
-<h2>
-+20%
-</h2>
-
-</div>
-
-
-
-</div>
-
-
-
-
-<div class="card">
-
-
-<h2>
-AI Insights
-</h2>
-
-
-<ul>
-
-
-<li>
-Strong leadership capability detected
-</li>
-
-
-<li>
-Excellent technical skill growth
-</li>
-
-
-<li>
-Improve presentation confidence
-</li>
-
-
-<li>
-Recommended: Participate in more competitions
-</li>
-
-
-</ul>
-
-
-</div>
-
-
-
-
-
-<div class="card">
-
-
-<h2>
-Skill Prediction
-</h2>
-
-
-
-<table class="table">
-
-
-<tr>
-
-<th>Area</th>
-
-<th>Current</th>
-
-<th>Prediction</th>
-
-</tr>
-
-
-<tr>
-
-<td>
-Technical Skills
-</td>
-
-<td>
-85%
-</td>
-
-<td>
-95%
-</td>
-
-
-</tr>
-
-
-<tr>
-
-<td>
-Leadership
-</td>
-
-<td>
-90%
-</td>
-
-<td>
-96%
-</td>
-
-</tr>
-
-
-
-<tr>
-
-<td>
-Communication
-</td>
-
-<td>
-80%
-</td>
-
-<td>
-90%
-</td>
-
-</tr>
-
-
-
-</table>
-
-
-</div>
-
-
-
-</div>
-
-
 {% endblock %}

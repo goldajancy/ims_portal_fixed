@@ -1472,9 +1472,9 @@ def mentor_ai_grade_all():
 
     # 1. Grade all pending assignments
     pending_assignments = query(f"""
-        SELECT s.id, s.content, s.user_id, COALESCE(a.max_marks, 100) as max_marks,
-               a.title as assignment_title, a.description as assignment_desc,
-               u.name as trainee_name
+    SELECT s.id, s.content, s.user_id, 100 as max_marks,
+           a.title as assignment_title, a.description as assignment_desc,
+           u.name as trainee_name
         FROM submissions s
         JOIN assignments a ON s.assignment_id=a.id
         JOIN users u ON s.user_id=u.id
@@ -1948,6 +1948,15 @@ def mentor_risk_dashboard():
     medium_count = sum(1 for r in risk_list if r["risk_label"] == "Medium Risk")
     low_count = sum(1 for r in risk_list if r["risk_label"] == "Low Risk")
 
+    class_records = query("SELECT name FROM classes WHERE mentor_id=%s AND is_active=1", (mid,))
+    class_names = [c['name'] for c in class_records] if class_records else []
+
+    mentor_insights = ai_service.generate_mentor_class_insights(
+        mentor_name=session.get('name', 'Mentor'),
+        class_names=class_names,
+        risk_list=risk_list
+    )
+
     return render_template(
         "mentor/risk_dashboard.html",
         risk_list=risk_list,
@@ -1959,8 +1968,10 @@ def mentor_risk_dashboard():
         leadership_count=leadership_count,
         communication_count=communication_count,
         cultural_count=cultural_count,
-        talented_count=talented_count
+        talented_count=talented_count,
+        mentor_insights=mentor_insights
     )
+
 
 
 @app.route('/mentor/extracurricular')
@@ -3020,24 +3031,6 @@ def admin_risk_dashboard():
         # -----------------------------------------
 
         scores = {
-
-            "Sports":sports,
-
-            "Technical":technical,
-
-            "Leadership":leadership,
-
-            "Communication":communication,
-
-            "Cultural":cultural
-
-        }
-
-            # -----------------------------------------
-        # Top Skill
-        # -----------------------------------------
-
-        scores = {
             "Sports": sports,
             "Technical": technical,
             "Leadership": leadership,
@@ -3046,44 +3039,26 @@ def admin_risk_dashboard():
         }
 
         if max(scores.values()) == 0:
-
             top_skill = "Not Identified"
             strengths = "No extracurricular participation"
             weaknesses = "Sports, Technical, Leadership, Communication, Cultural"
-
             ai = "Student has no extracurricular participation. Encourage involvement in extracurricular activities."
-
         else:
-
             top_skill = max(scores, key=scores.get)
-
-            strengths = ", ".join(
-                [k for k, v in scores.items() if v > 0]
-            )
-
-            weaknesses = ", ".join(
-                [k for k, v in scores.items() if v == 0]
-            )
+            strengths = ", ".join([k for k, v in scores.items() if v > 0])
+            weaknesses = ", ".join([k for k, v in scores.items() if v == 0])
 
             if data["risk_label"] == "High Risk" and skill_score >= 70:
-
                 ai = "Excellent extracurricular performance but poor academics. Provide academic mentoring while encouraging extracurricular excellence."
-
             elif data["risk_label"] == "High Risk":
-
                 ai = "Immediate academic mentoring required."
-
             elif skill_score >= 70:
-
                 ai = "Excellent extracurricular performance. Encourage competitions and leadership opportunities."
-
             else:
-
                 ai = "Balanced performance. Continue improving academics and extracurricular activities."
 
         data["name"] = t["name"]
         data["email"] = t["email"]
-
         data["skill_score"] = skill_score
         data["top_skill"] = top_skill
         data["strengths"] = strengths
@@ -3112,64 +3087,119 @@ def admin_risk_dashboard():
         if r["risk_label"] == "Low Risk"
     )
 
-    return render_template(
 
-        "admin/risk_dashboard.html",
+    stats = {
+        "total_mentors": (query("SELECT COUNT(*) as c FROM users WHERE role='mentor' AND is_active=1", one=True) or {}).get('c', 0),
+        "total_classes": (query("SELECT COUNT(*) as c FROM classes WHERE is_active=1", one=True) or {}).get('c', 0)
+    }
 
+    extra_summary = {
+        "sports": sports_count,
+        "technical": technical_count,
+        "leadership": leadership_count,
+        "communication": communication_count,
+        "cultural": cultural_count,
+        "talented": talented_count
+    }
+
+    admin_insights = ai_service.generate_admin_institutional_insights(
+        stats=stats,
         risk_list=risk_list,
+        extra_summary=extra_summary
+    )
 
+    return render_template(
+        "admin/risk_dashboard.html",
+        risk_list=risk_list,
         high_count=high_count,
         medium_count=medium_count,
         low_count=low_count,
-
         sports_count=sports_count,
         technical_count=technical_count,
         leadership_count=leadership_count,
         communication_count=communication_count,
         cultural_count=cultural_count,
-
-        talented_count=talented_count
-
+        talented_count=talented_count,
+        admin_insights=admin_insights
     )
 
 @app.route('/trainee/extracurricular/delete/<int:activity_id>', methods=['POST'])
 @login_required 
 def trainee_delete_extracurricular(activity_id): 
-    activity = ExtracurricularActivity.query.get_or_404(activity_id) 
-
-    db.session.delete(activity)
-    db.session.commit()
-    
+    tid = session['user_id']
+    query("DELETE FROM extracurricular WHERE id=%s AND student_id=%s", (activity_id, tid), commit=True)
     flash('Activity deleted successfully.', 'success')
     return redirect(url_for('trainee_extracurricular'))
 
 @app.route('/mentor/student-ai-report/<int:student_id>')
 @login_required
-@role_required('mentor')
+@role_required('mentor', 'admin')
 def mentor_student_ai_report(student_id):
-    student = query("SELECT id, name, email FROM users WHERE id=%s AND role='trainee'", (student_id,), one=True)
+    student = query("SELECT id, name, email, phone, bio, avatar FROM users WHERE id=%s AND role='trainee'", (student_id,), one=True)
     if not student:
         flash('Student not found.', 'error')
-        return redirect(url_for('mentor_risk_dashboard'))
+        return redirect(url_for('mentor_risk_dashboard' if session.get('role') == 'mentor' else 'admin_risk_dashboard'))
 
     risk_data = get_student_risk_data(query, student_id)
-    ai_feedback = generate_ai_feedback(student['name'], risk_data)
 
     subject_strengths = query("""
-        SELECT c.name as class_name, ROUND(AVG(s.marks),1) as avg_marks
+        SELECT c.name as class_name, ROUND(AVG(s.marks),1) as avg_marks, COUNT(s.id) as sub_count
         FROM submissions s
         JOIN assignments a ON s.assignment_id = a.id
         JOIN classes c ON a.class_id = c.id
         WHERE s.user_id=%s AND s.marks IS NOT NULL
-        GROUP BY c.id
+        GROUP BY c.id, c.name
     """, (student_id,))
 
-    suggestion = career_suggestion(risk_data, subject_strengths)
+    extra_activities = query("""
+        SELECT title, category, level, achievement, status, ai_feedback
+        FROM extracurricular
+        WHERE student_id=%s
+        ORDER BY created_at DESC
+    """, (student_id,))
+
+    exam_scores = query("""
+        SELECT e.title, es.marks, e.max_marks
+        FROM exam_scores es
+        JOIN exams e ON es.exam_id = e.id
+        WHERE es.user_id=%s
+        ORDER BY e.exam_date DESC
+    """, (student_id,))
+
+    recent_submissions = query("""
+        SELECT a.title, s.marks, s.submitted_at, s.feedback
+        FROM submissions s
+        JOIN assignments a ON s.assignment_id = a.id
+        WHERE s.user_id=%s
+        ORDER BY s.submitted_at DESC LIMIT 5
+    """, (student_id,))
+
+    feedback_data = ai_service.generate_student_comprehensive_feedback(
+        student_name=student['name'],
+        risk_data=risk_data,
+        subject_strengths=subject_strengths,
+        extra_activities=extra_activities,
+        exam_scores=exam_scores
+    )
 
     return render_template('mentor/student_ai_report.html',
-        student=student, risk_data=risk_data,
-        ai_feedback=ai_feedback, suggestion=suggestion,
-        subject_strengths=subject_strengths)
+        student=student,
+        risk_data=risk_data,
+        feedback_data=feedback_data,
+        ai_feedback=feedback_data.get('feedback', ''),
+        suggestion=feedback_data.get('career_suggestion', ''),
+        subject_strengths=subject_strengths,
+        extra_activities=extra_activities,
+        exam_scores=exam_scores,
+        recent_submissions=recent_submissions
+    )
+
+
+@app.route('/admin/student-ai-report/<int:student_id>')
+@login_required
+@role_required('admin')
+def admin_student_ai_report(student_id):
+    return mentor_student_ai_report(student_id)
 
 
 @app.route('/trainee/ai-feedback')
@@ -3178,39 +3208,106 @@ def mentor_student_ai_report(student_id):
 def trainee_ai_feedback():
     tid = session['user_id']
     risk_data = get_student_risk_data(query, tid)
-    ai_feedback = generate_ai_feedback(session['name'], risk_data)
 
+    subject_strengths = query("""
+        SELECT c.name as class_name, ROUND(AVG(s.marks),1) as avg_marks, COUNT(s.id) as sub_count
+        FROM submissions s
+        JOIN assignments a ON s.assignment_id = a.id
+        JOIN classes c ON a.class_id = c.id
+        WHERE s.user_id=%s AND s.marks IS NOT NULL
+        GROUP BY c.id, c.name
+    """, (tid,))
+
+    extra_activities = query("""
+        SELECT title, category, level, achievement, status, ai_feedback
+        FROM extracurricular
+        WHERE student_id=%s
+        ORDER BY created_at DESC
+    """, (tid,))
+
+    exam_scores = query("""
+        SELECT e.title, es.marks, e.max_marks
+        FROM exam_scores es
+        JOIN exams e ON es.exam_id = e.id
+        WHERE es.user_id=%s
+        ORDER BY e.exam_date DESC
+    """, (tid,))
+
+    feedback_data = ai_service.generate_student_comprehensive_feedback(
+        student_name=session.get('name', 'Trainee'),
+        risk_data=risk_data,
+        subject_strengths=subject_strengths,
+        extra_activities=extra_activities,
+        exam_scores=exam_scores
+    )
+
+    return render_template('trainee/ai_feedback.html',
+        risk_data=risk_data,
+        feedback_data=feedback_data,
+        ai_feedback=feedback_data.get('feedback', ''),
+        suggestion=feedback_data.get('career_suggestion', ''),
+        subject_strengths=subject_strengths,
+        extra_activities=extra_activities,
+        exam_scores=exam_scores
+    )
+
+
+@app.route('/api/ai/trainee/refresh-feedback', methods=['POST'])
+@login_required
+def api_refresh_trainee_feedback():
+    role = session.get('role')
+    data = request.get_json() or {}
+    target_id = data.get('student_id') if (role in ['admin', 'mentor'] and data.get('student_id')) else session['user_id']
+
+    student = query("SELECT name FROM users WHERE id=%s", (target_id,), one=True)
+    sname = student['name'] if student else session.get('name', 'Student')
+
+    risk_data = get_student_risk_data(query, target_id)
     subject_strengths = query("""
         SELECT c.name as class_name, ROUND(AVG(s.marks),1) as avg_marks
         FROM submissions s
         JOIN assignments a ON s.assignment_id = a.id
         JOIN classes c ON a.class_id = c.id
         WHERE s.user_id=%s AND s.marks IS NOT NULL
-        GROUP BY c.id
-    """, (tid,))
+        GROUP BY c.id, c.name
+    """, (target_id,))
+    extra_activities = query("SELECT title, category, level, achievement FROM extracurricular WHERE student_id=%s", (target_id,))
+    exam_scores = query("SELECT e.title, es.marks, e.max_marks FROM exam_scores es JOIN exams e ON es.exam_id=e.id WHERE es.user_id=%s", (target_id,))
 
-    suggestion = career_suggestion(risk_data, subject_strengths)
+    feedback_data = ai_service.generate_student_comprehensive_feedback(
+        student_name=sname,
+        risk_data=risk_data,
+        subject_strengths=subject_strengths,
+        extra_activities=extra_activities,
+        exam_scores=exam_scores
+    )
+    return jsonify({"success": True, "feedback_data": feedback_data, "risk_data": risk_data})
 
-    return render_template('trainee/ai_feedback.html',
-        risk_data=risk_data, ai_feedback=ai_feedback,
-        suggestion=suggestion, subject_strengths=subject_strengths)
+
 
 @app.route('/mentor/generate-ai-feedback/<int:activity_id>', methods=['POST'])
+@app.route('/admin/generate-ai-feedback/<int:activity_id>', methods=['POST'])
 @login_required
-@role_required('mentor')
+@role_required('mentor', 'admin')
 def mentor_generate_ai_feedback(activity_id):
-    activity = query("SELECT * FROM extracurricular WHERE id=%s", (activity_id,), one=True)
+    activity = query("""
+        SELECT e.*, u.name AS student_name
+        FROM extracurricular e
+        JOIN users u ON e.student_id = u.id
+        WHERE e.id=%s
+    """, (activity_id,), one=True)
 
     if not activity:
         flash('Activity not found.', 'error')
-        return redirect(url_for('mentor_extracurricular'))
+        return redirect(url_for('admin_extracurricular' if session.get('role') == 'admin' else 'mentor_extracurricular'))
 
-    feedback_text = (
-        f"{activity['student_name']} participated in \"{activity['title']}\" "
-        f"under the {activity['category']} category at {activity['level']} level"
-        + (f", achieving: {activity['achievement']}." if activity.get('achievement') else ".")
-        + " This activity reflects strong initiative, teamwork and time-management skills, "
-          "and is a valuable addition to their overall profile for placements and higher studies."
+    feedback_text = ai_service.evaluate_extracurricular_activity_ai(
+        title=activity.get('title', ''),
+        category=activity.get('category', ''),
+        level=activity.get('level', ''),
+        achievement=activity.get('achievement', ''),
+        description=activity.get('description', ''),
+        student_name=activity.get('student_name', 'Student')
     )
 
     query(
@@ -3219,24 +3316,63 @@ def mentor_generate_ai_feedback(activity_id):
         commit=True
     )
 
-    flash('AI feedback generated successfully.', 'success')
-    return redirect(url_for('mentor_extracurricular'))
+    flash('AI feedback generated successfully using Gemini.', 'success')
+    return redirect(url_for('admin_extracurricular' if session.get('role') == 'admin' else 'mentor_extracurricular'))
+
+
+@app.route('/admin/ai-analytics')
+@login_required
+@role_required('admin')
+def admin_ai_analytics():
+    total_activities = (query("SELECT COUNT(*) as c FROM extracurricular", one=True) or {}).get('c', 0)
+    approved_count = (query("SELECT COUNT(*) as c FROM extracurricular WHERE status='Approved'", one=True) or {}).get('c', 0)
+    category_stats = query("""
+        SELECT category, COUNT(*) as count
+        FROM extracurricular
+        GROUP BY category
+        ORDER BY count DESC
+    """)
+    top_talented = query("""
+        SELECT u.id, u.name, COUNT(e.id) as act_count,
+               GROUP_CONCAT(DISTINCT e.category SEPARATOR ', ') as categories
+        FROM users u
+        JOIN extracurricular e ON e.student_id=u.id
+        WHERE e.status='Approved'
+        GROUP BY u.id, u.name
+        ORDER BY act_count DESC LIMIT 10
+    """)
+    trainees = query("SELECT id, name FROM users WHERE role='trainee' AND is_active=1")
+    risk_list = [get_student_risk_data(query, t['id']) for t in trainees]
+    stats = {
+        "total_mentors": (query("SELECT COUNT(*) as c FROM users WHERE role='mentor' AND is_active=1", one=True) or {}).get('c', 0),
+        "total_classes": (query("SELECT COUNT(*) as c FROM classes WHERE is_active=1", one=True) or {}).get('c', 0)
+    }
+    extra_summary = {"total": total_activities, "approved": approved_count, "categories": [c['category'] for c in (category_stats or [])]}
+    institutional_insights = ai_service.generate_admin_institutional_insights(stats, risk_list, extra_summary)
+
+    return render_template('admin/ai_analytics.html',
+        total_activities=total_activities,
+        approved_count=approved_count,
+        category_stats=category_stats,
+        top_talented=top_talented,
+        institutional_insights=institutional_insights
+    )
+
 
 @app.route('/admin/delete-extracurricular/<int:activity_id>', methods=['POST'])
 @login_required
 @role_required('admin')
 def admin_delete_extracurricular(activity_id):
     activity = query(
-        "SELECT * FROM extracurricular_activities WHERE id=%s",
+        "SELECT * FROM extracurricular WHERE id=%s",
         (activity_id,), one=True
     )
     if not activity:
         flash('Activity not found.', 'error')
         return redirect(url_for('admin_extracurricular'))
 
-    # delete certificate file too, if you store one, before/after this
     query(
-        "DELETE FROM extracurricular_activities WHERE id=%s",
+        "DELETE FROM extracurricular WHERE id=%s",
         (activity_id,), commit=True
     )
 
@@ -3244,10 +3380,9 @@ def admin_delete_extracurricular(activity_id):
     return redirect(url_for('admin_extracurricular'))
 
 
+
+
 # ── Mentor edit/delete assignment ─────────────────────────────────────────────
-@app.route('/mentor/assignments/edit/<int:aid>', methods=['POST'])
-@login_required
-@role_required('mentor')
 def mentor_edit_assignment(aid):
     title    = request.form['title'].strip()
     due_date = request.form.get('due_date') or None
@@ -3587,7 +3722,97 @@ def api_ai_question_generate():
     return jsonify({"success": True, "questions": questions})
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. UNIVERSAL AI CHATBOT API (ALL PAGES)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.route('/api/ai/chat', methods=['POST'])
+@login_required
+def api_ai_chat():
+    """
+    Role-aware and context-aware chat assistant for all pages across IMS.
+    """
+    data = request.get_json() or {}
+    message = data.get('message', '').strip()
+    history = data.get('history', [])
+
+    if not message:
+        return jsonify({"success": False, "error": "Message is required"}), 400
+
+    user_id = session.get('user_id')
+    role = session.get('role', 'trainee')
+    name = session.get('name', 'User')
+
+    context = {}
+    try:
+        if role == 'trainee':
+            risk = get_student_risk_data(query, user_id)
+            enrolled = query("""
+                SELECT c.name FROM classes c 
+                JOIN class_enrollments ce ON ce.class_id=c.id 
+                WHERE ce.user_id=%s
+            """, (user_id,))
+            classes_str = ", ".join([c['name'] for c in enrolled]) or "Not enrolled yet"
+            context = {
+                "Attendance Percentage": f"{risk.get('attendance_pct', 0)}%",
+                "Average Assignment Marks": f"{risk.get('avg_marks_pct', 0)}%",
+                "Assignments Status": f"{risk.get('submitted', 0)} submitted out of {risk.get('total_assignments', 0)}",
+                "Current Risk Band": risk.get('risk_label', 'Unknown'),
+                "Enrolled Classes": classes_str
+            }
+        elif role == 'mentor':
+            classes = query("SELECT name FROM classes WHERE mentor_id=%s AND is_active=1", (user_id,))
+            classes_str = ", ".join([c['name'] for c in classes]) or "No active classes"
+            trainees_row = query("""
+                SELECT COUNT(DISTINCT ce.user_id) as c 
+                FROM class_enrollments ce 
+                JOIN classes c ON ce.class_id=c.id 
+                WHERE c.mentor_id=%s
+            """, (user_id,), one=True)
+            trainees_count = trainees_row['c'] if trainees_row else 0
+            
+            pending_row = query("""
+                SELECT COUNT(s.id) as c 
+                FROM submissions s 
+                JOIN assignments a ON s.assignment_id=a.id 
+                WHERE a.created_by=%s AND s.marks IS NULL
+            """, (user_id,), one=True)
+            pending_grading = pending_row['c'] if pending_row else 0
+            
+            context = {
+                "Classes Mentored": classes_str,
+                "Total Trainees": trainees_count,
+                "Pending Submissions to Grade": pending_grading
+            }
+        elif role == 'admin':
+            total_trainees = (query("SELECT COUNT(*) as c FROM users WHERE role='trainee' AND is_active=1", one=True) or {}).get('c', 0)
+            total_mentors = (query("SELECT COUNT(*) as c FROM users WHERE role='mentor' AND is_active=1", one=True) or {}).get('c', 0)
+            total_classes = (query("SELECT COUNT(*) as c FROM classes WHERE is_active=1", one=True) or {}).get('c', 0)
+            context = {
+                "Total Enrolled Trainees": total_trainees,
+                "Total Active Mentors": total_mentors,
+                "Total Active Classes": total_classes
+            }
+    except Exception as e:
+        logger.warning(f"Error gathering chat context: {e}")
+
+    reply = ai_service.chat_with_ims_assistant(
+        message=message,
+        role=role,
+        user_name=name,
+        user_context=context,
+        history=history
+    )
+
+    return jsonify({
+        "success": True,
+        "reply": reply,
+        "timestamp": datetime.now().strftime("%I:%M %p")
+    })
+
+
 if __name__ == '__main__':
         start_scheduler(notify)
         app.run(debug=True, port=5000)
+
 

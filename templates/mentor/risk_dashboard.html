@@ -451,6 +451,50 @@ Top Skilled Students
 
 </div>
 
+{% if mentor_insights %}
+<!-- Gemini AI Class Strategic Insights -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 mt-4 overflow-hidden" style="background: #ffffff;">
+  <div class="p-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #ffffff;">
+    <div class="d-flex align-items-center gap-3">
+      <div class="rounded-3 p-2 bg-white bg-opacity-25" style="font-size: 20px;">
+        <i class="fas fa-robot text-white"></i>
+      </div>
+      <div>
+        <h5 class="fw-bold mb-0">Gemini AI Class Intelligence & Triage</h5>
+        <small class="text-white text-opacity-75">Automated batch diagnostics and recommended intervention actions</small>
+      </div>
+    </div>
+    <span class="badge bg-white text-primary rounded-pill px-3 py-2 fw-semibold">Live AI</span>
+  </div>
+  <div class="card-body p-4">
+    <div class="p-3 rounded-3 mb-3" style="background: #f8faff; border-left: 4px solid #4f46e5;">
+      <p class="mb-0 text-dark fw-medium">{{ mentor_insights.overview }}</p>
+    </div>
+    <div class="row g-3">
+      <div class="col-12 col-md-6">
+        <div class="p-3 rounded-3 h-100" style="background: #fff7ed; border: 1px solid #fed7aa;">
+          <h6 class="fw-bold text-warning-emphasis mb-2"><i class="fas fa-exclamation-triangle me-2"></i>Priority Actions</h6>
+          <ul class="mb-0 ps-3 small text-dark">
+            {% for action in mentor_insights.priority_actions %}
+            <li class="mb-1">{{ action }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="p-3 rounded-3 h-100" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+          <h6 class="fw-bold text-success mb-2"><i class="fas fa-lightbulb me-2"></i>Pedagogical Advice & Highlights</h6>
+          <p class="small text-dark mb-1">{{ mentor_insights.mentor_tip }}</p>
+          {% if mentor_insights.positive_highlights %}
+          <p class="small text-muted mb-0"><i class="fas fa-check text-success me-1"></i>{{ mentor_insights.positive_highlights }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <!-- TOOLBAR -->
 
 <div class="toolbar">
@@ -799,10 +843,11 @@ Sort Risk ↓
                             ai:"{{ r.ai_recommendation }}"
 
                         })'>
-
-                        View AI
-
+                        <i class="fas fa-eye"></i> Quick
                         </button>
+                        <a href="{{ url_for('mentor_student_ai_report', student_id=r.user_id) }}" class="btn btn-sm btn-primary rounded-pill px-2 py-1 ms-1" style="font-size:12px;">
+                          <i class="fas fa-file-alt me-1"></i> Full Report
+                        </a>
 
                     </td>
 

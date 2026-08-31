@@ -1,348 +1,332 @@
 {% extends "base.html" %}
 {% from "macros.html" import sidebar, topbar, flash_messages %}
 
-{% block title %}My AI Feedback – IMS{% endblock %}
+{% block title %}My AI Academic & Career Feedback – IMS{% endblock %}
 
 {% block body %}
-
 {{ sidebar('trainee', 'aifeedback') }}
-{{ topbar('', '') }}
-{{ flash_messages() }}
+{{ topbar(' AI Academic & Career Intelligence', 'Personalized AI evaluation, progress trends, and growth roadmap powered by Gemini') }}
 
-<div class="ai-feedback-page">
+<div class="main-content">
+  {{ flash_messages() }}
 
-    <div class="page-header">
-        <div>
-            <h1></h1>
-            <p></p>
-        </div>
+  <div class="content-wrapper">
+    <div class="container-fluid px-4 py-4" style="max-width: 1400px; margin: 0 auto;">
+    
+    <!-- Top Action & Title Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div>
+        <h2 class="fw-bold mb-1" style="color: #1e1b4b; font-size: 26px;">
+          <i class="fas fa-brain text-primary me-2"></i>My AI Performance & Growth Center
+        </h2>
+        <p class="text-muted mb-0">Continuous real-time evaluation of your assignments, attendance, exams, and talent development.</p>
+      </div>
+      <div>
+        <button id="btn-refresh-feedback" class="btn btn-outline-primary shadow-sm px-3 py-2 rounded-pill fw-semibold" onclick="refreshAIFeedback()">
+          <i class="fas fa-sync-alt me-1" id="refresh-icon"></i> Refresh AI Analysis
+        </button>
+      </div>
     </div>
 
-    <!-- Performance Cards -->
-    <div class="performance-grid">
-
-        <div class="performance-card">
-            <div class="card-icon">📅</div>
-            <div>
-                <span>My Attendance</span>
-                <h2>{{ risk_data.attendance_pct }}%</h2>
+    <!-- Performance Metric Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100 p-3" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-primary" style="background: #eef2ff; font-size: 24px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-calendar-check"></i>
             </div>
-        </div>
-
-        <div class="performance-card">
-            <div class="card-icon">📊</div>
             <div>
-                <span>My Avg Marks</span>
-                <h2>{{ risk_data.avg_marks_pct }}%</h2>
+              <span class="text-muted small text-uppercase fw-semibold">Attendance</span>
+              <h3 class="fw-bold mb-0 text-dark">{{ risk_data.attendance_pct }}%</h3>
+              <small class="{% if risk_data.attendance_pct >= 75 %}text-success{% else %}text-danger{% endif %} fw-semibold">
+                {% if risk_data.attendance_pct >= 75 %}✓ On track{% else %}⚠️ Needs attention{% endif %}
+              </small>
             </div>
+          </div>
         </div>
+      </div>
 
-        <div class="performance-card">
-            <div class="card-icon">💚</div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100 p-3" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-info" style="background: #ecfeff; font-size: 24px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-chart-line"></i>
+            </div>
             <div>
-                <span>My Wellness Score</span>
-                <h2>{{ (100 - risk_data.risk_score)|round(0) }} / 100</h2>
+              <span class="text-muted small text-uppercase fw-semibold">Avg Assignment Marks</span>
+              <h3 class="fw-bold mb-0 text-dark">{{ risk_data.avg_marks_pct }}%</h3>
+              <small class="text-muted">{{ risk_data.submitted }} / {{ risk_data.total_assignments }} submitted</small>
             </div>
+          </div>
         </div>
+      </div>
 
-        <div class="performance-card">
-            <div class="card-icon">{{ risk_data.risk_emoji }}</div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100 p-3" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-success" style="background: #ecfdf5; font-size: 24px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-heartbeat"></i>
+            </div>
             <div>
-                <span>How am I doing?</span>
-                <h2>{{ risk_data.risk_label }}</h2>
-                <small>
-                    {{ risk_data.submitted }} /
-                    {{ risk_data.total_assignments }}
-                    assignments submitted
-                </small>
+              <span class="text-muted small text-uppercase fw-semibold">Academic Wellness</span>
+              <h3 class="fw-bold mb-0 text-dark">{{ (100 - risk_data.risk_score)|round(0)|int }} / 100</h3>
+              <small class="text-success fw-semibold">Overall health score</small>
             </div>
+          </div>
         </div>
+      </div>
 
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100 p-3" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-warning" style="background: #fffbeb; font-size: 24px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
+              <span>{{ risk_data.risk_emoji }}</span>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Risk Standing</span>
+              <h3 class="fw-bold mb-0 text-dark" id="txt-risk-label">{{ risk_data.risk_label }}</h3>
+              <small class="text-muted">{{ risk_data.pending_ratio }}% pending ratio</small>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-
-    <!-- AI Feedback -->
-    <div class="feedback-card">
-        <div class="section-title">
-            <span class="section-icon">🤖</span>
-            <div>
-                <h2>Your Personalized Feedback</h2>
-                <p>AI-generated insights based on your current performance</p>
-            </div>
-        </div>
-
-        <div class="feedback-content">
-            {{ ai_feedback }}
-        </div>
-    </div>
-
-
-    <!-- Career Tip -->
-    <div class="career-card">
-        <div class="section-title">
-            <span class="section-icon">🎯</span>
-            <div>
-                <h2>Career Growth Tip</h2>
-                <p>A suggestion to help you improve your career skills</p>
-            </div>
-        </div>
-
-        <div class="career-content">
-            {{ suggestion }}
-        </div>
-    </div>
-
-
-    <!-- Subject Performance -->
-    {% if subjects %}
-
-    <div class="subject-card">
-
-        <div class="section-title">
-            <span class="section-icon">📚</span>
-            <div>
-                <h2>My Performance by Subject</h2>
-                <p>See how you are performing in each subject</p>
-            </div>
-        </div>
-
-        <div class="subject-list">
-
-            {% for subject in subjects %}
-
-            <div class="subject-row">
-
-                <div class="subject-info">
-                    <strong>{{ subject.class_name }}</strong>
-                    <span>{{ subject.avg_marks }}%</span>
+    <!-- Main AI Insights Section -->
+    <div class="row g-4 mb-4">
+      
+      <!-- Primary Feedback Card -->
+      <div class="col-12 col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style="background: #ffffff;">
+          <div class="p-4" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #ffffff;">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-3 p-2 bg-white bg-opacity-25" style="font-size: 22px;">
+                  <i class="fas fa-robot text-white"></i>
                 </div>
-
-                <div class="progress-container">
-                    <div
-                        class="progress-bar"
-                        style="width: {{ subject.avg_marks|float }}%;">
-                    </div>
+                <div>
+                  <h4 class="fw-bold mb-0">Personalized Gemini AI Evaluation</h4>
+                  <small class="text-white text-opacity-75">Tailored academic feedback formulated for your profile</small>
                 </div>
+              </div>
+              <span class="badge bg-white text-primary rounded-pill px-3 py-2 fw-semibold">Live AI</span>
+            </div>
+          </div>
+          
+          <div class="card-body p-4">
+            {% if feedback_data and feedback_data.summary %}
+            <div class="alert alert-light border border-primary-subtle rounded-3 p-3 mb-3" style="background: #f8faff;">
+              <div class="d-flex gap-2">
+                <i class="fas fa-info-circle text-primary mt-1"></i>
+                <div id="ai-summary-text" class="fw-medium text-dark">{{ feedback_data.summary }}</div>
+              </div>
+            </div>
+            {% endif %}
 
+            <div class="fs-6 lh-lg text-secondary mb-4" id="ai-feedback-text">
+              {{ ai_feedback }}
             </div>
 
-            {% endfor %}
+            <!-- Strengths & Improvement Areas -->
+            <div class="row g-3 pt-2 border-top">
+              <div class="col-12 col-md-6">
+                <div class="p-3 rounded-3 h-100" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+                  <h6 class="fw-bold text-success mb-2"><i class="fas fa-star me-2"></i>Identified Strengths</h6>
+                  <ul class="mb-0 ps-3 small text-dark" id="ai-strengths-list">
+                    {% if feedback_data and feedback_data.strengths %}
+                      {% for s in feedback_data.strengths %}
+                        <li class="mb-1">{{ s }}</li>
+                      {% endfor %}
+                    {% else %}
+                      <li>Consistent engagement and active submissions.</li>
+                      <li>Good foundational discipline in core modules.</li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
 
+              <div class="col-12 col-md-6">
+                <div class="p-3 rounded-3 h-100" style="background: #fff7ed; border: 1px solid #fed7aa;">
+                  <h6 class="fw-bold text-warning-emphasis mb-2"><i class="fas fa-bullseye me-2"></i>Areas to Focus On</h6>
+                  <ul class="mb-0 ps-3 small text-dark" id="ai-improvements-list">
+                    {% if feedback_data and feedback_data.improvements %}
+                      {% for imp in feedback_data.improvements %}
+                        <li class="mb-1">{{ imp }}</li>
+                      {% endfor %}
+                    {% else %}
+                      <li>Clear any pending backlogs before assignment due dates.</li>
+                      <li>Schedule quick doubt-clearing sessions on difficult concepts.</li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
+
+        <!-- 3-Step AI Study & Action Plan -->
+        <div class="card border-0 shadow-sm rounded-4 p-4" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="rounded-3 p-2" style="background: #eef2ff; color: #4f46e5; font-size: 20px;">
+              <i class="fas fa-route"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold mb-0 text-dark">Recommended 3-Step Study Plan</h5>
+              <small class="text-muted">Structured roadmap generated by AI to maximize your GPA and placement readiness</small>
+            </div>
+          </div>
+
+          <div class="d-flex flex-column gap-3 mt-2" id="ai-study-plan">
+            {% if feedback_data and feedback_data.study_plan %}
+              {% for step in feedback_data.study_plan %}
+              <div class="d-flex align-items-start gap-3 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <span class="badge rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 13px;">{{ loop.index }}</span>
+                <div class="text-dark fw-medium">{{ step }}</div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="d-flex align-items-start gap-3 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <span class="badge rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">1</span>
+                <div class="text-dark fw-medium">Review current week's lecture materials and resolve remaining doubts.</div>
+              </div>
+              <div class="d-flex align-items-start gap-3 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <span class="badge rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">2</span>
+                <div class="text-dark fw-medium">Complete and submit upcoming assignments ahead of deadlines.</div>
+              </div>
+              <div class="d-flex align-items-start gap-3 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <span class="badge rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">3</span>
+                <div class="text-dark fw-medium">Practice mock test problems to solidify concept mastery.</div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Career Advice & Subject Performance -->
+      <div class="col-12 col-lg-4">
+        
+        <!-- Career & Placement Nudge Card -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="rounded-3 p-2" style="background: #ecfeff; color: #0891b2; font-size: 20px;">
+              <i class="fas fa-compass"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold mb-0 text-dark">Career & Skill Direction</h5>
+              <small class="text-muted">AI recommendations for placements</small>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-3 mb-3" style="background: #f0fdfa; border: 1px solid #99f6e4;">
+            <p class="mb-0 text-dark lh-base" id="ai-career-text">
+              {{ suggestion }}
+            </p>
+          </div>
+
+          <div class="d-grid gap-2">
+            <a href="/trainee/assignments" class="btn btn-outline-primary btn-sm rounded-3 py-2">
+              <i class="fas fa-tasks me-1"></i> Go to My Assignments
+            </a>
+            <a href="/trainee/extracurricular" class="btn btn-outline-secondary btn-sm rounded-3 py-2">
+              <i class="fas fa-trophy me-1"></i> Add Extracurricular Activity
+            </a>
+          </div>
+        </div>
+
+        <!-- Subject Performance Breakdown -->
+        <div class="card border-0 shadow-sm rounded-4 p-4" style="background: #ffffff;">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="rounded-3 p-2" style="background: #fdf2f8; color: #db2777; font-size: 20px;">
+              <i class="fas fa-book-open"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold mb-0 text-dark">Subject Mastery</h5>
+              <small class="text-muted">Average score per class</small>
+            </div>
+          </div>
+
+          {% if subject_strengths %}
+            <div class="d-flex flex-column gap-3">
+              {% for s in subject_strengths %}
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-1 small fw-semibold">
+                  <span class="text-dark">{{ s.class_name }}</span>
+                  <span class="{% if s.avg_marks >= 75 %}text-success{% elif s.avg_marks >= 50 %}text-warning{% else %}text-danger{% endif %}">{{ s.avg_marks }}%</span>
+                </div>
+                <div class="progress" style="height: 8px; border-radius: 4px; background: #e2e8f0;">
+                  <div class="progress-bar {% if s.avg_marks >= 75 %}bg-success{% elif s.avg_marks >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                       role="progressbar" style="width: {{ s.avg_marks }}%;"></div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-3 text-muted">
+              <i class="fas fa-inbox fa-2x mb-2 opacity-50"></i>
+              <p class="small mb-0">No graded assignment submissions recorded yet.</p>
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
 
     </div>
 
-    {% endif %}
-
+  </div>
 </div>
 
-<style>
+<script>
+async function refreshAIFeedback() {
+  const btn = document.getElementById("btn-refresh-feedback");
+  const icon = document.getElementById("refresh-icon");
+  btn.disabled = true;
+  icon.classList.add("fa-spin");
 
-.ai-feedback-page {
-    margin-left: 280px;
-    padding: 32px 40px;
-    width: calc(100% - 280px);
-    box-sizing: border-box;
-    background: #f6f8fc;
-    min-height: calc(100vh - 70px);
-}
-
-/* Header */
-
-.page-header {
-    margin-bottom: 28px;
-}
-
-.page-header h1 {
-    margin: 0;
-    font-size: 28px;
-    font-weight: 700;
-    color: #17203a;
-}
-
-.page-header p {
-    margin-top: 6px;
-    color: #68738a;
-}
-
-
-/* Performance cards */
-
-.performance-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-bottom: 25px;
-}
-
-.performance-card {
-    background: white;
-    border-radius: 16px;
-    padding: 22px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    border: 1px solid #e7eaf1;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
-}
-
-.card-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: #eef1ff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 23px;
-    flex-shrink: 0;
-}
-
-.performance-card span {
-    display: block;
-    color: #70798c;
-    font-size: 13px;
-    margin-bottom: 5px;
-}
-
-.performance-card h2 {
-    margin: 0;
-    color: #17203a;
-    font-size: 23px;
-}
-
-
-/* Common cards */
-
-.feedback-card,
-.career-card,
-.subject-card {
-    background: white;
-    border: 1px solid #e7eaf1;
-    border-radius: 16px;
-    padding: 26px;
-    margin-bottom: 24px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
-}
-
-
-/* Section heading */
-
-.section-title {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.section-icon {
-    width: 46px;
-    height: 46px;
-    border-radius: 12px;
-    background: #eef1ff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 21px;
-}
-
-.section-title h2 {
-    margin: 0;
-    color: #17203a;
-    font-size: 20px;
-}
-
-.section-title p {
-    margin: 5px 0 0;
-    color: #7a8395;
-    font-size: 13px;
-}
-
-
-/* Feedback */
-
-.feedback-content {
-    background: #f7f8fc;
-    border-radius: 12px;
-    padding: 20px;
-    color: #3e4658;
-    line-height: 1.7;
-    font-size: 15px;
-}
-
-
-/* Career */
-
-.career-content {
-    background: #fff8e8;
-    border-left: 4px solid #f3b63f;
-    padding: 18px 20px;
-    border-radius: 8px;
-    line-height: 1.7;
-    color: #4d4635;
-}
-
-
-/* Subjects */
-
-.subject-row {
-    padding: 17px 0;
-    border-bottom: 1px solid #edf0f5;
-}
-
-.subject-row:last-child {
-    border-bottom: none;
-}
-
-.subject-info {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 9px;
-}
-
-.subject-info strong {
-    color: #252d40;
-}
-
-.subject-info span {
-    font-weight: 600;
-    color: #596bd8;
-}
-
-.progress-container {
-    height: 9px;
-    background: #edf0f5;
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.progress-bar {
-    height: 100%;
-    background: #596bd8;
-    border-radius: 10px;
-}
-
-
-/* Responsive */
-
-@media (max-width: 1100px) {
-    .performance-grid {
-        grid-template-columns: repeat(2, 1fr);
+  try {
+    const res = await fetch("/api/ai/trainee/refresh-feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({})
+    });
+    const result = await res.json();
+    if (result.success && result.feedback_data) {
+      const data = result.feedback_data;
+      if (document.getElementById("ai-summary-text") && data.summary) {
+        document.getElementById("ai-summary-text").textContent = data.summary;
+      }
+      if (data.feedback) {
+        document.getElementById("ai-feedback-text").textContent = data.feedback;
+      }
+      if (data.career_suggestion) {
+        document.getElementById("ai-career-text").textContent = data.career_suggestion;
+      }
+      if (data.strengths && data.strengths.length > 0) {
+        const sList = document.getElementById("ai-strengths-list");
+        sList.innerHTML = data.strengths.map(s => `<li class="mb-1">${s}</li>`).join("");
+      }
+      if (data.improvements && data.improvements.length > 0) {
+        const impList = document.getElementById("ai-improvements-list");
+        impList.innerHTML = data.improvements.map(i => `<li class="mb-1">${i}</li>`).join("");
+      }
+      if (data.study_plan && data.study_plan.length > 0) {
+        const planBox = document.getElementById("ai-study-plan");
+        planBox.innerHTML = data.study_plan.map((step, idx) => `
+          <div class="d-flex align-items-start gap-3 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+            <span class="badge rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 13px;">${idx + 1}</span>
+            <div class="text-dark fw-medium">${step}</div>
+          </div>
+        `).join("");
+      }
     }
+  } catch (err) {
+    console.error("Error refreshing AI feedback:", err);
+  } finally {
+    btn.disabled = false;
+    icon.classList.remove("fa-spin");
+  }
 }
-
-@media (max-width: 700px) {
-    .ai-feedback-page {
-        margin-left: 0;
-        width: 100%;
-        padding: 20px;
-    }
-
-    .performance-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-</style>
-
+</script>
 {% endblock %}

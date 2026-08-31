@@ -452,6 +452,57 @@ Top Skilled Students
 
 </div>
 
+{% if admin_insights %}
+<!-- Gemini AI Institutional Strategic Intelligence -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 mt-4 overflow-hidden" style="background: #ffffff;">
+  <div class="p-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #ffffff;">
+    <div class="d-flex align-items-center gap-3">
+      <div class="rounded-3 p-2 bg-white bg-opacity-25" style="font-size: 20px;">
+        <i class="fas fa-brain text-white"></i>
+      </div>
+      <div>
+        <h5 class="fw-bold mb-0">Gemini AI Institutional Strategic Intelligence</h5>
+        <small class="text-white text-opacity-75">Executive risk analytics, retention health, and administrative growth opportunities</small>
+      </div>
+    </div>
+    <span class="badge bg-white text-primary rounded-pill px-3 py-2 fw-semibold">Live AI Intelligence</span>
+  </div>
+  <div class="card-body p-4">
+    <div class="p-3 rounded-3 mb-3" style="background: #f8faff; border-left: 4px solid #4f46e5;">
+      <p class="mb-0 text-dark fw-medium">{{ admin_insights.executive_summary }}</p>
+    </div>
+    <div class="row g-3">
+      <div class="col-12 col-md-4">
+        <div class="p-3 rounded-3 h-100" style="background: #fef2f2; border: 1px solid #fecaca;">
+          <h6 class="fw-bold text-danger mb-2"><i class="fas fa-exclamation-circle me-2"></i>Key Risk Areas</h6>
+          <ul class="mb-0 ps-3 small text-dark">
+            {% for rk in admin_insights.key_risks %}
+            <li class="mb-1">{{ rk }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="p-3 rounded-3 h-100" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+          <h6 class="fw-bold text-success mb-2"><i class="fas fa-chart-line me-2"></i>Growth Opportunities</h6>
+          <ul class="mb-0 ps-3 small text-dark">
+            {% for opp in admin_insights.growth_opportunities %}
+            <li class="mb-1">{{ opp }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="p-3 rounded-3 h-100" style="background: #eef2ff; border: 1px solid #c7d2fe;">
+          <h6 class="fw-bold text-primary mb-2"><i class="fas fa-lightbulb me-2"></i>Strategic Advice</h6>
+          <p class="small text-dark mb-0">{{ admin_insights.strategic_recommendation }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <!-- TOOLBAR -->
 
 <div class="toolbar">
@@ -800,10 +851,11 @@ Sort Risk ↓
                             ai:"{{ r.ai_recommendation }}"
 
                         })'>
-
-                        View AI
-
+                        <i class="fas fa-eye"></i> Quick
                         </button>
+                        <a href="{{ url_for('admin_student_ai_report', student_id=r.user_id) }}" class="btn btn-sm btn-primary rounded-pill px-2 py-1 ms-1" style="font-size:12px;">
+                          <i class="fas fa-file-alt me-1"></i> Full Report
+                        </a>
 
                     </td>
 

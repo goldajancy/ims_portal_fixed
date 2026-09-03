@@ -4,13 +4,23 @@
 {% block title %}AI Student Diagnostic Report – {{ student.name }}{% endblock %}
 
 {% block body %}
-{{ sidebar('mentor' if session.get('role') == 'mentor' else 'admin', 'risk') }}
-{{ topbar(' AI Diagnostic Report: ' ~ student.name, 'Comprehensive academic health evaluation and AI-guided intervention strategy') }}
-{{ flash_messages() }}
 
-<div class="content-wrapper">
-  <div class="container-fluid px-4 py-4" style="max-width: 1400px; margin: 0 auto;">
-    
+<div class="app-layout">
+
+  {{ sidebar('mentor' if session.get('role') == 'mentor' else 'admin', 'risk') }}
+
+  <div class="main-content">
+
+    {{ topbar(
+      'AI Diagnostic Report: ' ~ student.name,
+      'Comprehensive academic health evaluation and AI-guided intervention strategy'
+    ) }}
+
+    <div class="content-area">
+
+      {{ flash_messages() }}
+
+      <div class="container-fluid px-4 py-4" style="max-width: 1400px; margin: 0 auto;">    
     <!-- Navigation & Print bar -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <a href="{{ url_for('mentor_risk_dashboard' if session.get('role') == 'mentor' else 'admin_risk_dashboard') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">

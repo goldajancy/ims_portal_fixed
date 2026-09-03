@@ -1,3 +1,4 @@
+```html
 {% extends "base.html" %}
 {% from "macros.html" import sidebar, topbar, flash_messages %}
 
@@ -27,78 +28,47 @@
             <div class="dashboard-grid">
 
                 <div class="stat-card">
-
                     <div class="stat-icon">
-
                         <i class="fas fa-layer-group"></i>
-
                     </div>
-
                     <div class="stat-content">
-
                         <h3>{{ stats.total }}</h3>
-
                         <p>Total Activities</p>
-
                     </div>
-
                 </div>
 
                 <div class="stat-card">
-
                     <div class="stat-icon warning">
-
                         <i class="fas fa-clock"></i>
-
                     </div>
-
                     <div class="stat-content">
-
                         <h3>{{ stats.pending }}</h3>
-
                         <p>Pending Approval</p>
-
                     </div>
-
                 </div>
 
                 <div class="stat-card">
-
                     <div class="stat-icon success">
-
                         <i class="fas fa-check-circle"></i>
-
                     </div>
-
                     <div class="stat-content">
-
                         <h3>{{ stats.approved }}</h3>
-
                         <p>Approved</p>
-
                     </div>
-
                 </div>
 
                 <div class="stat-card">
-
                     <div class="stat-icon danger">
-
                         <i class="fas fa-times-circle"></i>
-
                     </div>
-
                     <div class="stat-content">
-
                         <h3>{{ stats.rejected }}</h3>
-
                         <p>Rejected</p>
-
                     </div>
-
                 </div>
 
             </div>
+
 
             <!-- ====================================== -->
             <!-- Search -->
@@ -106,9 +76,7 @@
 
             <div class="page-toolbar">
 
-                <form
-                    method="GET"
-                    class="search-form">
+                <form method="GET" class="search-form">
 
                     <input
                         type="text"
@@ -119,43 +87,28 @@
                     <select name="category">
 
                         <option value="">All Categories</option>
-
                         <option>Sports</option>
-
                         <option>Paper Presentation</option>
-
                         <option>Technical Event</option>
-
                         <option>Hackathon</option>
-
                         <option>Coding Contest</option>
-
                         <option>Workshop</option>
-
                         <option>Seminar</option>
-
                         <option>Communication Skill</option>
-
                         <option>Leadership</option>
-
                         <option>Volunteer</option>
-
                         <option>Internship</option>
-
                         <option>Certification</option>
-
                         <option>Cultural</option>
-
                         <option>Others</option>
 
                     </select>
 
                     <button
-                        class="btn-primary"
+                        class="btn-primary search-button"
                         type="submit">
 
                         <i class="fas fa-search"></i>
-
                         Search
 
                     </button>
@@ -164,19 +117,21 @@
 
             </div>
 
+
             <!-- ====================================== -->
             <!-- Tabs -->
             <!-- ====================================== -->
 
-            <div class="card">
+            <div class="card activity-tabs-card">
 
                 <div class="card-body">
 
-                    <ul class="nav nav-tabs">
+                    <ul class="nav nav-tabs custom-tabs">
 
                         <li class="nav-item">
 
                             <button
+                                type="button"
                                 class="nav-link active"
                                 data-bs-toggle="tab"
                                 data-bs-target="#pending">
@@ -190,6 +145,7 @@
                         <li class="nav-item">
 
                             <button
+                                type="button"
                                 class="nav-link"
                                 data-bs-toggle="tab"
                                 data-bs-target="#approved">
@@ -203,6 +159,7 @@
                         <li class="nav-item">
 
                             <button
+                                type="button"
                                 class="nav-link"
                                 data-bs-toggle="tab"
                                 data-bs-target="#rejected">
@@ -216,6 +173,7 @@
                         <li class="nav-item">
 
                             <button
+                                type="button"
                                 class="nav-link"
                                 data-bs-toggle="tab"
                                 data-bs-target="#history">
@@ -232,8 +190,9 @@
 
             </div>
 
+
             <!-- ====================================== -->
-            <!-- Pending Table -->
+            <!-- Tables -->
             <!-- ====================================== -->
 
             <div class="card">
@@ -241,6 +200,11 @@
                 <div class="card-body p0">
 
                     <div class="tab-content">
+
+
+                        <!-- ====================================== -->
+                        <!-- Pending -->
+                        <!-- ====================================== -->
 
                         <div
                             class="tab-pane fade show active"
@@ -251,23 +215,14 @@
                                 <thead>
 
                                 <tr>
-
                                     <th>#</th>
-
                                     <th>Student</th>
-
                                     <th>Category</th>
-
                                     <th>Title</th>
-
                                     <th>Level</th>
-
                                     <th>Certificate</th>
-
                                     <th>Status</th>
-
                                     <th>Action</th>
-
                                 </tr>
 
                                 </thead>
@@ -278,148 +233,166 @@
 
                                 {% for activity in activities %}
 
-                                {% if activity.status=="Pending" %}
+                                    {% if activity.status == "Pending" %}
 
-                                {% set ns.count = ns.count + 1 %}
+                                        {% set ns.count = ns.count + 1 %}
 
-                                <tr>
+                                        <tr>
 
-                                    <td>{{ ns.count }}</td>
+                                            <td>{{ ns.count }}</td>
 
-                                    <td>
+                                            <td>
 
-                                        <div class="user-cell">
+                                                <div class="user-cell">
 
-                                            <div class="avatar-sm">
+                                                    <div class="avatar-sm">
+                                                        {{ activity.student_name[0]|upper }}
+                                                    </div>
 
-                                                {{ activity.student_name[0]|upper }}
+                                                    {{ activity.student_name }}
 
-                                            </div>
+                                                </div>
 
-                                            {{ activity.student_name }}
+                                            </td>
 
-                                        </div>
+                                            <td>
 
-                                    </td>
+                                                <span class="badge badge-info">
+                                                    {{ activity.category }}
+                                                </span>
 
-                                    <td>
+                                            </td>
 
-                                        <span class="badge badge-info">
+                                            <td>
+                                                {{ activity.title }}
+                                            </td>
 
-                                            {{ activity.category }}
+                                            <td>
+                                                {{ activity.level }}
+                                            </td>
 
-                                        </span>
+                                            <td>
 
-                                    </td>
+                                                {% if activity.certificate %}
 
-                                    <td>
+                                                    <a
+                                                        href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                        target="_blank"
+                                                        class="btn-sm btn-primary">
 
-                                        {{ activity.title }}
+                                                        <i class="fas fa-eye"></i>
+                                                        View
 
-                                    </td>
+                                                    </a>
 
-                                    <td>
+                                                    <a
+                                                        href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                        download
+                                                        class="btn-sm btn-secondary">
 
-                                        {{ activity.level }}
+                                                        <i class="fas fa-download"></i>
 
-                                    </td>
+                                                    </a>
 
-                                    <td>
-                                                                                {% if activity.certificate %}
+                                                {% else %}
 
-                                            <a
-                                                href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
-                                                target="_blank"
-                                                class="btn-sm btn-primary">
+                                                    <span class="text-muted">
+                                                        Not Uploaded
+                                                    </span>
 
-                                                <i class="fas fa-eye"></i>
+                                                {% endif %}
 
-                                                View
+                                            </td>
 
-                                            </a>
+                                            <td>
 
-                                            <a
-                                                href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
-                                                download
-                                                class="btn-sm btn-secondary">
+                                                <span class="badge badge-warning">
 
-                                                <i class="fas fa-download"></i>
+                                                    <i class="fas fa-clock"></i>
+                                                    Pending
 
-                                            </a>
+                                                </span>
 
-                                        {% else %}
+                                            </td>
 
-                                            <span class="text-muted">
+                                            <td class="action-cell">
 
-                                                Not Uploaded
+                                                <button
+                                                    type="button"
+                                                    class="btn-sm btn-info"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#studentModal{{ activity.id }}"
+                                                    title="Student Profile">
 
-                                            </span>
+                                                    <i class="fas fa-user"></i>
 
-                                        {% endif %}
+                                                </button>
 
-                                    </td>
+                                                <button
+                                                    type="button"
+                                                    class="btn-sm btn-primary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#approveModal{{ activity.id }}"
+                                                    title="Approve">
 
-                                    <td>
+                                                    <i class="fas fa-check"></i>
 
-                                        <span class="badge badge-warning">
+                                                </button>
 
-                                            <i class="fas fa-clock"></i>
+                                                <button
+                                                    type="button"
+                                                    class="btn-sm btn-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#rejectModal{{ activity.id }}"
+                                                    title="Reject">
 
-                                            Pending
+                                                    <i class="fas fa-times"></i>
 
-                                        </span>
+                                                </button>
 
-                                    </td>
+                                                <button
+                                                    type="button"
+                                                    class="btn-sm btn-success"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#feedbackModal{{ activity.id }}"
+                                                    title="AI Feedback">
 
-                                    <td>
+                                                    <i class="fas fa-robot"></i>
 
-                                        <button type="button" class="btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#studentModal{{ activity.id }}" title="Student Profile">
-    <i class="fas fa-user"></i>
-</button>
-<button type="button" class="btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#approveModal{{ activity.id }}" title="Approve">
-    <i class="fas fa-check"></i>
-</button>
-<button type="button" class="btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ activity.id }}" title="Reject">
-    <i class="fas fa-times"></i>
-</button>
-<button type="button" class="btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#feedbackModal{{ activity.id }}" title="AI Feedback">
-    <i class="fas fa-robot"></i>
-</button>
-                                    </td>
+                                                </button>
 
-                                </tr>
+                                            </td>
 
-                                {% endif %}
+                                        </tr>
+
+                                    {% endif %}
 
                                 {% endfor %}
 
+
                                 {% if ns.count == 0 %}
 
-                                <tr>
+                                    <tr>
 
-                                    <td colspan="8" class="empty-state">
+                                        <td colspan="8" class="empty-state">
 
-                                        <div style="padding:40px;text-align:center;">
+                                            <div style="padding:40px;text-align:center;">
 
-                                            <i class="fas fa-inbox fa-3x text-warning"></i>
+                                                <i class="fas fa-inbox fa-3x text-warning"></i>
 
-                                            <h4 style="margin-top:15px;">
+                                                <h4 style="margin-top:15px;">
+                                                    No Pending Activities
+                                                </h4>
 
-                                                No Pending Activities
+                                                <p class="text-muted">
+                                                    All submitted extracurricular activities have been reviewed.
+                                                </p>
 
-                                            </h4>
+                                            </div>
 
-                                            <p class="text-muted">
+                                        </td>
 
-                                                All submitted extracurricular activities have been reviewed.
-
-                                            </p>
-
-                                        </div>
-
-                                    </td>
-
-                                </tr>
+                                    </tr>
 
                                 {% endif %}
 
@@ -429,9 +402,10 @@
 
                         </div>
 
-                        <!-- ===================================== -->
-                        <!-- Approved Activities -->
-                        <!-- ===================================== -->
+
+                        <!-- ====================================== -->
+                        <!-- Approved -->
+                        <!-- ====================================== -->
 
                         <div
                             class="tab-pane fade"
@@ -442,23 +416,14 @@
                                 <thead>
 
                                 <tr>
-
                                     <th>#</th>
-
                                     <th>Student</th>
-
                                     <th>Category</th>
-
                                     <th>Title</th>
-
                                     <th>Achievement</th>
-
                                     <th>Approved On</th>
-
                                     <th>AI Feedback</th>
-
                                     <th>Action</th>
-
                                 </tr>
 
                                 </thead>
@@ -469,122 +434,121 @@
 
                                 {% for activity in activities %}
 
-                                {% if activity.status == "Approved" %}
+                                    {% if activity.status == "Approved" %}
 
-                                {% set ns.count = ns.count + 1 %}
+                                        {% set ns.count = ns.count + 1 %}
 
-                                <tr>
+                                        <tr>
 
-                                    <td>{{ ns.count }}</td>
+                                            <td>{{ ns.count }}</td>
 
-                                    <td>{{ activity.student_name }}</td>
+                                            <td>
+                                                {{ activity.student_name }}
+                                            </td>
 
-                                    <td>
+                                            <td>
 
-                                        <span class="badge badge-success">
+                                                <span class="badge badge-success">
+                                                    {{ activity.category }}
+                                                </span>
 
-                                            {{ activity.category }}
+                                            </td>
 
-                                        </span>
+                                            <td>
+                                                {{ activity.title }}
+                                            </td>
 
-                                    </td>
+                                            <td>
+                                                {{ activity.achievement or "-" }}
+                                            </td>
 
-                                    <td>{{ activity.title }}</td>
+                                            <td>
 
-                                    <td>{{ activity.achievement or "-" }}</td>
+                                                {{ activity.approved_at.strftime('%d-%m-%Y')
+                                                   if activity.approved_at else "-" }}
 
-                                    <td>
-                                                                                {{ activity.approved_at.strftime('%d-%m-%Y') if activity.approved_at else "-" }}
+                                            </td>
 
-                                    </td>
+                                            <td>
 
-                                    <td>
+                                                {% if activity.ai_feedback %}
 
-                                        {% if activity.ai_feedback %}
+                                                    <button
+                                                        type="button"
+                                                        class="btn-sm btn-success"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#feedbackModal{{ activity.id }}">
 
-                                            <button
-                                                type="button"
-                                                class="btn-sm btn-success"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#feedbackModal{{ activity.id }}">
+                                                        <i class="fas fa-robot"></i>
 
-                                                <i class="fas fa-robot"></i>
+                                                    </button>
 
-                                            </button>
+                                                {% else %}
 
-                                        {% else %}
+                                                    <span class="text-muted">
+                                                        Not Generated
+                                                    </span>
 
-                                            <span class="text-muted">
+                                                {% endif %}
 
-                                                Not Generated
+                                            </td>
 
-                                            </span>
+                                            <td class="action-cell">
 
-                                        {% endif %}
+                                                <button
+                                                    type="button"
+                                                    class="btn-sm btn-info"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#studentModal{{ activity.id }}">
 
-                                    </td>
+                                                    <i class="fas fa-user"></i>
+                                                    Student
 
-                                    <td>
+                                                </button>
 
-                                        <button
-                                            type="button"
-                                            class="btn-sm btn-info"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#studentModal{{ activity.id }}">
+                                                <button
+                                                    type="button"
+                                                    class="btn-sm btn-primary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#detailsModal{{ activity.id }}">
 
-                                            <i class="fas fa-user"></i>
+                                                    <i class="fas fa-eye"></i>
+                                                    Details
 
-                                            Student
+                                                </button>
 
-                                        </button>
+                                            </td>
 
-                                        <button
-                                            type="button"
-                                            class="btn-sm btn-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#detailsModal{{ activity.id }}">
+                                        </tr>
 
-                                            <i class="fas fa-eye"></i>
-
-                                            Details
-
-                                        </button>
-
-                                    </td>
-
-                                </tr>
-
-                                {% endif %}
+                                    {% endif %}
 
                                 {% endfor %}
 
+
                                 {% if ns.count == 0 %}
 
-                                <tr>
+                                    <tr>
 
-                                    <td colspan="8" class="empty-state">
+                                        <td colspan="8" class="empty-state">
 
-                                        <div style="padding:40px;text-align:center;">
+                                            <div style="padding:40px;text-align:center;">
 
-                                            <i class="fas fa-check-circle fa-3x text-success"></i>
+                                                <i class="fas fa-check-circle fa-3x text-success"></i>
 
-                                            <h4 style="margin-top:15px;">
+                                                <h4 style="margin-top:15px;">
+                                                    No Approved Activities
+                                                </h4>
 
-                                                No Approved Activities
+                                                <p class="text-muted">
+                                                    Approved extracurricular activities will appear here.
+                                                </p>
 
-                                            </h4>
+                                            </div>
 
-                                            <p class="text-muted">
+                                        </td>
 
-                                                Approved extracurricular activities will appear here.
-
-                                            </p>
-
-                                        </div>
-
-                                    </td>
-
-                                </tr>
+                                    </tr>
 
                                 {% endif %}
 
@@ -594,9 +558,10 @@
 
                         </div>
 
-                        <!-- ===================================== -->
-                        <!-- Rejected Activities -->
-                        <!-- ===================================== -->
+
+                        <!-- ====================================== -->
+                        <!-- Rejected -->
+                        <!-- ====================================== -->
 
                         <div
                             class="tab-pane fade"
@@ -607,23 +572,14 @@
                                 <thead>
 
                                 <tr>
-
                                     <th>#</th>
-
                                     <th>Student</th>
-
                                     <th>Category</th>
-
                                     <th>Title</th>
-
                                     <th>Rejected On</th>
-
                                     <th>Remarks</th>
-
                                     <th>Certificate</th>
-
                                     <th>Action</th>
-
                                 </tr>
 
                                 </thead>
@@ -634,140 +590,130 @@
 
                                 {% for activity in activities %}
 
-                                {% if activity.status == "Rejected" %}
+                                    {% if activity.status == "Rejected" %}
 
-                                {% set ns.count = ns.count + 1 %}
+                                        {% set ns.count = ns.count + 1 %}
 
-                                <tr>
+                                        <tr>
 
-                                    <td>{{ ns.count }}</td>
+                                            <td>{{ ns.count }}</td>
 
-                                    <td>{{ activity.student_name }}</td>
+                                            <td>
+                                                {{ activity.student_name }}
+                                            </td>
 
-                                    <td>
+                                            <td>
 
-                                        <span class="badge badge-danger">
+                                                <span class="badge badge-danger">
+                                                    {{ activity.category }}
+                                                </span>
 
-                                            {{ activity.category }}
+                                            </td>
 
-                                        </span>
+                                            <td>
+                                                {{ activity.title }}
+                                            </td>
 
-                                    </td>
+                                            <td>
 
-                                    <td>
+                                                {{ activity.approved_at.strftime('%d-%m-%Y')
+                                                   if activity.approved_at else "-" }}
 
-                                        {{ activity.title }}
+                                            </td>
 
-                                    </td>
+                                            <td>
+                                                {{ activity.remarks or "-" }}
+                                            </td>
 
-                                    <td>
+                                            <td>
 
-                                        {{ activity.approved_at.strftime('%d-%m-%Y') if activity.approved_at else "-" }}
+                                                {% if activity.certificate %}
 
-                                    </td>
+                                                    <a
+                                                        href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                        target="_blank"
+                                                        class="btn-sm btn-primary">
 
-                                    <td>
+                                                        <i class="fas fa-eye"></i>
+                                                        View
 
-                                        {{ activity.remarks or "-" }}
+                                                    </a>
 
-                                    </td>
+                                                    <a
+                                                        href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                        download
+                                                        class="btn-sm btn-secondary">
 
-                                    <td>
-                                                                                {% if activity.certificate %}
+                                                        <i class="fas fa-download"></i>
 
-                                            <a
-                                                href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
-                                                target="_blank"
-                                                class="btn-sm btn-primary">
+                                                    </a>
 
-                                                <i class="fas fa-eye"></i>
+                                                {% else %}
 
-                                                View
+                                                    <span class="text-muted">
+                                                        -
+                                                    </span>
 
-                                            </a>
+                                                {% endif %}
 
-                                            <a
-                                                href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
-                                                download
-                                                class="btn-sm btn-secondary">
+                                            </td>
 
-                                                <i class="fas fa-download"></i>
+                                            <td class="action-cell">
 
-                                            </a>
+                                                <button
+                                                    type="button"
+                                                    class="btn-sm btn-info"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#studentModal{{ activity.id }}">
 
-                                        {% else %}
+                                                    <i class="fas fa-user"></i>
+                                                    Student
 
-                                            <span class="text-muted">
+                                                </button>
 
-                                                -
+                                                <button
+                                                    type="button"
+                                                    class="btn-sm btn-primary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#detailsModal{{ activity.id }}">
 
-                                            </span>
+                                                    <i class="fas fa-eye"></i>
+                                                    Details
 
-                                        {% endif %}
+                                                </button>
 
-                                    </td>
+                                            </td>
 
-                                    <td>
+                                        </tr>
 
-                                        <button
-                                            type="button"
-                                            class="btn-sm btn-info"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#studentModal{{ activity.id }}">
-
-                                            <i class="fas fa-user"></i>
-
-                                            Student
-
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            class="btn-sm btn-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#detailsModal{{ activity.id }}">
-
-                                            <i class="fas fa-eye"></i>
-
-                                            Details
-
-                                        </button>
-
-                                    </td>
-
-                                </tr>
-
-                                {% endif %}
+                                    {% endif %}
 
                                 {% endfor %}
 
+
                                 {% if ns.count == 0 %}
 
-                                <tr>
+                                    <tr>
 
-                                    <td colspan="8" class="empty-state">
+                                        <td colspan="8" class="empty-state">
 
-                                        <div style="padding:40px;text-align:center;">
+                                            <div style="padding:40px;text-align:center;">
 
-                                            <i class="fas fa-times-circle fa-3x text-danger"></i>
+                                                <i class="fas fa-times-circle fa-3x text-danger"></i>
 
-                                            <h4 style="margin-top:15px;">
+                                                <h4 style="margin-top:15px;">
+                                                    No Rejected Activities
+                                                </h4>
 
-                                                No Rejected Activities
+                                                <p class="text-muted">
+                                                    There are currently no rejected extracurricular activities.
+                                                </p>
 
-                                            </h4>
+                                            </div>
 
-                                            <p class="text-muted">
+                                        </td>
 
-                                                There are currently no rejected extracurricular activities.
-
-                                            </p>
-
-                                        </div>
-
-                                    </td>
-
-                                </tr>
+                                    </tr>
 
                                 {% endif %}
 
@@ -777,8 +723,9 @@
 
                         </div>
 
+
                         <!-- ====================================== -->
-                        <!-- Activity History -->
+                        <!-- History -->
                         <!-- ====================================== -->
 
                         <div
@@ -790,23 +737,14 @@
                                 <thead>
 
                                 <tr>
-
                                     <th>#</th>
-
                                     <th>Student</th>
-
                                     <th>Category</th>
-
                                     <th>Title</th>
-
                                     <th>Status</th>
-
                                     <th>Submitted</th>
-
                                     <th>Reviewed</th>
-
                                     <th>Action</th>
-
                                 </tr>
 
                                 </thead>
@@ -815,103 +753,90 @@
 
                                 {% for activity in activities %}
 
-                                <tr>
+                                    <tr>
 
-                                    <td>{{ loop.index }}</td>
+                                        <td>{{ loop.index }}</td>
 
-                                    <td>
+                                        <td>
+                                            {{ activity.student_name }}
+                                        </td>
 
-                                        {{ activity.student_name }}
+                                        <td>
 
-                                    </td>
-
-                                    <td>
-
-                                        <span class="badge badge-info">
-
-                                            {{ activity.category }}
-
-                                        </span>
-
-                                    </td>
-
-                                    <td>
-
-                                        {{ activity.title }}
-
-                                    </td>
-
-                                    <td>
-
-                                        {% if activity.status == "Approved" %}
-
-                                            <span class="badge badge-success">
-
-                                                Approved
-
+                                            <span class="badge badge-info">
+                                                {{ activity.category }}
                                             </span>
 
-                                        {% elif activity.status == "Rejected" %}
+                                        </td>
 
-                                            <span class="badge badge-danger">
+                                        <td>
+                                            {{ activity.title }}
+                                        </td>
 
-                                                Rejected
+                                        <td>
 
-                                            </span>
+                                            {% if activity.status == "Approved" %}
 
-                                        {% else %}
+                                                <span class="badge badge-success">
+                                                    Approved
+                                                </span>
 
-                                            <span class="badge badge-warning">
+                                            {% elif activity.status == "Rejected" %}
 
-                                                Pending
+                                                <span class="badge badge-danger">
+                                                    Rejected
+                                                </span>
 
-                                            </span>
+                                            {% else %}
 
-                                        {% endif %}
+                                                <span class="badge badge-warning">
+                                                    Pending
+                                                </span>
 
-                                    </td>
+                                            {% endif %}
 
-                                    <td>
+                                        </td>
 
-                                        {{ activity.created_at.strftime('%d-%m-%Y') if activity.created_at else "-" }}
+                                        <td>
 
-                                    </td>
+                                            {{ activity.created_at.strftime('%d-%m-%Y')
+                                               if activity.created_at else "-" }}
 
-                                    <td>
+                                        </td>
 
-                                        {{ activity.approved_at.strftime('%d-%m-%Y') if activity.approved_at else "-" }}
+                                        <td>
 
-                                    </td>
+                                            {{ activity.approved_at.strftime('%d-%m-%Y')
+                                               if activity.approved_at else "-" }}
 
-                                    <td>
+                                        </td>
 
-                                        <button
-                                            type="button"
-                                            class="btn-sm btn-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#detailsModal{{ activity.id }}">
+                                        <td class="action-cell">
 
-                                            <i class="fas fa-eye"></i>
+                                            <button
+                                                type="button"
+                                                class="details-btn"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#detailsModal{{ activity.id }}">
 
-                                            Details
+                                                <i class="fas fa-eye"></i>
+                                                Details
 
-                                        </button>
+                                            </button>
 
-                                    </td>
+                                        </td>
 
-                                </tr>
+                                    </tr>
 
                                 {% else %}
 
-                                <tr>
+                                    <tr>
 
-                                    <td colspan="8" class="empty-state">
+                                        <td colspan="8" class="empty-state">
+                                            No activity history found.
+                                        </td>
 
-                                        No activity history found.
-
-                                    </td>
-
-                                </tr>
+                                    </tr>
 
                                 {% endfor %}
 
@@ -927,11 +852,17 @@
 
             </div>
 
+
             <!-- ====================================== -->
-            <!-- Student Profile Modal -->
+            <!-- ALL MODALS -->
             <!-- ====================================== -->
 
             {% for activity in activities %}
+
+
+            <!-- ====================================== -->
+            <!-- Student Profile Modal -->
+            <!-- ====================================== -->
 
             <div
                 class="modal fade"
@@ -948,7 +879,6 @@
                             <h5 class="modal-title">
 
                                 <i class="fas fa-user-graduate"></i>
-
                                 Student Profile
 
                             </h5>
@@ -956,7 +886,8 @@
                             <button
                                 type="button"
                                 class="btn-close"
-                                data-bs-dismiss="modal"></button>
+                                data-bs-dismiss="modal">
+                            </button>
 
                         </div>
 
@@ -969,75 +900,52 @@
                                     <table class="table table-bordered">
 
                                         <tr>
-
                                             <th>Name</th>
-
                                             <td>{{ activity.student_name }}</td>
-
                                         </tr>
 
                                         <tr>
-
                                             <th>Register No.</th>
-
                                             <td>{{ activity.register_no or "-" }}</td>
-
                                         </tr>
 
                                         <tr>
-
                                             <th>Department</th>
-
                                             <td>{{ activity.department or "-" }}</td>
-
                                         </tr>
 
                                         <tr>
-
                                             <th>Year</th>
-
                                             <td>{{ activity.year or "-" }}</td>
-
                                         </tr>
 
                                     </table>
 
                                 </div>
 
+
                                 <div class="col-md-6">
 
                                     <table class="table table-bordered">
 
                                         <tr>
-
                                             <th>Activity</th>
-
                                             <td>{{ activity.title }}</td>
-
                                         </tr>
 
                                         <tr>
-
                                             <th>Category</th>
-
                                             <td>{{ activity.category }}</td>
-
                                         </tr>
 
                                         <tr>
-
                                             <th>Status</th>
-
                                             <td>{{ activity.status }}</td>
-
                                         </tr>
 
                                         <tr>
-
                                             <th>Level</th>
-
                                             <td>{{ activity.level }}</td>
-
                                         </tr>
 
                                     </table>
@@ -1052,7 +960,7 @@
 
                             <button
                                 type="button"
-                                class="btn-secondary"
+                                class="details-btn"
                                 data-bs-dismiss="modal">
 
                                 Close
@@ -1066,8 +974,10 @@
                 </div>
 
             </div>
-                        <!-- ====================================== -->
-            <!-- Approve Activity Modal -->
+
+
+            <!-- ====================================== -->
+            <!-- Approve Modal -->
             <!-- ====================================== -->
 
             <div
@@ -1083,12 +993,12 @@
                         <form
                             method="POST"
                             action="{{ url_for('mentor_verify_extracurricular', eid=activity.id, status='Approved') }}">
+
                             <div class="modal-header">
 
                                 <h5 class="modal-title">
 
                                     <i class="fas fa-check-circle text-success"></i>
-
                                     Approve Extracurricular Activity
 
                                 </h5>
@@ -1096,9 +1006,11 @@
                                 <button
                                     type="button"
                                     class="btn-close"
-                                    data-bs-dismiss="modal"></button>
+                                    data-bs-dismiss="modal">
+                                </button>
 
                             </div>
+
 
                             <div class="modal-body">
 
@@ -1109,57 +1021,41 @@
                                         <table class="table table-bordered">
 
                                             <tr>
-
                                                 <th width="40%">Student</th>
-
                                                 <td>{{ activity.student_name }}</td>
-
                                             </tr>
 
                                             <tr>
-
                                                 <th>Category</th>
-
                                                 <td>{{ activity.category }}</td>
-
                                             </tr>
 
                                             <tr>
-
                                                 <th>Title</th>
-
                                                 <td>{{ activity.title }}</td>
-
                                             </tr>
 
                                             <tr>
-
                                                 <th>Level</th>
-
                                                 <td>{{ activity.level }}</td>
-
                                             </tr>
 
                                             <tr>
-
                                                 <th>Achievement</th>
-
                                                 <td>{{ activity.achievement or "-" }}</td>
-
                                             </tr>
 
                                         </table>
 
                                     </div>
 
+
                                     <div class="col-md-6">
 
                                         {% if activity.certificate %}
 
                                             <label class="form-label">
-
                                                 Uploaded Certificate
-
                                             </label>
 
                                             <div style="margin-bottom:15px;">
@@ -1167,10 +1063,9 @@
                                                 <a
                                                     href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
                                                     target="_blank"
-                                                    class="btn-primary">
+                                                    class="modal-action-btn">
 
                                                     <i class="fas fa-eye"></i>
-
                                                     Preview Certificate
 
                                                 </a>
@@ -1179,21 +1074,22 @@
 
                                         {% endif %}
 
+
                                         <div class="form-group">
 
                                             <label>
-
                                                 Mentor Remarks
-
                                             </label>
 
                                             <textarea
                                                 class="form-control"
                                                 name="remarks"
                                                 rows="5"
-                                                placeholder="Write remarks for approving this activity..."></textarea>
+                                                placeholder="Write remarks for approving this activity...">
+                                            </textarea>
 
                                         </div>
+
 
                                         <div class="form-check mt-3">
 
@@ -1221,11 +1117,12 @@
 
                             </div>
 
+
                             <div class="modal-footer">
 
                                 <button
                                     type="button"
-                                    class="btn-secondary"
+                                    class="modal-secondary-btn"
                                     data-bs-dismiss="modal">
 
                                     Cancel
@@ -1234,10 +1131,9 @@
 
                                 <button
                                     type="submit"
-                                    class="btn-success">
+                                    class="modal-success-btn">
 
                                     <i class="fas fa-check-circle"></i>
-
                                     Approve Activity
 
                                 </button>
@@ -1251,8 +1147,10 @@
                 </div>
 
             </div>
-                        <!-- ====================================== -->
-            <!-- Reject Activity Modal -->
+
+
+            <!-- ====================================== -->
+            <!-- Reject Modal -->
             <!-- ====================================== -->
 
             <div
@@ -1274,7 +1172,6 @@
                                 <h5 class="modal-title">
 
                                     <i class="fas fa-times-circle"></i>
-
                                     Reject Extracurricular Activity
 
                                 </h5>
@@ -1282,9 +1179,11 @@
                                 <button
                                     type="button"
                                     class="btn-close"
-                                    data-bs-dismiss="modal"></button>
+                                    data-bs-dismiss="modal">
+                                </button>
 
                             </div>
+
 
                             <div class="modal-body">
 
@@ -1297,6 +1196,7 @@
 
                                 </div>
 
+
                                 <div class="row">
 
                                     <div class="col-md-6">
@@ -1304,82 +1204,64 @@
                                         <table class="table table-bordered">
 
                                             <tr>
-
                                                 <th width="40%">Student</th>
-
                                                 <td>{{ activity.student_name }}</td>
-
                                             </tr>
 
                                             <tr>
-
                                                 <th>Category</th>
-
                                                 <td>{{ activity.category }}</td>
-
                                             </tr>
 
                                             <tr>
-
                                                 <th>Activity</th>
-
                                                 <td>{{ activity.title }}</td>
-
                                             </tr>
 
                                             <tr>
-
                                                 <th>Level</th>
-
                                                 <td>{{ activity.level }}</td>
-
                                             </tr>
 
                                             <tr>
-
                                                 <th>Achievement</th>
-
                                                 <td>{{ activity.achievement or "-" }}</td>
-
                                             </tr>
 
                                         </table>
 
                                     </div>
 
+
                                     <div class="col-md-6">
 
                                         {% if activity.certificate %}
 
-                                        <label>
+                                            <label>
+                                                Uploaded Certificate
+                                            </label>
 
-                                            Uploaded Certificate
+                                            <div style="margin-bottom:15px;">
 
-                                        </label>
+                                                <a
+                                                    href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                    target="_blank"
+                                                    class="modal-action-btn">
 
-                                        <div style="margin-bottom:15px;">
+                                                    <i class="fas fa-eye"></i>
+                                                    Preview Certificate
 
-                                            <a
-                                                href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
-                                                target="_blank"
-                                                class="btn-primary">
+                                                </a>
 
-                                                <i class="fas fa-eye"></i>
-
-                                                Preview Certificate
-
-                                            </a>
-
-                                        </div>
+                                            </div>
 
                                         {% endif %}
+
 
                                         <div class="form-group">
 
                                             <label>
-
                                                 Rejection Reason
-
                                             </label>
 
                                             <select
@@ -1387,51 +1269,38 @@
                                                 name="reason">
 
                                                 <option value="Incomplete Information">
-
                                                     Incomplete Information
-
                                                 </option>
 
                                                 <option value="Invalid Certificate">
-
                                                     Invalid Certificate
-
                                                 </option>
 
                                                 <option value="Duplicate Submission">
-
                                                     Duplicate Submission
-
                                                 </option>
 
                                                 <option value="Incorrect Category">
-
                                                     Incorrect Category
-
                                                 </option>
 
                                                 <option value="Not Eligible">
-
                                                     Not Eligible
-
                                                 </option>
 
                                                 <option value="Other">
-
                                                     Other
-
                                                 </option>
 
                                             </select>
 
                                         </div>
 
+
                                         <div class="form-group mt-3">
 
                                             <label>
-
                                                 Mentor Remarks
-
                                             </label>
 
                                             <textarea
@@ -1439,7 +1308,8 @@
                                                 name="remarks"
                                                 rows="5"
                                                 required
-                                                placeholder="Explain why this activity is being rejected and guide the student for future submissions..."></textarea>
+                                                placeholder="Explain why this activity is being rejected and guide the student for future submissions...">
+                                            </textarea>
 
                                         </div>
 
@@ -1449,11 +1319,12 @@
 
                             </div>
 
+
                             <div class="modal-footer">
 
                                 <button
                                     type="button"
-                                    class="btn-secondary"
+                                    class="modal-secondary-btn"
                                     data-bs-dismiss="modal">
 
                                     Cancel
@@ -1462,10 +1333,9 @@
 
                                 <button
                                     type="submit"
-                                    class="btn-danger">
+                                    class="modal-danger-btn">
 
                                     <i class="fas fa-times-circle"></i>
-
                                     Reject Activity
 
                                 </button>
@@ -1479,8 +1349,10 @@
                 </div>
 
             </div>
-                        <!-- ====================================== -->
-            <!-- Activity Details Modal -->
+
+
+            <!-- ====================================== -->
+            <!-- Details Modal -->
             <!-- ====================================== -->
 
             <div
@@ -1498,7 +1370,6 @@
                             <h5 class="modal-title">
 
                                 <i class="fas fa-file-alt"></i>
-
                                 Extracurricular Activity Details
 
                             </h5>
@@ -1506,74 +1377,53 @@
                             <button
                                 type="button"
                                 class="btn-close"
-                                data-bs-dismiss="modal"></button>
+                                data-bs-dismiss="modal">
+                            </button>
 
                         </div>
+
 
                         <div class="modal-body">
 
                             <div class="row">
-
-                                <!-- Left Side -->
 
                                 <div class="col-lg-6">
 
                                     <table class="table table-bordered">
 
                                         <tr>
-
                                             <th width="35%">Student</th>
-
                                             <td>{{ activity.student_name }}</td>
-
                                         </tr>
 
                                         <tr>
-
                                             <th>Category</th>
-
                                             <td>{{ activity.category }}</td>
-
                                         </tr>
 
                                         <tr>
-
                                             <th>Activity Title</th>
-
                                             <td>{{ activity.title }}</td>
-
                                         </tr>
 
                                         <tr>
-
                                             <th>Participation Level</th>
-
                                             <td>{{ activity.level }}</td>
-
                                         </tr>
 
                                         <tr>
-
                                             <th>Participation Date</th>
-
                                             <td>
-
-                                                {{ activity.participation_date.strftime('%d-%m-%Y') if activity.participation_date else "-" }}
-
+                                                {{ activity.participation_date.strftime('%d-%m-%Y')
+                                                   if activity.participation_date else "-" }}
                                             </td>
-
                                         </tr>
 
                                         <tr>
-
                                             <th>Achievement</th>
-
                                             <td>
-
                                                 {{ activity.achievement or "-" }}
-
                                             </td>
-
                                         </tr>
 
                                         <tr>
@@ -1582,29 +1432,23 @@
 
                                             <td>
 
-                                                {% if activity.status=="Approved" %}
+                                                {% if activity.status == "Approved" %}
 
-                                                <span class="badge badge-success">
+                                                    <span class="badge badge-success">
+                                                        Approved
+                                                    </span>
 
-                                                    Approved
+                                                {% elif activity.status == "Rejected" %}
 
-                                                </span>
-
-                                                {% elif activity.status=="Rejected" %}
-
-                                                <span class="badge badge-danger">
-
-                                                    Rejected
-
-                                                </span>
+                                                    <span class="badge badge-danger">
+                                                        Rejected
+                                                    </span>
 
                                                 {% else %}
 
-                                                <span class="badge badge-warning">
-
-                                                    Pending
-
-                                                </span>
+                                                    <span class="badge badge-warning">
+                                                        Pending
+                                                    </span>
 
                                                 {% endif %}
 
@@ -1616,7 +1460,6 @@
 
                                 </div>
 
-                                <!-- Right Side -->
 
                                 <div class="col-lg-6">
 
@@ -1624,64 +1467,77 @@
 
                                         <tr>
 
-                                            <th width="35%">Submitted On</th>
+                                            <th width="35%">
+                                                Submitted On
+                                            </th>
 
                                             <td>
-
-                                                {{ activity.created_at.strftime('%d-%m-%Y %I:%M %p') if activity.created_at else "-" }}
-
+                                                {{ activity.created_at.strftime('%d-%m-%Y %I:%M %p')
+                                                   if activity.created_at else "-" }}
                                             </td>
 
                                         </tr>
 
                                         <tr>
 
-                                            <th>Reviewed On</th>
+                                            <th>
+                                                Reviewed On
+                                            </th>
 
                                             <td>
-
-                                                {{ activity.approved_at.strftime('%d-%m-%Y %I:%M %p') if activity.approved_at else "-" }}
-
+                                                {{ activity.approved_at.strftime('%d-%m-%Y %I:%M %p')
+                                                   if activity.approved_at else "-" }}
                                             </td>
 
                                         </tr>
 
                                         <tr>
 
-                                            <th>Mentor Remarks</th>
+                                            <th>
+                                                Mentor Remarks
+                                            </th>
 
                                             <td>
-
                                                 {{ activity.remarks or "No remarks yet." }}
-
                                             </td>
 
                                         </tr>
 
                                         <tr>
 
-                                            <th>Certificate</th>
+                                            <th>
+                                                Certificate
+                                            </th>
 
                                             <td>
 
                                                 {% if activity.certificate %}
 
-                                                <a href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
-   target="_blank" class="btn-sm btn-primary" title="View Certificate">
-    <i class="fas fa-eye"></i>
-</a>
-<a href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
-   download class="btn-sm btn-secondary" title="Download Certificate">
-    <i class="fas fa-download"></i>
-</a>
+                                                    <a
+                                                        href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                        target="_blank"
+                                                        class="icon-action-btn"
+                                                        title="View Certificate">
+
+                                                        <i class="fas fa-eye"></i>
+
+                                                    </a>
+
+                                                    <a
+                                                        href="{{ url_for('static', filename='uploads/extracurricular/' ~ activity.certificate) }}"
+                                                        download
+                                                        class="icon-action-btn"
+                                                        title="Download Certificate">
+
+                                                        <i class="fas fa-download"></i>
+
+                                                    </a>
 
                                                 {% else %}
 
-                                                <span class="text-muted">
-
-                                                    No Certificate Uploaded
-
-                                                </span>
+                                                    <span class="text-muted">
+                                                        No Certificate Uploaded
+                                                    </span>
 
                                                 {% endif %}
 
@@ -1695,12 +1551,13 @@
 
                             </div>
 
+
                             <hr>
+
 
                             <h6>
 
                                 <i class="fas fa-align-left"></i>
-
                                 Activity Description
 
                             </h6>
@@ -1711,72 +1568,71 @@
 
                             </div>
 
+
                             <hr>
+
 
                             <h6>
 
                                 <i class="fas fa-robot"></i>
-
                                 AI Career Feedback
 
                             </h6>
 
+
                             {% if activity.ai_feedback %}
 
-                            <div class="alert alert-success">
-
-                                {{ activity.ai_feedback }}
-
-                            </div>
+                                <div class="alert alert-success">
+                                    {{ activity.ai_feedback }}
+                                </div>
 
                             {% else %}
 
-                            <div class="alert alert-warning">
-
-                                AI feedback has not been generated yet.
-
-                            </div>
+                                <div class="alert alert-warning">
+                                    AI feedback has not been generated yet.
+                                </div>
 
                             {% endif %}
 
                         </div>
 
+
                         <div class="modal-footer">
 
                             <button
                                 type="button"
-                                class="btn-secondary"
+                                class="modal-secondary-btn"
                                 data-bs-dismiss="modal">
 
                                 Close
 
                             </button>
 
-                            {% if activity.status=="Pending" %}
 
-                            <button
-                                type="button"
-                                class="btn-success"
-                                data-bs-target="#approveModal{{ activity.id }}"
-                                data-bs-toggle="modal">
+                            {% if activity.status == "Pending" %}
 
-                                <i class="fas fa-check"></i>
+                                <button
+                                    type="button"
+                                    class="modal-success-btn"
+                                    data-bs-target="#approveModal{{ activity.id }}"
+                                    data-bs-toggle="modal">
 
-                                Approve
+                                    <i class="fas fa-check"></i>
+                                    Approve
 
-                            </button>
+                                </button>
 
-                            <button
-                                type="button"
-                                class="btn-danger"
-                                data-bs-target="#rejectModal{{ activity.id }}"
-                                data-bs-toggle="modal">
 
-                                <i class="fas fa-times"></i>
+                                <button
+                                    type="button"
+                                    class="modal-danger-btn"
+                                    data-bs-target="#rejectModal{{ activity.id }}"
+                                    data-bs-toggle="modal">
 
-                                Reject
+                                    <i class="fas fa-times"></i>
+                                    Reject
 
-                            </button>
+                                </button>
 
                             {% endif %}
 
@@ -1787,7 +1643,9 @@
                 </div>
 
             </div>
-                        <!-- ====================================== -->
+
+
+            <!-- ====================================== -->
             <!-- AI Feedback Modal -->
             <!-- ====================================== -->
 
@@ -1806,7 +1664,6 @@
                             <h5 class="modal-title">
 
                                 <i class="fas fa-robot"></i>
-
                                 AI Career Analysis
 
                             </h5>
@@ -1814,43 +1671,42 @@
                             <button
                                 type="button"
                                 class="btn-close"
-                                data-bs-dismiss="modal"></button>
+                                data-bs-dismiss="modal">
+                            </button>
 
                         </div>
+
 
                         <div class="modal-body">
 
                             {% if activity.ai_feedback %}
 
-                            <div class="alert alert-success">
+                                <div class="alert alert-success">
 
-                                <h6>
+                                    <h6>
 
-                                    <i class="fas fa-lightbulb"></i>
+                                        <i class="fas fa-lightbulb"></i>
+                                        AI Evaluation
 
-                                    AI Evaluation
+                                    </h6>
 
-                                </h6>
+                                    <p style="margin-bottom:0;">
+                                        {{ activity.ai_feedback }}
+                                    </p>
 
-                                <p style="margin-bottom:0;">
-
-                                    {{ activity.ai_feedback }}
-
-                                </p>
-
-                            </div>
+                                </div>
 
                             {% else %}
 
-                            <div class="alert alert-warning">
-
-                                AI feedback has not been generated yet.
-
-                            </div>
+                                <div class="alert alert-warning">
+                                    AI feedback has not been generated yet.
+                                </div>
 
                             {% endif %}
 
+
                             <div class="row mt-3">
+
 
                                 <div class="col-md-6">
 
@@ -1861,7 +1717,6 @@
                                             <h6>
 
                                                 <i class="fas fa-star"></i>
-
                                                 Skills Demonstrated
 
                                             </h6>
@@ -1869,13 +1724,9 @@
                                             <ul class="mb-0">
 
                                                 <li>Leadership</li>
-
                                                 <li>Teamwork</li>
-
                                                 <li>Communication</li>
-
                                                 <li>Problem Solving</li>
-
                                                 <li>Critical Thinking</li>
 
                                             </ul>
@@ -1886,6 +1737,7 @@
 
                                 </div>
 
+
                                 <div class="col-md-6">
 
                                     <div class="card">
@@ -1895,21 +1747,16 @@
                                             <h6>
 
                                                 <i class="fas fa-chart-line"></i>
-
                                                 Employability Score
 
                                             </h6>
 
                                             <h2 class="text-success">
-
                                                 91%
-
                                             </h2>
 
                                             <small class="text-muted">
-
                                                 *(Static value for now. Replace with AI output later.)*
-
                                             </small>
 
                                         </div>
@@ -1920,6 +1767,7 @@
 
                             </div>
 
+
                             <div class="card mt-3">
 
                                 <div class="card-body">
@@ -1927,7 +1775,6 @@
                                     <h6>
 
                                         <i class="fas fa-user-graduate"></i>
-
                                         Mentor Recommendation
 
                                     </h6>
@@ -1948,16 +1795,18 @@
 
                         </div>
 
+
                         <div class="modal-footer">
 
                             <button
                                 type="button"
-                                class="btn-secondary"
+                                class="modal-secondary-btn"
                                 data-bs-dismiss="modal">
 
                                 Close
 
                             </button>
+
 
                             <form
                                 method="POST"
@@ -1966,10 +1815,9 @@
 
                                 <button
                                     type="submit"
-                                    class="btn-primary">
+                                    class="modal-primary-btn">
 
                                     <i class="fas fa-robot"></i>
-
                                     Regenerate Feedback
 
                                 </button>
@@ -1984,6 +1832,7 @@
 
             </div>
 
+
             {% endfor %}
 
         </div>
@@ -1992,4 +1841,784 @@
 
 </div>
 
+
+<!-- ========================================================= -->
+<!-- CUSTOM CSS -->
+<!-- ========================================================= -->
+
+<style>
+
+/* =========================================================
+   DASHBOARD GRID
+   ========================================================= */
+
+.dashboard-grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(4, 1fr);
+
+    gap: 20px;
+
+}
+
+
+@media (max-width: 1000px) {
+
+    .dashboard-grid {
+
+        grid-template-columns: repeat(2, 1fr);
+
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .dashboard-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+}
+
+
+/* =========================================================
+   ACTIVITY TABS
+   ========================================================= */
+
+/*
+   IMPORTANT:
+   Bootstrap normally changes .nav-link.active,
+   :hover, :focus and :active.
+
+   These rules intentionally override Bootstrap.
+*/
+
+.activity-tabs-card {
+
+    margin-bottom: 15px;
+
+}
+
+
+.custom-tabs {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin: 0;
+
+    padding: 0;
+
+    border: none !important;
+
+}
+
+
+.custom-tabs .nav-item {
+
+    margin: 0;
+
+}
+
+
+/* ALL FOUR BUTTONS */
+
+.custom-tabs .nav-link {
+
+    width: 110px;
+
+    height: 40px;
+
+    display: inline-flex !important;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 0 !important;
+
+    margin: 0 !important;
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border: 1px solid #d5d8e2 !important;
+
+    border-radius: 6px !important;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    box-shadow: none !important;
+
+    outline: none !important;
+
+    text-decoration: none;
+
+    transition: none !important;
+
+}
+
+
+/* ACTIVE */
+
+.custom-tabs .nav-link.active {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border: 1px solid #d5d8e2 !important;
+
+    border-bottom: 1px solid #d5d8e2 !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* HOVER */
+
+.custom-tabs .nav-link:hover {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border-color: #1a237e !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* FOCUS */
+
+.custom-tabs .nav-link:focus {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border-color: #d5d8e2 !important;
+
+    box-shadow: none !important;
+
+    outline: none !important;
+
+}
+
+
+/* ACTIVE + FOCUS */
+
+.custom-tabs .nav-link.active:focus {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border-color: #d5d8e2 !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* MOUSE CLICK */
+
+.custom-tabs .nav-link:active {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border-color: #d5d8e2 !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* ACTIVE + HOVER */
+
+.custom-tabs .nav-link.active:hover {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border-color: #1a237e !important;
+
+}
+
+
+/* =========================================================
+   TABLE ACTION BUTTONS
+   ========================================================= */
+
+.action-cell {
+
+    white-space: nowrap;
+
+}
+
+
+/* General small buttons */
+
+.data-table .btn-sm {
+
+    display: inline-flex !important;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 5px;
+
+    min-height: 34px;
+
+    padding: 6px 10px !important;
+
+    border-radius: 5px !important;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    box-shadow: none !important;
+
+    outline: none !important;
+
+}
+
+
+/* PRIMARY */
+
+.data-table .btn-primary {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border: 1px solid #1a237e !important;
+
+}
+
+
+.data-table .btn-primary:hover,
+.data-table .btn-primary:focus,
+.data-table .btn-primary:active,
+.data-table .btn-primary:focus-visible {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border-color: #1a237e !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* INFO */
+
+.data-table .btn-info {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1976d2 !important;
+
+    border: 1px solid #1976d2 !important;
+
+}
+
+
+.data-table .btn-info:hover,
+.data-table .btn-info:focus,
+.data-table .btn-info:active,
+.data-table .btn-info:focus-visible {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1976d2 !important;
+
+    border-color: #1976d2 !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* SUCCESS */
+
+.data-table .btn-success {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #2e7d32 !important;
+
+    border: 1px solid #2e7d32 !important;
+
+}
+
+
+.data-table .btn-success:hover,
+.data-table .btn-success:focus,
+.data-table .btn-success:active,
+.data-table .btn-success:focus-visible {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #2e7d32 !important;
+
+    border-color: #2e7d32 !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* DANGER */
+
+.data-table .btn-danger {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #d32f2f !important;
+
+    border: 1px solid #d32f2f !important;
+
+}
+
+
+.data-table .btn-danger:hover,
+.data-table .btn-danger:focus,
+.data-table .btn-danger:active,
+.data-table .btn-danger:focus-visible {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #d32f2f !important;
+
+    border-color: #d32f2f !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* SECONDARY */
+
+.data-table .btn-secondary {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #555555 !important;
+
+    border: 1px solid #cccccc !important;
+
+}
+
+
+.data-table .btn-secondary:hover,
+.data-table .btn-secondary:focus,
+.data-table .btn-secondary:active,
+.data-table .btn-secondary:focus-visible {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #555555 !important;
+
+    border-color: #aaaaaa !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* =========================================================
+   HISTORY DETAILS BUTTON
+   ========================================================= */
+
+.details-btn {
+
+    display: inline-flex !important;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    min-width: 90px;
+
+    height: 34px;
+
+    padding: 6px 12px !important;
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border: 1px solid #1a237e !important;
+
+    border-radius: 5px !important;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    box-shadow: none !important;
+
+    outline: none !important;
+
+}
+
+
+/* Keep white after click */
+
+.details-btn:hover,
+.details-btn:focus,
+.details-btn:active,
+.details-btn:focus-visible {
+
+    background: #ffffff !important;
+
+    background-color: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border-color: #1a237e !important;
+
+    box-shadow: none !important;
+
+    outline: none !important;
+
+}
+
+
+/* =========================================================
+   MODAL BUTTONS
+   ========================================================= */
+
+.modal-primary-btn,
+.modal-secondary-btn,
+.modal-success-btn,
+.modal-danger-btn,
+.modal-action-btn {
+
+    display: inline-flex !important;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    min-height: 36px;
+
+    padding: 7px 14px !important;
+
+    border-radius: 6px !important;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    text-decoration: none !important;
+
+    box-shadow: none !important;
+
+    outline: none !important;
+
+}
+
+
+/* Modal primary */
+
+.modal-primary-btn {
+
+    background: #1a237e !important;
+
+    color: #ffffff !important;
+
+    border: 1px solid #1a237e !important;
+
+}
+
+
+.modal-primary-btn:hover,
+.modal-primary-btn:focus,
+.modal-primary-btn:active {
+
+    background: #1a237e !important;
+
+    color: #ffffff !important;
+
+    border-color: #1a237e !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* Modal secondary */
+
+.modal-secondary-btn {
+
+    background: #ffffff !important;
+
+    color: #555555 !important;
+
+    border: 1px solid #cccccc !important;
+
+}
+
+
+.modal-secondary-btn:hover,
+.modal-secondary-btn:focus,
+.modal-secondary-btn:active {
+
+    background: #ffffff !important;
+
+    color: #555555 !important;
+
+    border-color: #aaaaaa !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* Modal success */
+
+.modal-success-btn {
+
+    background: #2e7d32 !important;
+
+    color: #ffffff !important;
+
+    border: 1px solid #2e7d32 !important;
+
+}
+
+
+.modal-success-btn:hover,
+.modal-success-btn:focus,
+.modal-success-btn:active {
+
+    background: #2e7d32 !important;
+
+    color: #ffffff !important;
+
+    border-color: #2e7d32 !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* Modal danger */
+
+.modal-danger-btn {
+
+    background: #d32f2f !important;
+
+    color: #ffffff !important;
+
+    border: 1px solid #d32f2f !important;
+
+}
+
+
+.modal-danger-btn:hover,
+.modal-danger-btn:focus,
+.modal-danger-btn:active {
+
+    background: #d32f2f !important;
+
+    color: #ffffff !important;
+
+    border-color: #d32f2f !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* Modal certificate */
+
+.modal-action-btn {
+
+    background: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border: 1px solid #1a237e !important;
+
+}
+
+
+.modal-action-btn:hover,
+.modal-action-btn:focus,
+.modal-action-btn:active {
+
+    background: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border-color: #1a237e !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* =========================================================
+   DETAILS MODAL ICON BUTTONS
+   ========================================================= */
+
+.icon-action-btn {
+
+    display: inline-flex !important;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 34px;
+
+    height: 34px;
+
+    margin-right: 5px;
+
+    background: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border: 1px solid #1a237e !important;
+
+    border-radius: 5px !important;
+
+    text-decoration: none !important;
+
+    box-shadow: none !important;
+
+}
+
+
+.icon-action-btn:hover,
+.icon-action-btn:focus,
+.icon-action-btn:active {
+
+    background: #ffffff !important;
+
+    color: #1a237e !important;
+
+    border-color: #1a237e !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* =========================================================
+   SEARCH BUTTON
+   ========================================================= */
+
+.search-button {
+
+    box-shadow: none !important;
+
+}
+
+
+/* =========================================================
+   REMOVE BOOTSTRAP FOCUS RING FROM ALL BUTTONS
+   ON THIS PAGE
+   ========================================================= */
+
+button:focus,
+button:focus-visible,
+a:focus,
+a:focus-visible {
+
+    outline: none !important;
+
+    box-shadow: none !important;
+
+}
+
+
+/* =========================================================
+   MOBILE TABS
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .custom-tabs {
+
+        flex-wrap: wrap;
+
+    }
+
+    .custom-tabs .nav-link {
+
+        width: 100px;
+
+    }
+
+}
+
+</style>
+
 {% endblock %}
+```

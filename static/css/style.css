@@ -587,3 +587,150 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
     outline: none !important;
     box-shadow: none !important;
 }
+
+/* Modal Close Button */
+.modal .btn-close {
+    width: 34px !important;
+    height: 34px !important;
+    padding: 8px !important;
+    border-radius: 10px !important;
+    opacity: 1 !important;
+    background-color: #f0f2f8 !important;
+    transition: all 0.2s ease;
+}
+
+.modal .btn-close:hover {
+    background-color: #e5e7eb !important;
+    transform: scale(1.05);
+}
+
+.modal .btn-close:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* =========================================================
+   EXTRACURRICULAR TABS - REMOVE FOCUS BOX
+   ========================================================= */
+
+.nav-tabs .nav-link {
+    background: transparent !important;
+    color: var(--muted) !important;
+
+    border: none !important;
+    border-radius: 0 !important;
+
+    border-bottom: 2px solid transparent !important;
+
+    padding: 10px 18px !important;
+    font-weight: 600;
+
+    outline: none !important;
+    box-shadow: none !important;
+
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Hover */
+.nav-tabs .nav-link:hover {
+    background: transparent !important;
+    color: var(--primary) !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Active tab */
+.nav-tabs .nav-link.active {
+    background: transparent !important;
+    color: var(--primary) !important;
+
+    border: none !important;
+    border-bottom: 3px solid var(--primary) !important;
+
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* IMPORTANT: Remove the big box when clicking/focusing */
+.nav-tabs .nav-link:focus,
+.nav-tabs .nav-link:focus-visible,
+.nav-tabs .nav-link.active:focus,
+.nav-tabs .nav-link.active:focus-visible {
+    outline: 0 !important;
+    outline-style: none !important;
+    outline-width: 0 !important;
+
+    box-shadow: none !important;
+
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+}
+
+/* Remove browser tap/click highlight */
+.nav-tabs .nav-link {
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* =========================================================
+   EXTRACURRICULAR TABS
+   ========================================================= */
+
+.nav-tabs {
+    border-bottom: 1px solid var(--border) !important;
+}
+
+/* Normal tab */
+.nav-tabs .nav-link {
+    background: transparent !important;
+    color: var(--muted) !important;
+
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 6px 6px 0 0 !important;
+
+    padding: 6px 16px !important;   /* REDUCED HEIGHT */
+
+    font-weight: 600;
+    outline: none !important;
+    box-shadow: none !important;
+
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Hover */
+.nav-tabs .nav-link:hover {
+    background: #b3c7f6 !important;  /* CHANGE HOVER COLOUR HERE */
+    color: var(--primary) !important;
+
+     border: none !important;
+    border-bottom: 2px solid transparent !important; 
+
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Active tab */
+.nav-tabs .nav-link.active {
+    background: transparent !important;
+    color: var(--primary) !important;
+
+    border: none !important;
+    border-bottom: 3px solid var(--primary) !important;
+
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Focus / click */
+.nav-tabs .nav-link:focus,
+.nav-tabs .nav-link:focus-visible,
+.nav-tabs .nav-link.active:focus,
+.nav-tabs .nav-link.active:focus-visible {
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
